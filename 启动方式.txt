@@ -1,0 +1,72 @@
+========================================
+最简单：双击「启动.bat」
+========================================
+D:\FLY网站\启动.bat
+  1 - 全部启动（前台官网 + 后台管理），并自动打开两个页面
+  2 - 仅启动后台管理（端口 8000）
+  3 - 仅启动前台官网（端口 3000）
+  4 - 停止所有服务（杀掉占用 8000 / 3000 的进程）
+
+说明：脚本会新开两个窗口分别跑后端和前台，关掉窗口即停止对应服务；
+      启动前会检测端口是否被占用并给出提示。
+
+========================================
+手动启动（不用脚本时）
+========================================
+set PYTHONUTF8=1 #设置确保cmd能识别utf-8编码
+pip install -r requirements.txt
+//如果没有requirements.txt
+//pip install fastapi uvicorn
+启动服务：
+uvicorn app.main:app --reload --port 8000
+
+前端启动
+cd /d D:\FLY网站\frontend\web
+npm install && npm run dev
+或（分开）
+npm install   # 首次需要
+npm run dev   # 启动开发服务器
+
+前端通常会运行在 http://localhost:5173 或 http://localhost:3000 等端口，具体看项目配置（查看 package.json 中的 scripts 部分）
+
+cd D:\FLY网站\backend
+.\.venv\Scripts\activate
+uvicorn app.main:app --reload --port 8000
+
+========================================
+打开后台管理系统（推荐，不用单独起服务）
+========================================
+先按上面启动后端，然后浏览器打开：
+http://localhost:8000/admin/index.html
+
+（后端已把 D:\FLY网站\backendManage 静态挂载到 /admin，
+双击 index.html 也能开，但那样是纯本地演示、连不上后端。）
+
+首页轮播图已打通：进入 运营 → 网页管理 → 首页轮播图
+→ 点右上角「连接后端」（账号 admin / 密码 admin1234）
+→ 增删改轮播图（选本地图片会自动上传）→ 保存即写入 fly.db 并发布
+→ 前台 http://localhost:3000 刷新即可看到变化
+
+前台启动（另一个 cmd 窗口）
+cd /d D:\FLY网站\frontend\web
+npm run dev
+打开 http://localhost:3000
+
+========================================
+原理：为什么必须"跑起来"才能访问
+========================================
+浏览器访问 http://localhost:3000 实际是向本机 3000 端口发请求，
+必须有一个进程在这个端口上"监听"，否则就是「无法访问此页面」。
+
+  3000 端口  ← 前台的 vite 开发服务器（npm run dev 启动的 node 进程）
+  8000 端口  ← 后端的 uvicorn（FastAPI），同时挂载了两个静态目录：
+                /admin   → D:\FLY网站\backendManage   （后台管理页面）
+                /uploads → D:\FLY网站\backend\uploads （上传的图片）
+
+所以：只启动后端，就能打开后台管理页面（8000/admin）；
+      要打开前台官网，必须另外启动 vite（3000）。
+      两个进程都关掉，页面就都打不开了。
+
+查看当前是谁在占用端口：
+  netstat -ano | findstr LISTENING | findstr :8000
+  netstat -ano | findstr LISTENING | findstr :3000

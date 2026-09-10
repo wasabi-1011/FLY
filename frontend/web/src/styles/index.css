@@ -1,0 +1,18 @@
+:root{
+  --ink:#0F172A;
+  --mut:#475569;
+  --line:#E2E8F0;
+  --paper:#FFFFFF;
+  --acc:#000000;
+  --px:48px;
+  --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+  --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased}
+.site-header{display:flex;align-items:center;justify-content:space-between;padding:16px var(--px);border-bottom:1px solid var(--line)}
+.site-header .brand{font-weight:800;font-size:1.5rem;letter-spacing:.2em}
+.site-header nav{display:flex;gap:24px}
+.site-header a{text-decoration:none;color:var(--ink)}
+.page{padding:40px var(--px);min-height:60vh}
+.page h1{margin-bottom:16px}

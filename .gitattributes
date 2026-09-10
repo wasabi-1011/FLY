@@ -1,0 +1,20 @@
+# 统一行尾：工作区按系统本地规则检出，入库一律 LF（避免跨平台协作时整文件 diff）
+* text=auto eol=lf
+
+# Windows 批处理必须为 CRLF，否则双击运行可能异常
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 明确标记为二进制，禁止换行转换或 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.pdf binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+*.db binary

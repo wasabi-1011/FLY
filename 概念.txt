@@ -1,0 +1,16 @@
+SPA = Single Page Application（单页应用）。简单说：服务器只给你一个"空盒子"（一个几乎没内容的 HTML 文件）+ 一包 JS 代码
+盒子到了浏览器里，JS 才开始跑、去后端拿数据、再把门店/款式内容"画"到页面上。
+
+SSR = Server-Side Rendering（服务端渲染）。区别在第二步：不是丢个空盒子，而是服务器先把页面完整渲染好（门店名称、地址、款式、价格……都已经在 HTML 里了），再发给浏览器。
+
+SEO = Search Engine Optimization（搜索引擎优化）。对你这种业务，字面意思就是：当用户在百度/Google 搜"XX 城市 买 XX 款式""附近 XX 门店"时，你的页面能排在前面、能被点进来。
+
+
+
+
+ 两个重要提醒
+千万别拿这个脚本去执行项目现有的 D:\FLY网站\backend\fly.db —— 那里面 12 张表已经存在，
+执行会报 table ... already exists 错误。脚本是"全量建表"，不是增量补列；
+目前只有新建空库跑脚本这一种用法是正确的。将来若要在现有库补 price 列，正确做法是单独执行 ALTER TABLE items ADD COLUMN price NUMERIC(10,2);，而不是重跑整个 DDL。
+
+想直接浏览现有 fly.db（不跑脚本）也可以：新建连接时数据库文件直接选 backend\fly.db，展开「表」即可查看——但那是运行时数据库，还没有 price 列，和这份 v1.1 建表文档有一列差异，属预期。

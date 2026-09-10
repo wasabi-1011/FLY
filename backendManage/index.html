@@ -1,0 +1,2240 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="2rGi86ZyGnIqurgaBHJsbi">
+<head data-page-node-id="PFEL1C8chFsFNO8ZCk2oI4">
+<meta charset="UTF-8" data-page-node-id="aVTesMSiTYPGpNJ66S99S1">
+<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="d8soc9eQdyRduq7HG7rzE5">
+<title>FLY 管理后台 · 超级管理员</title>
+<style>
+  :root{
+    --side-bg:#001529; --side-bg-2:#000c17; --side-hover:#ffffff14;
+    --side-text:rgba(255,255,255,.65); --side-text-active:#fff; --side-active:#409eff;
+    --primary:#409eff; --primary-hover:#66b1ff; --primary-soft:#ecf5ff;
+    --success:#67c23a; --warning:#e6a23c; --danger:#f56c6c; --info:#909399;
+    --text-1:#303133; --text-2:#606266; --text-3:#909399;
+    --border:#e4e7ed; --border-light:#ebeef5; --content-bg:#f5f7fa; --card:#fff;
+    --radius:4px; --side-w:200px; --side-w-collapsed:64px; --top-h:50px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:-apple-system,"Helvetica Neue",Helvetica,"PingFang SC","Microsoft YaHei",Arial,sans-serif;
+    color:var(--text-1);background:var(--content-bg);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  svg{display:block}
+  .ico{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ico-sm{width:16px;height:16px}
+
+  /* layout */
+  .layout{display:flex;min-height:100vh}
+  .sidebar{width:var(--side-w);background:var(--side-bg);color:var(--side-text);
+    position:fixed;left:0;top:0;bottom:0;display:flex;flex-direction:column;transition:width .2s ease;z-index:30;overflow:hidden}
+  .logo{height:var(--top-h);display:flex;align-items:center;gap:10px;padding:0 16px;
+    border-bottom:1px solid #ffffff14;color:#fff;font-weight:600;font-size:16px;white-space:nowrap;flex:none}
+  .logo .mark{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#409eff,#66b1ff);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;flex:none}
+  .menu{flex:1;overflow-y:auto;padding:8px 0}
+  .menu::-webkit-scrollbar{width:6px}
+  .menu::-webkit-scrollbar-thumb{background:#ffffff24;border-radius:3px}
+  .menu-group{color:#ffffff40;font-size:12px;padding:12px 20px 6px;white-space:nowrap}
+  .menu-item{display:flex;align-items:center;gap:10px;padding:11px 20px;color:var(--side-text);
+    cursor:pointer;white-space:nowrap;transition:background .15s,color .15s;border-left:3px solid transparent}
+  .menu-item:hover{background:var(--side-hover);color:var(--side-text-active)}
+  .menu-item.active{background:var(--side-active);color:#fff;border-left-color:#fff}
+  .menu-item .sub{margin-left:auto;transition:transform .2s}
+  .menu-item.open .sub{transform:rotate(90deg)}
+  .submenu{background:var(--side-bg-2);overflow:hidden;max-height:0;transition:max-height .25s ease}
+  .submenu.open{max-height:400px}
+  .submenu a{display:block;padding:10px 20px 10px 48px;color:var(--side-text);text-decoration:none;
+    white-space:nowrap;transition:color .15s;font-size:13px}
+  .submenu a:hover,.submenu a.active{color:#fff}
+
+  .main{margin-left:var(--side-w);flex:1;min-width:0;transition:margin-left .2s ease}
+  .layout.collapsed .sidebar{width:var(--side-w-collapsed)}
+  .layout.collapsed .main{margin-left:var(--side-w-collapsed)}
+  .layout.collapsed .logo span,.layout.collapsed .menu-label,
+  .layout.collapsed .menu-group,.layout.collapsed .sub{display:none}
+  .layout.collapsed .menu-item{justify-content:center;padding:11px 0}
+  .layout.collapsed .submenu{display:none}
+
+  /* topbar */
+  .topbar{height:var(--top-h);background:#fff;border-bottom:1px solid var(--border-light);
+    position:fixed;top:0;right:0;left:var(--side-w);display:flex;align-items:center;
+    padding:0 16px;gap:14px;z-index:20;transition:left .2s ease}
+  .layout.collapsed .topbar{left:var(--side-w-collapsed)}
+  .topbar .btn-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;
+    border-radius:var(--radius);color:var(--text-2);cursor:pointer;transition:background .15s,color .15s;border:none;background:none}
+  .topbar .btn-icon:hover{background:var(--primary-soft);color:var(--primary)}
+  .topbar .btn-icon:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+  .breadcrumb{display:flex;align-items:center;gap:6px;color:var(--text-3);font-size:13px}
+  .breadcrumb b{color:var(--text-2);font-weight:500}
+  .spacer{flex:1}
+  .user{display:flex;align-items:center;gap:8px;cursor:pointer;padding:4px 8px;border-radius:var(--radius);transition:background .15s}
+  .user:hover{background:#f5f7fa}
+  .avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#409eff,#67c23a);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:600;flex:none}
+  .user .meta{display:flex;flex-direction:column;line-height:1.2}
+  .user .meta .name{font-size:13px;color:var(--text-1);font-weight:500}
+  .user .meta .role{font-size:11px;color:var(--text-3)}
+  .tag{display:inline-block;padding:1px 7px;border-radius:3px;font-size:11px;line-height:18px}
+  .tag-blue{background:var(--primary-soft);color:var(--primary)}
+  .tag-green{background:#f0f9eb;color:var(--success)}
+  .tag-orange{background:#fdf6ec;color:var(--warning)}
+  .tag-red{background:#fef0f0;color:var(--danger)}
+  .tag-gray{background:#f4f4f5;color:var(--info)}
+
+  /* content */
+  .content{padding:16px;margin-top:var(--top-h)}
+  .view[hidden]{display:none}
+  .page-head{display:flex;align-items:baseline;gap:12px;margin-bottom:14px}
+  .page-head h2{font-size:18px;font-weight:600}
+  .page-head .sub{color:var(--text-3);font-size:13px}
+
+  .grid{display:grid;gap:14px}
+  .stats{grid-template-columns:repeat(4,1fr)}
+  .card{background:var(--card);border:1px solid var(--border-light);border-radius:var(--radius);}
+  .stat{padding:18px;display:flex;align-items:center;gap:14px}
+  .stat .badge{width:52px;height:52px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+  .stat .badge.blue{background:var(--primary-soft);color:var(--primary)}
+  .stat .badge.green{background:#f0f9eb;color:var(--success)}
+  .stat .badge.orange{background:#fdf6ec;color:var(--warning)}
+  .stat .badge.red{background:#fef0f0;color:var(--danger)}
+  .stat .num{font-size:24px;font-weight:700;line-height:1.1}
+  .stat .lab{color:var(--text-3);font-size:13px;margin-top:2px}
+  .stat .trend{font-size:12px;margin-top:4px}
+  .stat .trend.up{color:var(--success)} .stat .trend.down{color:var(--danger)}
+
+  .row-2{grid-template-columns:1.6fr 1fr;margin-top:14px}
+  .card-h{padding:14px 16px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;
+    justify-content:space-between;font-weight:600;font-size:14px}
+  .card-h .more{font-size:12px;color:var(--primary);cursor:pointer;font-weight:400}
+  .card-b{padding:16px}
+
+  /* bar list */
+  .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;font-size:13px}
+  .bar-row .city{width:48px;color:var(--text-2);flex:none}
+  .bar-track{flex:1;height:10px;background:#f0f2f5;border-radius:6px;overflow:hidden}
+  .bar-fill{height:100%;background:linear-gradient(90deg,#409eff,#66b1ff);border-radius:6px}
+  .bar-row .val{width:34px;text-align:right;color:var(--text-2);flex:none}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:11px 12px;text-align:left;border-bottom:1px solid var(--border-light);color:var(--text-2)}
+  th{color:var(--text-3);font-weight:500;background:#fafafa;white-space:nowrap}
+  tbody tr:hover{background:#fafcff}
+  td .op{color:var(--primary);cursor:pointer;margin-right:10px}
+  td .op.del{color:var(--danger)}
+  td .op:hover{text-decoration:underline}
+  td .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text-1)}
+
+  /* filter bar */
+  .filter{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border-light)}
+  .filter label{font-size:13px;color:var(--text-2);display:flex;align-items:center;gap:6px}
+  .filter input,.filter select{padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius);
+    font-size:13px;color:var(--text-1);background:#fff;outline:none;transition:border-color .15s}
+  .filter input:focus,.filter select:focus{border-color:var(--primary)}
+  .btn{padding:7px 16px;border-radius:var(--radius);font-size:13px;cursor:pointer;border:1px solid var(--border);
+    background:#fff;color:var(--text-1);transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{border-color:var(--primary);color:var(--primary)}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff}
+  .btn.primary:hover{background:var(--primary-hover);border-color:var(--primary-hover);color:#fff}
+  .btn:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+  .filter .spacer{flex:1}
+
+  .pager{display:flex;align-items:center;justify-content:flex-end;gap:6px;padding:14px 16px;color:var(--text-3);font-size:13px;flex-wrap:wrap}
+  .pager .pg{min-width:30px;height:30px;padding:0 8px;border:1px solid var(--border);border-radius:var(--radius);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;background:#fff;color:var(--text-2)}
+  .pager .pg.active{background:var(--primary);border-color:var(--primary);color:#fff}
+  .pager .pg:hover:not(.active){border-color:var(--primary);color:var(--primary)}
+
+  .todo{padding:8px 16px}
+  .todo li{list-style:none;display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border-light);font-size:13px}
+  .todo li:last-child{border-bottom:none}
+  .todo .dot{width:8px;height:8px;border-radius:50%;flex:none}
+  .todo .txt{flex:1;color:var(--text-2)}
+  .todo .n{font-weight:600;color:var(--text-1)}
+
+  @media (max-width:1100px){.stats{grid-template-columns:repeat(2,1fr)}.row-2{grid-template-columns:1fr}}
+  @media (max-width:640px){.stats{grid-template-columns:1fr}.user .meta{display:none}.breadcrumb{display:none}}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+  /* login */
+  body.logged-out .layout{display:none}
+  .login-screen{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#1d3a5f 0%,#0a1f33 55%,#001529 100%)}
+  body:not(.logged-out) .login-screen{display:none}
+  .login-card{width:380px;max-width:90vw;background:#fff;border-radius:8px;padding:34px 30px;box-shadow:0 14px 44px rgba(0,0,0,.28)}
+  .login-card h1{font-size:20px;text-align:center;margin-bottom:4px;color:var(--text-1)}
+  .login-card .sub{text-align:center;color:var(--text-3);font-size:13px;margin-bottom:22px}
+  .login-field{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:var(--radius);padding:0 12px;margin-bottom:14px;transition:border-color .15s}
+  .login-field:focus-within{border-color:var(--primary)}
+  .login-field .ico{color:var(--text-3);width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .login-field input{flex:1;border:none;outline:none;padding:11px 0;font-size:14px;color:var(--text-1);background:none}
+  .login-role{margin-bottom:14px}
+  .login-role label{display:block;font-size:13px;color:var(--text-2);margin-bottom:6px}
+  .login-role select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;color:var(--text-1);background:#fff;outline:none;transition:border-color .15s}
+  .login-role select:focus{border-color:var(--primary)}
+  .login-hint{font-size:12px;color:var(--text-3);margin-bottom:14px;background:#f5f7fa;padding:8px 10px;border-radius:var(--radius)}
+  .login-btn{width:100%;padding:11px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius);font-size:15px;cursor:pointer;transition:background .15s}
+  .login-btn:hover{background:var(--primary-hover)}
+  .login-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+
+  /* user dropdown */
+  .user{position:relative}
+  .user-menu{position:absolute;top:42px;right:0;background:#fff;border:1px solid var(--border-light);border-radius:var(--radius);box-shadow:0 6px 20px rgba(0,0,0,.12);min-width:120px;overflow:hidden;z-index:40}
+  .user-menu button{width:100%;text-align:left;padding:10px 14px;border:none;background:#fff;font-size:13px;color:var(--text-2);cursor:pointer}
+  .user-menu button:hover{background:#f5f7fa;color:var(--danger)}
+
+  /* ===== 弹窗：新增门店（腾讯地图点选） ===== */
+  .modal-mask{position:fixed;inset:0;background:rgba(0,21,41,.45);display:flex;align-items:center;justify-content:center;z-index:200;padding:24px;}
+  .modal-mask[hidden]{display:none;}
+  .modal{width:min(820px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:8px;box-shadow:0 12px 40px rgba(0,0,0,.22);display:flex;flex-direction:column;}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #ebeef5;}
+  .modal-head h3{margin:0;font-size:16px;color:#1f2d3d;}
+  .modal-x{border:0;background:transparent;font-size:22px;line-height:1;color:#909399;cursor:pointer;padding:0 4px;}
+  .modal-x:hover{color:#f56c6c;}
+  .modal-body{padding:20px;display:flex;flex-direction:column;gap:18px;}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
+  .form-grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#606266;}
+  .form-grid input,.form-grid select{height:34px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;background:#fff;}
+  .form-grid input:focus,.form-grid select:focus{outline:none;border-color:#409eff;}
+  .map-wrap{border:1px solid #ebeef5;border-radius:6px;overflow:hidden;}
+  .map-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f5f7fa;border-bottom:1px solid #ebeef5;}
+  .map-title{font-size:13px;color:#303133;font-weight:600;}
+  .map-badge{font-size:11px;color:#e6a23c;background:#fdf6ec;border:1px solid #faecd8;padding:2px 8px;border-radius:10px;white-space:nowrap;}
+  .map-canvas{position:relative;height:300px;background:#eef1f5;}
+  .map-canvas .sim-hint{position:absolute;top:8px;left:8px;z-index:3;font-size:11px;color:#fff;background:rgba(0,21,41,.55);padding:3px 8px;border-radius:4px;}
+  .map-pin{cursor:grab;}
+  .map-pin.drag{cursor:grabbing;}
+  .coord-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid #ebeef5;background:#fafafa;}
+  .coord-row label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#909399;}
+  .coord-row input{width:140px;height:30px;padding:0 8px;border:1px solid #dcdfe6;border-radius:4px;font-size:12px;font-family:monospace;color:#303133;background:#fff;}
+  .coord-hint{font-size:12px;color:#909399;}
+  .modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:14px 20px;border-top:1px solid #ebeef5;}
+  .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);background:rgba(0,21,41,.85);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none;}
+  .toast.show{opacity:1;}
+  @media (max-width:640px){.form-grid{grid-template-columns:1fr;}}
+
+  /* ===== 内容运营：编辑区 / 留言卡片 ===== */
+  .editor-card{display:flex;flex-direction:column;gap:14px;}
+  .ed-field{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#606266;}
+  .ed-field input,.ed-field select{height:34px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;background:#fff;}
+  .ed-field input:focus,.ed-field select:focus{outline:none;border-color:#409eff;}
+  .ed-toolbar{display:flex;gap:4px;flex-wrap:wrap;padding:8px 10px;border:1px solid #dcdfe6;border-bottom:none;border-radius:4px 4px 0 0;background:#f5f7fa;}
+  .ed-toolbar button{border:1px solid #e4e7ed;background:#fff;border-radius:4px;min-width:30px;height:28px;padding:0 8px;font-size:13px;color:#606266;cursor:pointer;line-height:1;}
+  .ed-toolbar button:hover{border-color:#409eff;color:#409eff;background:#ecf5ff;}
+  .ed-area{border:1px solid #dcdfe6;border-radius:0 0 4px 4px;min-height:220px;padding:12px 14px;font-size:14px;color:#303133;line-height:1.7;outline:none;background:#fff;}
+  .ed-area:focus{border-color:#409eff;box-shadow:0 0 0 1px #409eff inset;}
+  .ed-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
+  .ed-hint{font-size:12px;color:#909399;}
+  .ed-hint b{color:#606266;font-weight:600;}
+  .msg-card{border:1px solid #ebeef5;border-radius:6px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+  .msg-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+  .msg-name{font-weight:600;color:#303133;}
+  .msg-meta{font-size:12px;color:#909399;}
+  .msg-txt{font-size:13px;color:#303133;line-height:1.6;margin-bottom:8px;}
+  .msg-reply{background:#f5f7fa;border-left:3px solid #409eff;border-radius:0 4px 4px 0;padding:8px 12px;font-size:13px;color:#606266;margin-top:8px;}
+  .msg-ops{display:flex;gap:14px;font-size:13px;color:#409eff;}
+  .msg-ops .op{cursor:pointer;}
+  .msg-ops .del{color:#f56c6c;}
+  .reply-bar{display:flex;gap:8px;margin-top:8px;}
+  .reply-bar input{flex:1;height:32px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;}
+  .reply-bar input:focus{outline:none;border-color:#409eff;}
+  /* 图片缩略图（款式主图 / 轮播 Banner）与弹窗图片预览 */
+  .img-th{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:40px;padding:0 6px;border-radius:6px;overflow:hidden;font-style:normal;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);background:#eef1f7 center/cover no-repeat;border:1px solid rgba(255,255,255,.55);vertical-align:middle}
+  .img-th.banner{min-width:160px;height:56px}
+  .img-prev{display:block;width:100%;height:72px;border-radius:6px;background:repeating-linear-gradient(45deg,#f5f7fa,#f5f7fa 10px,#eef1f7 10px,#eef1f7 20px) center/cover no-repeat;border:1px dashed #dcdfe6}
+  .imgpick{display:flex;align-items:center;gap:12px}
+  .imgpick .img-prev{width:220px;height:84px;flex:none;margin:0}
+  .imgpick-actions{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .img-viewer{position:relative;background:#fff;border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.25);padding:8px;max-width:min(92vw,1000px)}
+  .img-viewer img{display:block;max-width:100%;max-height:82vh;border-radius:6px}
+  .img-viewer .img-v-placeholder{padding:56px 64px;color:#909399;text-align:center}
+  .dim{color:#c0c4cc;font-size:13px}
+  .vimg{color:#409EFF;cursor:pointer;font-size:13px}
+</style>
+</head>
+<body class="logged-out" data-page-node-id="3Vsq2Ot4gBAPTMAiLtH9xy">
+<div class="login-screen" id="login">
+  <div class="login-card">
+    <h1>FLY 管理后台</h1>
+    <div class="sub">Fly 门店与款式运营平台</div>
+    <form id="loginForm">
+      <div class="login-field">
+        <svg class="ico"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input type="text" id="username" placeholder="用户名" autocomplete="username" value="admin">
+      </div>
+      <div class="login-field">
+        <svg class="ico"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input type="password" id="password" placeholder="密码" autocomplete="current-password" value="admin1234">
+      </div>
+      <div class="login-role">
+        <label>演示角色（切换可看菜单差异）</label>
+        <select id="rolePick">
+          <option value="SUPER_ADMIN">超级管理员 SUPER_ADMIN（全部菜单）</option>
+          <option value="CONTENT_OPS">内容运营 CONTENT_OPS（内容/留言/看板）</option>
+          <option value="MERCH_STORE_OPS">门店商品运营 MERCH_STORE_OPS（门店/款式）</option>
+        </select>
+      </div>
+      <div class="login-hint" id="loginHint">将以种子账号 <b>admin</b> 登录，拥有全部权限。</div>
+      <button type="submit" class="login-btn" id="loginBtn">登 录</button>
+    </form>
+  </div>
+</div>
+<div class="layout" id="layout" data-page-node-id="bKUjfpl7CcqBKjbC8v56Da">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar" data-page-node-id="i0LUVfywlDSbmcg64lu4GW">
+    <div class="logo" data-page-node-id="JtBgcLoQwqXpBOir055A31"><span class="mark" data-page-node-id="OLYy7kl3mQGSQgXHKsGtnQ">F</span><span data-page-node-id="lYsqzJmiqtLcElvPut6Qpl">FLY 管理后台</span></div>
+    <nav class="menu" data-page-node-id="vya3o9cBgFk0VqXTTitJcJ">
+      <div class="menu-group" data-page-node-id="2V50LoZmassnr8Brej1jgY">主菜单</div>
+      <div class="menu-item active" data-view="dashboard" data-roles="SUPER_ADMIN,CONTENT_OPS,MERCH_STORE_OPS" data-page-node-id="t5rP5KpsvMY5yrA5P1x6vL">
+        <svg class="ico" data-page-node-id="luMpDfVY432wGwIDFbQgBT"><rect x="3" y="3" width="7" height="7" data-page-node-id="etqQ9BZPIGrfq79XHBjO98"/><rect x="14" y="3" width="7" height="7" data-page-node-id="oBs51ygOEgWF1GJWdIaxXC"/><rect x="14" y="14" width="7" height="7" data-page-node-id="jUtN3ZMBhR2DSfDKViXBMC"/><rect x="3" y="14" width="7" height="7" data-page-node-id="5UXxCyKvMCacGtKZNRjLpf"/></svg>
+        <span class="menu-label" data-page-node-id="dgAd1sS3nLH7yB5QkXJI2Q">仪表盘</span>
+      </div>
+
+      <div class="menu-item has-sub" data-sub="stores" data-roles="SUPER_ADMIN,MERCH_STORE_OPS" data-page-node-id="R1YLdJTPHOEyeGoqxa0Fzs">
+        <svg class="ico" data-page-node-id="opanjtJOomWzyBdfAMxfm6"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" data-page-node-id="62XXOFEc0TJkTmHPJKectO"/><circle cx="12" cy="10" r="3" data-page-node-id="ntTtB3PtQNGRu98j6CuIHn"/></svg>
+        <span class="menu-label" data-page-node-id="Dn4SF5gcI0G1HCDBdMtz3Y">门店管理</span>
+        <svg class="ico-sm sub" data-page-node-id="5xZmA5VYYFOLncrD3LwE3Z"><polyline points="9 6 15 12 9 18" data-page-node-id="IG2xaNUFTEdFNDMZTaU8yd"/></svg>
+      </div>
+      <div class="submenu" id="sub-stores" data-page-node-id="8T7V79RoNnWTyJmjInjXKs">
+        <a data-view="stores" class="active" data-page-node-id="6ktOFAARp1wmfRLRKfHItP">门店列表</a>
+        <a data-view="citygroups" data-page-node-id="qFFI70HUtwFO9sIBOhMryP">城市分组</a>
+      </div>
+
+      <div class="menu-item has-sub" data-sub="styles" data-roles="SUPER_ADMIN,MERCH_STORE_OPS" data-page-node-id="Fns9QlzlYhHFohdRSyhsZ9">
+        <svg class="ico" data-page-node-id="wwLj8Ou6vjFQE0dvSgL821"><polygon points="12 2 2 7 12 12 22 7 12 2" data-page-node-id="Vh4MvcicGSAfpnnjqwr6zT"/><polyline points="2 17 12 22 22 17" data-page-node-id="13TmvZaG4fXRhEhUHIYKdL"/><polyline points="2 12 12 17 22 12" data-page-node-id="CCKrWQG0sm0ET5PhkAnmTE"/></svg>
+        <span class="menu-label" data-page-node-id="jHNUsaqG1gVVrsF9PNVZye">款式管理</span>
+        <svg class="ico-sm sub" data-page-node-id="fTfKyXPJxuGFYrxecxceFy"><polyline points="9 6 15 12 9 18" data-page-node-id="L34NbnXdOssWMfEOOZLrOa"/></svg>
+      </div>
+      <div class="submenu" id="sub-styles" data-page-node-id="GCbgqZHzbMhvi0nGVtql1e">
+        <a data-view="styles" data-page-node-id="EIGaB66JH7Mhw6mcEn1Eem">款式列表</a><a data-view="series" data-page-node-id="kaL8zP4rUXvDSO7g7MvH1m">系列管理</a>
+      </div>
+
+      <div class="menu-group" data-page-node-id="1h4sHwAiNA2ytEAjE3KYD6">运营</div>
+      <div class="menu-item has-sub" data-sub="content" data-roles="SUPER_ADMIN,CONTENT_OPS" data-page-node-id="qDKIUJr64JqpgTI1AEzkL5">
+        <svg class="ico" data-page-node-id="qcwU699KSh7OUksTKE1Ki1"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" data-page-node-id="mLhugEwUEHLoYI1LjjHsGG"/><polyline points="14 2 14 8 20 8" data-page-node-id="JmGFNmQxmUrI302dqzdOeC"/><line x1="16" y1="13" x2="8" y2="13" data-page-node-id="wrRzojNihe1dOunxZybKCx"/><line x1="16" y1="17" x2="8" y2="17" data-page-node-id="ErpRCDZ5DZhN6QqNMifZMP"/></svg>
+        <span class="menu-label" data-page-node-id="GLkXZ1bMldnqChXcszxL78">内容运营</span>
+        <svg class="ico-sm sub" data-page-node-id="cEd2zdDuYn4a5yLDlKP27w"><polyline points="9 6 15 12 9 18" data-page-node-id="RYA4DRwMbl1CVcn5LwMT6d"/></svg>
+      </div>
+      <div class="submenu" id="sub-content" data-page-node-id="lJvhRu4A5esmhvMRl3UozD">
+        <a data-view="content" class="active" data-page-node-id="FiOkLD0nTDEcDRblHto0WR">新闻管理</a><a data-view="tips" data-page-node-id="WK2I441xn10jOyhBZKiQKs">资讯管理</a>
+      </div>
+
+      <div class="menu-item has-sub" data-sub="web" data-roles="SUPER_ADMIN,CONTENT_OPS" data-page-node-id="WEB_MENU_ROOT_2026A">
+        <svg class="ico"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        <span class="menu-label">网页管理</span>
+        <svg class="ico-sm sub"><polyline points="9 6 15 12 9 18"/></svg>
+      </div>
+      <div class="submenu" id="sub-web">
+        <a data-view="banners">首页轮播图</a>
+      </div>
+
+      <div class="menu-item" data-view="messages" data-roles="SUPER_ADMIN,CONTENT_OPS" data-page-node-id="n1r8wySgfKBo01jpJ7DiCW">
+        <svg class="ico" data-page-node-id="MfIMguHEeAQTY0b2qekmvf"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="rd3ajykzwop2fSi9RRjgSy"/></svg>
+        <span class="menu-label" data-page-node-id="oRR8CMGq713vBYkuCpAPC2">留言管理</span>
+        <span class="tag tag-red" style="margin-left:auto;font-size:10px" data-page-node-id="cybmDk7tRDwheGKs4DfGx4">12</span>
+      </div>
+
+      <div class="menu-group" data-page-node-id="2iwhsQiKoyBzDfPRugn9BE">系统</div>
+      <div class="menu-item has-sub" data-sub="rbac" data-roles="SUPER_ADMIN" data-page-node-id="q3UfV2XkYgsE42NPeBZD2Q">
+        <svg class="ico" data-page-node-id="M9bxE9qOL5dQgkBjMKRqkJ"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" data-page-node-id="mMIdnWaHmWpzpxGXtPKI65"/><circle cx="9" cy="7" r="4" data-page-node-id="pPWjnNHOcVLP23v5fNpXEz"/><path d="M23 21v-2a4 4 0 0 0-3-3.87" data-page-node-id="PJwefuZvbAtJvCbWsmHlBR"/><path d="M16 3.13a4 4 0 0 1 0 7.75" data-page-node-id="zQpttk7WkE5bRiD8JTXxJq"/></svg>
+        <span class="menu-label" data-page-node-id="FHCgCapP1CXr4vQf18qzsC">用户与权限</span>
+        <svg class="ico-sm sub" data-page-node-id="cEd2zdDuYn4a5yLDlKP27w"><polyline points="9 6 15 12 9 18" data-page-node-id="RYA4DRwMbl1CVcn5LwMT6d"/></svg>
+      </div>
+      <div class="submenu" id="sub-rbac" data-page-node-id="lJvhRu4A5esmhvMRl3UozD">
+        <a data-view="accounts" data-page-node-id="FiOkLD0nTDEcDRblHto0WR">账号管理</a><a data-view="roles" data-page-node-id="WK2I441xn10jOyhBZKiQKs">角色管理</a>
+      </div>
+      <div class="menu-item" data-view="board" data-roles="SUPER_ADMIN,CONTENT_OPS,MERCH_STORE_OPS" data-page-node-id="AJroEB3Sk0QMSMaE9qzefp">
+        <svg class="ico" data-page-node-id="7T1hjjOAVpAbPNbIq8Zsto"><line x1="12" y1="20" x2="12" y2="10" data-page-node-id="PxWaeXtusQeriHj83pHMms"/><line x1="18" y1="20" x2="18" y2="4" data-page-node-id="5Nhuh5QD4cNm1FhU7wfeAm"/><line x1="6" y1="20" x2="6" y2="16" data-page-node-id="12FV7NBOJTh9SJhNlcgPhj"/></svg>
+        <span class="menu-label" data-page-node-id="SFK70FwGKxI5MZln47QPtg">数据看板</span>
+      </div>
+      <div class="menu-item has-sub" data-sub="sys" data-roles="SUPER_ADMIN" data-page-node-id="Wv4d5cikTkfHNF0SdbWHBo">
+        <svg class="ico" data-page-node-id="qkkKlu4dXMfiiVKZqBW99Y"><circle cx="12" cy="12" r="3" data-page-node-id="hCBTGOeJmDB0i1X6rdZRQE"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" data-page-node-id="56pBaMOOV4vMpylo1ooExT"/></svg>
+        <span class="menu-label" data-page-node-id="72W9pkaHzh2sUFkAnlAaYn">系统设置</span>
+        <svg class="ico-sm sub" data-page-node-id="VAkh3K9AcOpnwuybHlqVqU"><polyline points="9 6 15 12 9 18" data-page-node-id="1mEBj3BfdxOvNybRlREgpO"/></svg>
+      </div>
+      <div class="submenu" id="sub-sys" data-page-node-id="Nb881Y9NPuDxgabN4d9Y0Z">
+        <a data-view="settings" data-page-node-id="YzraBwwlhwwiIRfX8tM6IG">参数设置</a><a data-view="logs" data-page-node-id="2uj7iokLjImLqBBSGcjrRN">操作日志</a>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main" data-page-node-id="HIcYGxqK0LIwkasoQiU7Cc">
+    <header class="topbar" data-page-node-id="yhCZZfXYzdFDq3OVDVFKqD">
+      <button class="btn-icon" id="toggle" aria-label="折叠侧边栏" data-page-node-id="BKi3NyIAEwk4sUesZAy0vN">
+        <svg class="ico" data-page-node-id="BP4aL4AGWkYxdRHpcKm5HH"><line x1="3" y1="6" x2="21" y2="6" data-page-node-id="RafeNBUhwqcUk57ttFX84H"/><line x1="3" y1="12" x2="21" y2="12" data-page-node-id="Q93sAX2GEq3WNFmr17sFqn"/><line x1="3" y1="18" x2="21" y2="18" data-page-node-id="lMeMbdxLjbtXmg8jUyHvnm"/></svg>
+      </button>
+      <div class="breadcrumb" data-page-node-id="lmUEGeQH7evOUA9YKOhAec"><span data-page-node-id="lep0C36tP23wJBe1Tbr5P9">首页</span><span data-page-node-id="yr8gHUV1VtW5dGETKTanRN">/</span><b id="crumb" data-page-node-id="pjYIGRJLsnSh2yaCnGNcE1">仪表盘</b></div>
+      <div class="spacer" data-page-node-id="x0EqCtOklhjUtGbmmCNYYw"></div>
+      <button class="btn-icon" aria-label="搜索" data-page-node-id="BhF8gxqCgBaj5sXKP2IJBM"><svg class="ico" data-page-node-id="aCLETd0oVi6UsosIKPXbbb"><circle cx="11" cy="11" r="8" data-page-node-id="9QBF4YawafRuQHJbnV6BqW"/><line x1="21" y1="21" x2="16.65" y2="16.65" data-page-node-id="GEE2K5YS5U0F91cokxQLmB"/></svg></button>
+      <button class="btn-icon" aria-label="全屏" data-page-node-id="CMaZP5iANdGWfBgR7nQVFQ"><svg class="ico" data-page-node-id="LES2tkeI1CmLvYLkHzEAxc"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" data-page-node-id="oy4kpvIL1ZLfSmmjMd26OH"/></svg></button>
+      <button class="btn-icon" aria-label="通知" data-page-node-id="ZwlaDvXcCJMSgs7yPZjx1T"><svg class="ico" data-page-node-id="HoLVJLAITj8YdCrkhG45Lk"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" data-page-node-id="ypJq4EZBYHVV8XzIAlx7GD"/><path d="M13.73 21a2 2 0 0 1-3.46 0" data-page-node-id="KQffu8yHyGttJigDuDFB4n"/></svg></button>
+      <div class="user" id="userBox" aria-label="当前用户菜单">
+        <span class="avatar" id="avatarTxt">超</span>
+        <span class="meta"><span class="name"><span id="dispName">超级管理员</span> <span class="tag tag-blue" id="roleTag">SUPER_ADMIN</span></span><span class="role" id="userEmail">admin@fly.com</span></span>
+        <div class="user-menu" id="userMenu" hidden><button id="logoutBtn">退出登录</button></div>
+      </div>
+    </header>
+
+    <main class="content" data-page-node-id="kRODtjMCQAr5Epb6vYxQdz">
+      <!-- ===== Dashboard ===== -->
+      <section class="view" id="view-dashboard" data-page-node-id="wR9KbJIQcJ5U8uuSb6Bdp6">
+        <div class="page-head" data-page-node-id="uEdNm5izGLEXfbr71qGMSv"><h2 data-page-node-id="aJkfGnxCfQhNAMsVqutw9u">仪表盘</h2><span class="sub" id="today" data-page-node-id="tlaq76r8T4AjsKG2Voe4TS"></span></div>
+
+        <div class="grid stats" data-page-node-id="VZwuS7xnpGZ0dwTIifw3Fu">
+          <div class="card stat" data-page-node-id="NQIfBHje4JTSi4N2aMfuCi">
+            <div class="badge blue" data-page-node-id="gHeG1ORZeFfWoPtwCdb6eI"><svg class="ico" data-page-node-id="ZXG6ACfBPI2FgagQX0mD4n"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" data-page-node-id="dM0Rw7eveK5DHJaDki70G6"/><circle cx="12" cy="10" r="3" data-page-node-id="U9CCk5jJuDHHOca7Eqgi87"/></svg></div>
+            <div data-page-node-id="ndNQn1MdDciMDWA6JKdT2d"><div class="num" data-page-node-id="BGGQxH86YcUqmKAhtwe1pP">128</div><div class="lab" data-page-node-id="AGCfCEm0IPFrvE7o2z0eSB">门店总数</div><div class="trend up" data-page-node-id="pWKln2zHoYlFyTvXOBRelM">↑ 12 较上月</div></div>
+          </div>
+          <div class="card stat" data-page-node-id="5vnTHl9ODcDHkBFSkXxuev">
+            <div class="badge green" data-page-node-id="fmlZWKyzkui4oNcsyQqWQ9"><svg class="ico" data-page-node-id="lTgUqqar1YCs0GqqbSHbpX"><polygon points="12 2 2 7 12 12 22 7 12 2" data-page-node-id="hImx2iQAgsdVzPECKmGiwi"/><polyline points="2 17 12 22 22 17" data-page-node-id="67WAQgNervXKa2dND46AgO"/><polyline points="2 12 12 17 22 12" data-page-node-id="z9HwFmL5aYex5IzH0g5LKH"/></svg></div>
+            <div data-page-node-id="gTnk2xJmS4mQG1EYfDOUs8"><div class="num" data-page-node-id="lqiyabA4vD1dX9cF0Zk5Hc">1,024</div><div class="lab" data-page-node-id="5XW7HdSN8W9Oegn1x2cZqt">款式总数</div><div class="trend up" data-page-node-id="BFI5qVIALr6vvuCa2fEz4v">↑ 86 较上月</div></div>
+          </div>
+          <div class="card stat" data-page-node-id="FbeNSpa6JkOnuffTtSOreF">
+            <div class="badge orange" data-page-node-id="Cskt4WXBy1NLrFzi4M7NkB"><svg class="ico" data-page-node-id="9XvqjKx12RpTBnCWH9oM1h"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" data-page-node-id="T4fSSiNsOvZp36kR83Rd8D"/><line x1="3" y1="6" x2="21" y2="6" data-page-node-id="BvJPv4lR9FgFBC36CGC6il"/><path d="M16 10a4 4 0 0 1-8 0" data-page-node-id="zDxgOBoZKBJabSHiyfMv6m"/></svg></div>
+            <div data-page-node-id="bwPfovdrlOiJe5P5GaLpRH"><div class="num" data-page-node-id="6WFH8okvSbSUWRC0pvJwZL">86</div><div class="lab" data-page-node-id="kJ9tlJN5d12d5dPN19Oqi9">今日订单</div><div class="trend up" data-page-node-id="6PPz50iUaD3Xy4lZueDWha">↑ 9.2%</div></div>
+          </div>
+          <div class="card stat" data-page-node-id="RBxWwdMPa9CZA2H9O2r5Iu">
+            <div class="badge red" data-page-node-id="dGuJcngGrlGs8ExDI5YAek"><svg class="ico" data-page-node-id="95VUjjQRlw9mb1Qq2qCimT"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" data-page-node-id="FF0kGYoNBc6NmvZ7DOIfL1"/></svg></div>
+            <div data-page-node-id="DB8uJPrtcN1OPAZfThfcd9"><div class="num" data-page-node-id="yxAsBSGfooBJsHHkJoEPgn">12</div><div class="lab" data-page-node-id="91KPrG9KdhzYsJCfIzHEYJ">待处理留言</div><div class="trend down" data-page-node-id="CztMhucdDSmhFESpzGuTda">↓ 3 较昨日</div></div>
+          </div>
+        </div>
+
+        <div class="grid row-2" data-page-node-id="3CPY2ioiECsJTEwNGVE6nJ">
+          <div class="card" data-page-node-id="Xo2EvOIXKxteAwVZKNsrLM">
+            <div class="card-h" data-page-node-id="loT1gp07oM0MR3UEp7pSGg">近 7 日订单趋势 <span class="more" data-page-node-id="NwywFMhnsWPYhHUWoe5t2N">查看详情</span></div>
+            <div class="card-b" id="orderChart" data-page-node-id="LPGIYwIbOXlrOu6DNzYTgS"></div>
+          </div>
+          <div class="card" data-page-node-id="JnbSK9pRBmmmleHWTWxrR2">
+            <div class="card-h" data-page-node-id="s23QWQkWqxvL6J868XoOOd">门店城市分布</div>
+            <div class="card-b" data-page-node-id="Fi7sbCVR64SDo3ioq8kUmt">
+              <div class="bar-row" data-page-node-id="fYeSqnAercxAOgyVPLHn6i"><span class="city" data-page-node-id="QJBHxG53FMknDFh9usOKAa">北京</span><span class="bar-track" data-page-node-id="yRgj0LfXrv3IQPNWbK6yLO"><span class="bar-fill" style="width:100%" data-page-node-id="w4FlLvv7E3mo7w6igZdeiJ"></span></span><span class="val" data-page-node-id="3DIrCoI1KUP45CbzL6Rt1y">32</span></div>
+              <div class="bar-row" data-page-node-id="TzO0hDzLZTAZrME6gNMxDO"><span class="city" data-page-node-id="NhHbgXFiMshv8DiwbuiC5j">上海</span><span class="bar-track" data-page-node-id="yC4Yk7rCQ5egtpxdsrpif2"><span class="bar-fill" style="width:88%" data-page-node-id="cEDuVq9FPrAvbGxDYx53H5"></span></span><span class="val" data-page-node-id="dCjPdX7EebHintpDjmYZJz">28</span></div>
+              <div class="bar-row" data-page-node-id="Imn8ZTD5fGA2l9fVAtDSsn"><span class="city" data-page-node-id="ZNBRhxgJZirFCg437VcCVJ">广州</span><span class="bar-track" data-page-node-id="l04KN0pw59mulszrUto0YE"><span class="bar-fill" style="width:63%" data-page-node-id="7AE1AMfDMqTJcI8kC1pgBV"></span></span><span class="val" data-page-node-id="PC3FEn9xtzHiBzJxLuJYWq">20</span></div>
+              <div class="bar-row" data-page-node-id="H1JbfTxkHFYTYl1x3hO3cb"><span class="city" data-page-node-id="zgsICeriKumCEA8dKnYpYK">深圳</span><span class="bar-track" data-page-node-id="BdmNBCIwUySIpJuv4qcOam"><span class="bar-fill" style="width:56%" data-page-node-id="OjRtBqOoHaqwCHpBucHhtL"></span></span><span class="val" data-page-node-id="hBpK02tESSvE1ycTj1UQD7">18</span></div>
+              <div class="bar-row" data-page-node-id="SJztwFHC38XXvA8r0L77aD"><span class="city" data-page-node-id="0BgAqtFEoROvASXcTTaIaL">成都</span><span class="bar-track" data-page-node-id="zIiegPlJUeyWwNXzQWhZEn"><span class="bar-fill" style="width:47%" data-page-node-id="0mb5KkB6lDnR3BwvqGpe9G"></span></span><span class="val" data-page-node-id="bJPhGESBKlGzTwzcgHxVLH">15</span></div>
+              <div class="bar-row" data-page-node-id="AnJ6nlAc2kfVOo4HxTGCVw"><span class="city" data-page-node-id="iUbUZHNMtL84KRm200BuyM">其他</span><span class="bar-track" data-page-node-id="GWYja8RvBPPGSecNrW9OD1"><span class="bar-fill" style="width:47%" data-page-node-id="40hYz9VNQm9FQyVevYUIJ7"></span></span><span class="val" data-page-node-id="k9AiVBMTRs0NtR1U8yxK00">15</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid row-2" style="margin-top:14px" data-page-node-id="IEKmbd3UODaatDlr4LlMGl">
+          <div class="card" data-page-node-id="eM4i8RaISRfX9HtO8wcVny">
+            <div class="card-h" data-page-node-id="gHhpIX3RAkYxYHwsvJ4L2F">最新订单 <span class="more" data-page-node-id="gMoJKmS6xg0MEirHzr13lw">全部订单</span></div>
+            <table data-page-node-id="TK3bmCtsmNXCkvqO5Snk1w">
+              <thead data-page-node-id="Jq7WqHD2DS6bEPeHR5Imtx"><tr data-page-node-id="UXuOs1CKFkBzK7f3wFEenK"><th data-page-node-id="8YTu5hdKMuJq4MpV7WPqKd">订单号</th><th data-page-node-id="ZiRhTaEafgOAMJlxPtfrRw">门店</th><th data-page-node-id="UuxGFvdCitJnDKm1AOGflq">款式</th><th data-page-node-id="NXjtlPV4UPsKwjncvzR2ZN">金额</th><th data-page-node-id="a1WEOSYPMl59ivEYxad3eq">状态</th><th data-page-node-id="b3E4UwP3dM332Fv3xXOzs7">时间</th></tr></thead>
+              <tbody data-page-node-id="B6ZK2gt24ijwn83MZ1ObcQ">
+                <tr data-page-node-id="HmalA1E1xtFPoEDGl2QR0z"><td class="mono" data-page-node-id="GUFUjFKXdxGEICxvEOCcHA">SO20260908001</td><td data-page-node-id="hQ1wXODtp5eXV9Z2u5JqZk">北京三里屯店</td><td data-page-node-id="tX8bZ2YQFJpiEwzyOuc4uG">经典托特包</td><td data-page-node-id="shCgOANhCUs2u5YT6VCCjP">¥899</td><td data-page-node-id="H7afVWtcnHSMwAUf8nUHNR"><span class="tag tag-green" data-page-node-id="F4xKmZOl9OGk1YrPIIDNiR">已付款</span></td><td data-page-node-id="zsnoRtdreG2bE4HhXJuMcn">09-08 14:02</td></tr>
+                <tr data-page-node-id="tqaxtLlGDDtZRvBCGYHmAo"><td class="mono" data-page-node-id="o6cEVbCmn9G31kLDQEAXla">SO20260908002</td><td data-page-node-id="h1smeVF2J9emUDKEHVp6JO">上海静安店</td><td data-page-node-id="cVEXYr3lMSZJS3gdHYyri1">真皮短靴</td><td data-page-node-id="TKsbdxHfJpzo3cY74jsC3B">¥1,299</td><td data-page-node-id="r9slgigzFm9IFbO9IHOZSS"><span class="tag tag-blue" data-page-node-id="jaqIeyfclvPRdJpxVSq4MX">待发货</span></td><td data-page-node-id="Pd42H1AcXOXPMlRGz9qlTr">09-08 13:47</td></tr>
+                <tr data-page-node-id="0HTj3BftFGBxs0u5LeGqJu"><td class="mono" data-page-node-id="484N1GnBZ1hcq5tBfpmyJz">SO20260908003</td><td data-page-node-id="K0VKm3CFXgGMnGj9ddwhYQ">广州天河店</td><td data-page-node-id="8Eljm5jzBxKJuYwzFAFQFm">羊绒围巾</td><td data-page-node-id="5r6FJix8zyQAuwH1SdE38W">¥459</td><td data-page-node-id="gpBqrCEqms0yoWYDrHGPoi"><span class="tag tag-gray" data-page-node-id="hTfTfjuhewvKf6LztVQEjn">已取消</span></td><td data-page-node-id="YYa2ZgGRBarYvFoqWMFE3G">09-08 13:20</td></tr>
+                <tr data-page-node-id="z8GSzgyyA6MwElfsFrBOle"><td class="mono" data-page-node-id="Pqx54A79CBZiq0C62AMj7F">SO20260908004</td><td data-page-node-id="GO3tJVwVLRI6QWGwK0QAC1">深圳南山店</td><td data-page-node-id="9XWAA1m0AOGN4BDhTCS19y">帆布双肩包</td><td data-page-node-id="hRtmZtJlC12BC8y1GImI1U">¥599</td><td data-page-node-id="5qokf7ljKVPXmDg1RGWXRO"><span class="tag tag-orange" data-page-node-id="6VBiaTxnyRRtKMIJnKtYjp">退款中</span></td><td data-page-node-id="BNhdgxFXJXFz84Jrxlfqgq">09-08 12:58</td></tr>
+                <tr data-page-node-id="hh2A5HBedh8bzmxXfDLHxa"><td class="mono" data-page-node-id="DvaoiQz7eQJXoD0NMtBLHZ">SO20260908005</td><td data-page-node-id="2UswUfR1TNAMRFz6KtD4RL">成都春熙店</td><td data-page-node-id="spThbyXPjLd9Ko2hDhja6Q">真皮腰带</td><td data-page-node-id="BqEBi1aCzmRW9I8s7tDwzk">¥329</td><td data-page-node-id="YeSZfjnqcNssqNLemhgOmo"><span class="tag tag-green" data-page-node-id="Rf5ToeHEqGxtSHNomDAW8Q">已付款</span></td><td data-page-node-id="Ro5aFXY7AHPZZ97ayMByFb">09-08 12:31</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card" data-page-node-id="MCU2UeN5mKsSwCFS0L3P7c">
+            <div class="card-h" data-page-node-id="pxNK1hiRwVJsunajaGYBOl">待办事项</div>
+            <ul class="todo" data-page-node-id="XSvz96xI8ARwO6GZchJe4z">
+              <li data-page-node-id="HBCIgFxeFf4C8zByWvHa1c"><span class="dot" style="background:var(--warning)" data-page-node-id="FueG7h3sxRMff3QhUvmW7X"></span><span class="txt" data-page-node-id="hzsCb4JFneJFCGb2XLFA2E">待审核门店上线申请</span><span class="n" data-page-node-id="CE74qDJc1lomjQtLDJXPmt">5</span></li>
+              <li data-page-node-id="0FwzWcfFnEX5V77LbMNFqJ"><span class="dot" style="background:var(--danger)" data-page-node-id="ZXO7DV3KOJNl0KfZYwGj8q"></span><span class="txt" data-page-node-id="FTGNwjkDhyCfyr9TH3GmpY">待回复用户留言</span><span class="n" data-page-node-id="UJ1Fy1dSg9OFlFCMBlaCEz">12</span></li>
+              <li data-page-node-id="CNcd6d8BTAU0jzscQyXof1"><span class="dot" style="background:var(--primary)" data-page-node-id="pTe2LwwwSOQnTH1meqqxvI"></span><span class="txt" data-page-node-id="RCfINYFfLQrlAdABW5KBd8">异常/退款订单</span><span class="n" data-page-node-id="kHaNWcTczh7X6Ykdngg7NF">3</span></li>
+              <li data-page-node-id="nqFFWdgLtOWgonJ7z7YE9S"><span class="dot" style="background:var(--success)" data-page-node-id="e2tView1zAQRL0SKRtlSHq"></span><span class="txt" data-page-node-id="L3jmbfAnGH9N5JvHpNYxP6">本周新款式待上架</span><span class="n" data-page-node-id="TzUPPCQBMVSJ0nNJw0Edpf">18</span></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Stores ===== -->
+      <section class="view" id="view-stores" hidden data-page-node-id="IYiNAvsaUhgEIhx9F77F5z">
+        <div class="page-head" data-page-node-id="MAZ5IQqSDBqRFjf4c1GiUL"><h2 data-page-node-id="9AC9jkIcHc0kAi1ysVCiOt">门店列表</h2><span class="sub" data-page-node-id="hoa17gwYf2BtqbMeQrimO0">门店 CRUD · 腾讯地图点选经纬度 · 上下线即时同步前台</span></div>
+        <div class="card" data-page-node-id="uPWLdCKkNRvAao83fRjfu4">
+          <div class="filter" data-page-node-id="vhd0TvzKeIXa1AHLVen7nF">
+            <label data-page-node-id="HugigZp6t8agZfxvfkUB7y">门店名称 <input type="text" placeholder="请输入门店名称" data-page-node-id="FNDX1RYnde70sNft0ZHJpZ"></label>
+            <label data-page-node-id="UjFuKkd81a5wvVmxLJn5Gl">城市
+              <select data-page-node-id="3j32dFbBMypAIoE9zVvyA8"><option data-page-node-id="Mt5fL3sa4L1V7HS3F1QIQG">全部</option><option data-page-node-id="HZjr4ZFFdmH7Dr6iEC841a">北京</option><option data-page-node-id="UiaMQvTcyREicIDi5ld3Uf">上海</option><option data-page-node-id="NZHJ7wxiPROb7lmYSYgCEu">广州</option><option data-page-node-id="i2sZZ7rt5j4A1ISof2XC4C">深圳</option><option data-page-node-id="Bm7TLg6Giwuy8v8wIJMt4V">成都</option></select>
+            </label>
+            <label data-page-node-id="X2kSwrYIxZLaKmEweV7l7C">状态
+              <select data-page-node-id="1CDolHttCXX0nlUb3gTAml"><option data-page-node-id="Z7vy40TXPZuWgfO1AHAXKW">全部</option><option data-page-node-id="4kFwCzLwZnvh2oWAtoK4OP">营业中</option><option data-page-node-id="7nJWs2lP5BAD9EM0sb7PfG">已下线</option></select>
+            </label>
+            <button class="btn primary" data-page-node-id="AwOjVP1ZpRcpptSlGeY3Aw">查询</button>
+            <button class="btn" data-page-node-id="BSMQLDnB6xHWMESYWL4dbf">重置</button>
+            <span class="spacer" data-page-node-id="wWN8YjWwvDaX89fGVG85pj"></span>
+            <button class="btn primary" id="btnAddStore" data-page-node-id="WStIKLDclpJdDqE5bedHMN"><svg class="ico-sm" data-page-node-id="jX63JUqFKEx3s3nKiTGRQb"><line x1="12" y1="5" x2="12" y2="19" data-page-node-id="qHDCBqaIWUB2udhDqcFjN5"/><line x1="5" y1="12" x2="19" y2="12" data-page-node-id="UJpE3q1CvcbAjgv5VuZzwB"/></svg>新增门店</button>
+          </div>
+          <table data-page-node-id="28bNCsDGYOFz97mt5OOwMC">
+            <thead data-page-node-id="XwhPb2FQ4xXg0XtjhrRKws"><tr data-page-node-id="nuXD08cLywAhU16t8JOvza"><th data-page-node-id="ZR4V1JKAbmStSGEQitqpr8">门店ID</th><th data-page-node-id="k20S3MPnPi5qMP84s5W9TU">门店名称</th><th data-page-node-id="IqHLZCSAFseDexXl2KMmyw">城市</th><th data-page-node-id="d2VAJ3pqHZOXGyCGnxWiqy">地址</th><th data-page-node-id="surGqFN7XTlf2PLGur5wGb">状态</th><th data-page-node-id="G4CBk8Rweg1454NVWMEAky">更新时间</th><th data-page-node-id="9ACi1zeN5iaSCebrKjhkFS">操作</th></tr></thead>
+            <tbody data-page-node-id="MTG6KefpLVQGtHQ3lUUkQ6">
+              <tr data-page-node-id="JxeD4bik4VrvfJ7ksdHbTk"><td class="mono" data-page-node-id="vsuIDpEXOFEAsKF6Ndeaxe">S001</td><td data-page-node-id="f5ZKGvxeXkFDIpqm8EifgA">北京三里屯店</td><td data-page-node-id="2lpjNjesHcMtjmPIwaANmA">北京</td><td data-page-node-id="bm7UrN30FgMkiMghKpwuLq">朝阳区三里屯太古里 N4-20</td><td data-page-node-id="Y6pqZ0d4nWZNhfZNHRFes9"><span class="tag tag-green" data-page-node-id="UDZESqVm4QoKyaUs5sJPve">营业中</span></td><td data-page-node-id="AAQDjPnz91AHEHOesQKoAI">2026-09-08 14:00</td><td data-page-node-id="N4WA20rxdZDss51pSenwdO"><span class="op" data-page-node-id="OljBVeCqFFYcdTuFK3rS2W">编辑</span><span class="op del" data-page-node-id="DQIq7yrStYgope3wHrHb4w">删除</span></td></tr>
+              <tr data-page-node-id="D2l8UBgufi97ONK2TCFoKz"><td class="mono" data-page-node-id="ejjPgw5CIN74GXjgIbOVVI">S002</td><td data-page-node-id="ZWa29fARWggEn8fSBuS9aZ">上海静安店</td><td data-page-node-id="OGFDIQp8eXwnXSWE7KUC6Q">上海</td><td data-page-node-id="8Zb9pEbkeIF12FENFmfhKF">静安区南京西路 1788 号</td><td data-page-node-id="T59PoiNCk8qiZZZkI73IBD"><span class="tag tag-green" data-page-node-id="JEqQkLv402PDOpa3ASYW3w">营业中</span></td><td data-page-node-id="MELn5JMQW24aA3yDFxH6z4">2026-09-08 11:22</td><td data-page-node-id="VeSNI9bl8Gs4e9xY4MC8JF"><span class="op" data-page-node-id="8vFymiUFaFOh2YSsXxxyxL">编辑</span><span class="op del" data-page-node-id="VdqVCBTVVUVmjhPLsLl6HK">删除</span></td></tr>
+              <tr data-page-node-id="KmDuD1wFmAWbO1gZ0uSqb0"><td class="mono" data-page-node-id="OK3azGy66XhWzEiqlgKDkb">S003</td><td data-page-node-id="RBlxyluHte3o1DCejEFcmj">广州天河店</td><td data-page-node-id="TcpFYtAJJsmS2JCfAV00QM">广州</td><td data-page-node-id="BdfxNUVd4Lj4zr0VfS0PUY">天河区天河路 208 号</td><td data-page-node-id="VbI0zCBuLJMdhM5UMpIHa3"><span class="tag tag-green" data-page-node-id="8joFuzUyGxEzv0icQpO9O8">营业中</span></td><td data-page-node-id="yfApkSTuAo9pnLTrtxA7s6">2026-09-07 19:05</td><td data-page-node-id="zVlEZNH9hq1vmvF40e46Ej"><span class="op" data-page-node-id="5HlD4Eb3RADJ98bUpcebg6">编辑</span><span class="op del" data-page-node-id="gZnSJ8RY8boXyBPd79iHdA">删除</span></td></tr>
+              <tr data-page-node-id="q0fa7Fp4YnN8xf5xSlhlMH"><td class="mono" data-page-node-id="wLP2jyEfDn5drvkAtYbSNS">S004</td><td data-page-node-id="W1lToEd6MKGDpENNODGROB">深圳南山店</td><td data-page-node-id="Tk4BcK76zxlPY2SIxLn1K1">深圳</td><td data-page-node-id="Og71axPFhrn8jClPMionpM">南山区文心五路 33 号</td><td data-page-node-id="Hhgt3pLbTnKLBXw8QpjF49"><span class="tag tag-gray" data-page-node-id="h8aaAkEtObuSY1BkCr5s5w">已下线</span></td><td data-page-node-id="fygFCGE4bMFram70x0mzPi">2026-09-06 10:40</td><td data-page-node-id="B0XzredxVRjELJuqJcaK8t"><span class="op" data-page-node-id="bsJWyGHYriOsB6MoOfaAbg">编辑</span><span class="op del" data-page-node-id="HT0Z9go4LansyMIqUPwtXq">删除</span></td></tr>
+              <tr data-page-node-id="agNHcfzzBvSJZ0mBe8bTk6"><td class="mono" data-page-node-id="23CVwKbeAlKzjv4T9wG7Ft">S005</td><td data-page-node-id="xnvAYClSSV7EkCutkaOHb3">成都春熙店</td><td data-page-node-id="4qZYCTg4RoRRBnCKEoxAyx">成都</td><td data-page-node-id="YKx3f6qON69Az3I8dHjx30">锦江区春熙路步行街 8 号</td><td data-page-node-id="AKIijLB8kFpjPQnFcbp271"><span class="tag tag-green" data-page-node-id="AheeU5XCLQuP0FwwDzhlUF">营业中</span></td><td data-page-node-id="xOVv0aY4O1LESY5xDvOREX">2026-09-05 16:18</td><td data-page-node-id="xmiHIGyr6A9ULAzJ1CBoW7"><span class="op" data-page-node-id="zj77zQ2Ls6RLfLW3vzOYAA">编辑</span><span class="op del" data-page-node-id="jmO4WOu2RrvosHFERqYOED">删除</span></td></tr>
+              <tr data-page-node-id="YohAUMPUqLRXl77kLeiZTd"><td class="mono" data-page-node-id="2IyRU04XK1t59EMWc8Hkpf">S006</td><td data-page-node-id="gITfLML403KPCYqnhsguAm">杭州西湖店</td><td data-page-node-id="JK5iZ0jpEyOhsndFH2CJJc">杭州</td><td data-page-node-id="dKYcaGpNxARLTqtXhDUIqY">西湖区湖滨银泰 in77</td><td data-page-node-id="xgw3jSN2sMpKQ3Y9XyDRKn"><span class="tag tag-orange" data-page-node-id="0J003yq2FdVWlL5tHzXGz1">待审核</span></td><td data-page-node-id="KckCHf0gJrvnvrerOJGJk4">2026-09-04 09:12</td><td data-page-node-id="DnDt8UhOxLwpPHlGYPkWFW"><span class="op" data-page-node-id="EzJTcEfeihpTURS1llgyDz">编辑</span><span class="op del" data-page-node-id="7PGzRt7ZAUdCkvFNki7xQZ">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager" data-page-node-id="56Vt7UrxSrkiNEM5ctF6lb">
+            <span data-page-node-id="oaGVLmtudbQTnjUARsjRip">共 128 条</span>
+            <span class="pg" data-page-node-id="21shqbjfmOEmCX8riNtgYc">上一页</span><span class="pg active" data-page-node-id="rs8HJ225i8lFwwjZ03m4vr">1</span><span class="pg" data-page-node-id="qxNUtLnJ9ikhWhom5CwRBE">2</span><span class="pg" data-page-node-id="PZ4uGxJe3PacfK3mFrIt0e">3</span><span class="pg" data-page-node-id="RjOnEjOlLVdgEapa3g22vw">下一页</span>
+            <span style="margin-left:8px" data-page-node-id="ewUl6EQLcUaMq4W8fLxzWB">每页 10 条</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 款式列表 ===== -->
+      <section class="view" id="view-styles" hidden>
+        <div class="page-head"><h2>款式列表</h2><span class="sub">款式 CRUD · 分类/系列 · 上架下架即时同步前台</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>款式名称 <input type="text" placeholder="请输入款式名称"></label>
+            <label>分类
+              <select><option>全部</option><option>男装</option><option>女装</option><option>童装</option></select>
+            </label>
+            <label>状态
+              <select><option>全部</option><option>在售</option><option>草稿</option><option>已下架</option></select>
+            </label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增款式</button>
+          </div>
+          <table>
+            <thead><tr><th>款式ID</th><th>主图</th><th>款式名称</th><th>分类</th><th>系列</th><th>价格</th><th>库存</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">ST001</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyshirt01/800/480" title="点击查看大图">查看图片</a></td><td>经典男士衬衫</td><td>男装</td><td>经典衬衫系列</td><td>¥399</td><td>156</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 14:20</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">ST002</td><td><a class="vimg" data-img="https://picsum.photos/seed/flydress02/800/480" title="点击查看大图">查看图片</a></td><td>法式方领连衣裙</td><td>女装</td><td>法式裙装系列</td><td>¥699</td><td>89</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 13:05</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">ST003</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyhoodie03/800/480" title="点击查看大图">查看图片</a></td><td>童趣印花卫衣</td><td>童装</td><td>童趣系列</td><td>¥259</td><td>210</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 12:40</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">ST004</td><td><a class="vimg" data-img="https://picsum.photos/seed/flypants04/800/480" title="点击查看大图">查看图片</a></td><td>羊毛休闲西裤</td><td>男装</td><td>商务通勤系列</td><td>¥529</td><td>0</td><td><span class="tag tag-orange">草稿</span></td><td>2026-09-07 18:30</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">ST005</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyjeans05/800/480" title="点击查看大图">查看图片</a></td><td>复古牛仔外套</td><td>女装</td><td>复古牛仔系列</td><td>¥799</td><td>64</td><td><span class="tag tag-green">在售</span></td><td>2026-09-07 15:22</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">ST006</td><td><a class="vimg" data-img="https://picsum.photos/seed/flybaby06/800/480" title="点击查看大图">查看图片</a></td><td>婴儿连体衣</td><td>童装</td><td>新生儿系列</td><td>¥199</td><td>330</td><td><span class="tag tag-gray">已下架</span></td><td>2026-09-06 10:12</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 1,024 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 系列管理 ===== -->
+      <section class="view" id="view-series" hidden>
+        <div class="page-head"><h2>系列管理</h2><span class="sub">系列 CRUD · 影响前台系列详情页</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>系列名称 <input type="text" placeholder="请输入系列名称"></label>
+            <label>状态 <select><option>全部</option><option>启用</option><option>停用</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增系列</button>
+          </div>
+          <table>
+            <thead><tr><th>系列ID</th><th>系列名称</th><th>所属分类</th><th>款式数</th><th>头图</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">SE01</td><td>经典衬衫系列</td><td>男装</td><td>24</td><td><span class="tag tag-blue">已设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">SE02</td><td>法式裙装系列</td><td>女装</td><td>31</td><td><span class="tag tag-blue">已设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">SE03</td><td>童趣系列</td><td>童装</td><td>17</td><td><span class="tag tag-gray">未设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 12 系列</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 账号管理 ===== -->
+      <section class="view" id="view-accounts" hidden>
+        <div class="page-head"><h2>账号管理</h2><span class="sub">后台登录账号 · 绑定角色 · 启停账号</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>账号 <input type="text" placeholder="请输入账号"></label>
+            <label>角色 <select><option>全部</option><option>超级管理员</option><option>内容运营</option><option>门店商品运营</option></select></label>
+            <label>状态 <select><option>全部</option><option>启用</option><option>停用</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增账号</button>
+          </div>
+          <table>
+            <thead><tr><th>账号ID</th><th>账号</th><th>角色</th><th>显示名</th><th>邮箱</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">U001</td><td>admin</td><td><span class="tag tag-blue">超级管理员</span></td><td>超级管理员</td><td>admin@fly.com</td><td><span class="tag tag-green">启用</span></td><td>2026-09-08 14:30</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">U002</td><td>editor</td><td><span class="tag tag-blue">内容运营</span></td><td>内容编辑小王</td><td>editor@fly.com</td><td><span class="tag tag-green">启用</span></td><td>2026-09-08 11:02</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">U003</td><td>merch</td><td><span class="tag tag-blue">门店商品运营</span></td><td>门店运营小李</td><td>merch@fly.com</td><td><span class="tag tag-green">启用</span></td><td>2026-09-07 17:45</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">U004</td><td>temp01</td><td><span class="tag tag-blue">内容运营</span></td><td>临时实习</td><td>temp01@fly.com</td><td><span class="tag tag-gray">停用</span></td><td>2026-08-30 15:18</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 8 个账号</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 角色管理 ===== -->
+      <section class="view" id="view-roles" hidden>
+        <div class="page-head"><h2>角色管理</h2><span class="sub">RBAC 角色定义 · 菜单/权限授权</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>角色名 <input type="text" placeholder="请输入角色名"></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增角色</button>
+          </div>
+          <table>
+            <thead><tr><th>角色编码</th><th>角色名称</th><th>菜单范围</th><th>账号数</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              <tr><td class="mono">SUPER_ADMIN</td><td>超级管理员</td><td>全部模块</td><td>1</td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op">授权</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">CONTENT_OPS</td><td>内容运营</td><td>仪表盘/内容运营/留言管理/数据看板</td><td>3</td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op">授权</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">MERCH_STORE_OPS</td><td>门店商品运营</td><td>仪表盘/门店/款式/数据看板</td><td>2</td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op">授权</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">VIEWER</td><td>只读访客</td><td>仪表盘/数据看板</td><td>1</td><td><span class="tag tag-orange">停用</span></td><td><span class="op">编辑</span><span class="op">授权</span><span class="op del">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 4 个角色</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 新闻管理 ===== -->
+      <section class="view" id="view-content" hidden>
+        <div class="page-head"><h2>新闻管理</h2><span class="sub">企业新闻 · 编辑发布 · 上线即时同步前台</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>标题 <input type="text" placeholder="请输入新闻标题"></label>
+            <label>分类 <select><option>全部</option><option>品牌动态</option><option>门店开业</option><option>社会责任</option><option>行业资讯</option></select></label>
+            <label>状态 <select><option>全部</option><option>已发布</option><option>草稿</option><option>已下线</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary" id="btnNewArticle"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>发布新闻</button>
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>作者</th><th>状态</th><th>发布时间</th><th>操作</th></tr></thead>
+            <tbody id="newsTbody">
+              <tr><td class="mono">N001</td><td>FLY 2026 秋冬新品发布</td><td>品牌动态</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 10:00</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N002</td><td>北京三里屯旗舰店盛大开业</td><td>门店开业</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-05 09:30</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N003</td><td>携手环保组织发布绿色制造白皮书</td><td>社会责任</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-04 15:12</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N004</td><td>2026 秋季面料趋势解读</td><td>行业资讯</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N005</td><td>成都春熙店升级焕新</td><td>门店开业</td><td>内容编辑小王</td><td><span class="tag tag-gray">已下线</span></td><td>2026-08-30 11:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 28 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+        </div>
+        <div class="card" style="margin-top:14px">
+          <div class="card-h">编辑 / 发布新闻</div>
+          <div class="editor-card" id="articleEditor">
+            <div class="form-grid">
+              <label class="ed-field">标题<input id="ed-title" type="text" placeholder="请输入新闻标题"></label>
+              <label class="ed-field">分类
+                <select id="ed-cat"><option>品牌动态</option><option>门店开业</option><option>社会责任</option><option>行业资讯</option></select>
+              </label>
+            </div>
+            <div>
+              <div class="ed-toolbar">
+                <button type="button" title="粗体" onclick="fmt('bold')"><b>B</b></button>
+                <button type="button" title="斜体" onclick="fmt('italic')"><i>I</i></button>
+                <button type="button" title="下划线" onclick="fmt('underline')"><u>U</u></button>
+                <button type="button" title="有序列表" onclick="fmt('insertOrderedList')">1•</button>
+                <button type="button" title="无序列表" onclick="fmt('insertUnorderedList')">•</button>
+                <button type="button" title="清除格式" onclick="fmt('removeFormat')">T̶</button>
+              </div>
+              <div class="ed-area" id="ed-body" contenteditable="true" aria-label="新闻正文（可编辑富文本）"></div>
+            </div>
+            <div class="ed-foot">
+              <span class="ed-hint">支持粗体 / 斜体 / 列表等富文本，<b>保存后需在上方列表手动刷新查看</b></span>
+              <div style="display:flex;gap:10px">
+                <button class="btn" id="btnSaveDraft">存草稿</button>
+                <button class="btn primary" id="btnPublish">发布</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 资讯管理 ===== -->
+      <section class="view" id="view-tips" hidden>
+        <div class="page-head"><h2>资讯管理</h2><span class="sub">企业资讯 / 公告 · 编辑发布</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>标题 <input type="text" placeholder="请输入资讯标题"></label>
+            <label>栏目 <select><option>全部</option><option>公司公告</option><option>会员资讯</option><option>促销活动</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary" id="btnNewTip"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>发布资讯</button>
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>标题</th><th>栏目</th><th>作者</th><th>状态</th><th>发布时间</th><th>操作</th></tr></thead>
+            <tbody id="tipTbody">
+              <tr><td class="mono">T001</td><td>会员积分规则更新公告</td><td>公司公告</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-07 16:40</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">T002</td><td>秋季会员专属 8 折券发放</td><td>促销活动</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 14:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">T003</td><td>门店取货服务上线说明</td><td>会员资讯</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 16 条</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 网页管理 · 首页轮播图 ===== -->
+      <section class="view" id="view-banners" hidden>
+        <div class="page-head"><h2>首页轮播图</h2><span class="sub">网页管理 · 官网首页 Banner 图片管理（连接后端后，改动将写入 fly.db 并即时发布到官网首页）</span></div>
+        <div class="card" id="bannerApiBar" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap">
+          <span id="apiState" class="tag tag-gray">未连接后端</span>
+          <span style="flex:1;min-width:220px;color:#909399;font-size:13px">未连接时仅为本地演示（刷新后还原）；连接后每一次增删改都会同步到后端首页轮播区块。</span>
+          <button class="btn primary" id="btnApiConnect">连接后端</button>
+          <button class="btn" id="btnApiRefresh" hidden>重新拉取</button>
+          <button class="btn" id="btnApiLogout" hidden>断开</button>
+        </div>
+        <div class="card">
+          <div class="filter">
+            <label>标题 <input type="text" placeholder="请输入轮播标题"></label>
+            <label>状态 <select><option>全部</option><option>显示中</option><option>隐藏</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+            <span class="spacer"></span>
+            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增轮播图</button>
+          </div>
+          <table>
+            <thead><tr><th>ID</th><th>图片</th><th>标题</th><th>副标题</th><th>跳转链接</th><th>排序</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
+            <tbody id="bnrTbody">
+              <tr><td class="mono">BN001</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flyfw2026/640/240" style="background:linear-gradient(135deg,rgba(91,124,250,.82),rgba(143,111,255,.82)),url('https://picsum.photos/seed/flyfw2026/640/240') center/cover no-repeat"><i>Banner 1</i></span></td><td>FLY 2026 秋冬新品首发</td><td>穿出自我，随心而飞</td><td>/collection/2026fw</td><td>1</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-08 10:20</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN002</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flycitytour/640/240" style="background:linear-gradient(135deg,rgba(64,158,255,.82),rgba(88,190,231,.82)),url('https://picsum.photos/seed/flycitytour/640/240') center/cover no-repeat"><i>Banner 2</i></span></td><td>城市旗舰店巡礼</td><td>让「看到」变为「找到」</td><td>/stores</td><td>2</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-07 17:42</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN003</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flymemberday/640/240" style="background:linear-gradient(135deg,rgba(250,140,86,.82),rgba(245,108,78,.82)),url('https://picsum.photos/seed/flymemberday/640/240') center/cover no-repeat"><i>Banner 3</i></span></td><td>会员日 · 双倍积分</td><td>会员专属 · 双倍礼遇</td><td>/member</td><td>3</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-06 15:08</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN004</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flyfreshseason/640/240" style="background:linear-gradient(135deg,rgba(127,208,160,.82),rgba(47,174,107,.82)),url('https://picsum.photos/seed/flyfreshseason/640/240') center/cover no-repeat"><i>Banner 4</i></span></td><td>焕新季 · 满 999 减 150</td><td>焕新季 · 满减不止</td><td>/promo/fresh</td><td>4</td><td><span class="tag tag-gray">隐藏</span></td><td>2026-09-05 11:30</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+            </tbody>
+          </table>
+          <div class="pager"><span>共 4 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 留言管理 ===== -->
+      <section class="view" id="view-messages" hidden>
+        <div class="page-head"><h2>留言管理</h2><span class="sub">前台留言 · 查看/回复/删除</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>关键词 <input type="text" placeholder="留言内容关键词"></label>
+            <label>状态 <select><option>全部</option><option>待回复</option><option>已回复</option></select></label>
+            <button class="btn primary">查询</button>
+            <button class="btn">重置</button>
+          </div>
+          <div id="msgList">
+            <div class="msg-card">
+              <div class="msg-top"><span class="msg-name">张女士</span><span class="tag tag-red">待回复</span><span class="msg-meta">北京 · 2026-09-08 09:12 · 留言编号 M034</span></div>
+              <div class="msg-txt">想问下三里屯店最近上新了哪些秋冬款，周末想带孩子去买童装。</div>
+              <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
+              <div class="reply-bar" style="display:none"><input type="text" placeholder="输入回复内容..."><button class="btn primary">发送</button></div>
+            </div>
+            <div class="msg-card">
+              <div class="msg-top"><span class="msg-name">李先生</span><span class="tag tag-red">待回复</span><span class="msg-meta">上海 · 2026-09-08 08:47 · 留言编号 M033</span></div>
+              <div class="msg-txt">网上下单了真皮短靴，多久能发货？门店自取怎么操作？</div>
+              <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
+              <div class="reply-bar" style="display:none"><input type="text" placeholder="输入回复内容..."><button class="btn primary">发送</button></div>
+            </div>
+            <div class="msg-card">
+              <div class="msg-top"><span class="msg-name">王先生</span><span class="tag tag-green">已回复</span><span class="msg-meta">广州 · 2026-09-07 18:05 · 留言编号 M032</span></div>
+              <div class="msg-txt">请问成都春熙店现在营业时间正常吗？</div>
+              <div class="msg-reply"><b>官方回复：</b>您好，成都春熙店营业时间为每日 10:00-22:00，节假日正常营业，欢迎光临。</div>
+              <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
+              <div class="reply-bar" style="display:none"><input type="text" placeholder="输入回复内容..."><button class="btn primary">发送</button></div>
+            </div>
+          </div>
+          <div class="pager"><span>共 46 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+        </div>
+      </section>
+
+      <!-- ===== 城市分组（门店聚合视图） ===== -->
+      <section class="view" id="view-citygroups" hidden>
+        <div class="page-head"><h2>城市分组</h2><span class="sub">按城市聚合门店 · 来自门店列表数据实时生成</span></div>
+        <div class="card">
+          <div class="filter">
+            <span style="font-size:13px;color:#606266">门店按城市聚合展示（点击城市标题展开/收起，点击门店可跳编辑）</span>
+            <span class="spacer"></span>
+            <button class="btn" id="btnCityBack"><svg class="ico-sm"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 19 19 12"/></svg>返回门店列表</button>
+          </div>
+          <div class="card-b" id="cityGroupsWrap" style="padding:8px 12px"></div>
+        </div>
+      </section>
+
+      <!-- ===== 数据看板 ===== -->
+      <section class="view" id="view-board" hidden>
+        <div class="page-head"><h2>数据看板</h2><span class="sub">经营数据汇总（原型演示 · 数据为示例）</span></div>
+        <div class="grid stats">
+          <div class="card stat"><div class="badge blue"><svg class="ico"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div><div class="num" id="bdStores">0</div><div class="lab">在营门店</div></div></div>
+          <div class="card stat"><div class="badge green"><svg class="ico"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></div><div><div class="num" id="bdItems">0</div><div class="lab">在售款式</div></div></div>
+          <div class="card stat"><div class="badge orange"><svg class="ico"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div><div class="num" id="bdNews">0</div><div class="lab">已发新闻</div></div></div>
+          <div class="card stat"><div class="badge red"><svg class="ico"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div><div class="num" id="bdMsgs">0</div><div class="lab">待处理留言</div></div></div>
+        </div>
+        <div class="grid row-2">
+          <div class="card"><div class="card-h">门店城市分布</div><div class="card-b" id="bdCityBars"></div></div>
+          <div class="card"><div class="card-h">快捷入口</div><div class="card-b" style="display:flex;flex-direction:column;gap:10px">
+            <button class="btn" data-jump="stores">门店管理</button>
+            <button class="btn" data-jump="styles">款式管理</button>
+            <button class="btn" data-jump="content">新闻管理</button>
+            <button class="btn" data-jump="messages">留言管理</button>
+            <button class="btn" data-jump="banners">网页管理</button>
+          </div></div>
+        </div>
+        <div class="card" style="margin-top:14px"><div class="card-h">说明</div><div class="card-b" style="color:#909399;font-size:13px;line-height:1.8">数据看板为「数据分析入口」，一期以关键卡片与分组聚合为主；接入真实后端后，本页将补充趋势图 / 转化漏斗 / 导出等能力（见后台技术方案 §5 数据看板）。</div></div>
+      </section>
+
+      <!-- ===== 参数设置 ===== -->
+      <section class="view" id="view-settings" hidden>
+        <div class="page-head"><h2>参数设置</h2><span class="sub">站点级基础参数（原型演示 · 本地生效）</span></div>
+        <div class="card">
+          <div class="card-h">基础参数</div>
+          <div class="card-b" style="max-width:680px">
+            <div class="form-grid" style="grid-template-columns:1fr">
+              <label>站点名称<input id="cfgSiteName" type="text" value="FLY 品牌官网"></label>
+              <label>站点关键词<input id="cfgKeywords" type="text" value="FLY, 服饰, 品牌官网, 门店"></label>
+              <label>备案号<input id="cfgIcp" type="text" value="沪ICP备2026XXXXXX号"></label>
+              <label>联系电话<input id="cfgPhone" type="text" value="400-800-2026"></label>
+              <label>客服邮箱<input id="cfgEmail" type="text" value="service@fly.com"></label>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:10px">
+              <button class="btn primary" id="btnCfgSave">保存参数</button>
+              <button class="btn" id="btnCfgReset">恢复默认</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== 操作日志 ===== -->
+      <section class="view" id="view-logs" hidden>
+        <div class="page-head"><h2>操作日志</h2><span class="sub">后台敏感操作留痕（原型演示 · 记录于本地）</span></div>
+        <div class="card">
+          <div class="filter">
+            <label>操作人 <input type="text" id="logUserKw" placeholder="输入账号"></label>
+            <label>类型
+              <select id="logTypeSel"><option value="">全部</option><option>登录</option><option>内容</option><option>门店</option><option>款式</option><option>系统</option></select>
+            </label>
+            <button class="btn primary" id="btnLogQuery">查询</button>
+            <button class="btn" id="btnLogReset">重置</button>
+            <span class="spacer"></span>
+            <button class="btn" id="btnLogClear"><svg class="ico-sm"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>清空日志</button>
+          </div>
+          <table>
+            <thead><tr><th>时间</th><th>操作人</th><th>类型</th><th>动作</th><th>对象</th><th>详情</th></tr></thead>
+            <tbody id="logTbody"></tbody>
+          </table>
+          <div class="pager"><span id="logCount">共 0 条</span></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- ===== 新增门店弹窗（腾讯地图点选） ===== -->
+<div class="modal-mask" id="storeModal" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="新增门店">
+    <div class="modal-head">
+      <h3>新增门店</h3>
+      <button class="modal-x" id="storeClose" type="button" aria-label="关闭">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <label>门店名称<input id="f-name" type="text" placeholder="如：北京国贸店"></label>
+        <label>城市
+          <select id="f-city">
+            <option>北京</option><option>上海</option><option>广州</option>
+            <option>深圳</option><option>成都</option><option>杭州</option>
+          </select>
+        </label>
+        <label>详细地址<input id="f-addr" type="text" placeholder="街道 / 门牌号"></label>
+        <label>状态
+          <select id="f-status">
+            <option value="营业中">营业中</option>
+            <option value="待审核">待审核</option>
+            <option value="已下线">已下线</option>
+          </select>
+        </label>
+      </div>
+      <div class="map-wrap">
+        <div class="map-bar">
+          <span class="map-title">门店位置 · 腾讯地图点选</span>
+          <span class="map-badge" id="mapBadge">演示模式（未配置 Key）</span>
+        </div>
+        <div class="map-canvas" id="mapCanvas">
+          <span class="sim-hint">模拟地图（演示）— 点击或拖拽放置门店位置</span>
+        </div>
+        <div class="coord-row">
+          <label>经度<input id="f-lng" type="text" readonly placeholder="--"></label>
+          <label>纬度<input id="f-lat" type="text" readonly placeholder="--"></label>
+          <span class="coord-hint" id="coordHint">点击地图放置门店位置</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" id="storeCancel" type="button">取消</button>
+      <button class="btn primary" id="storeSave" type="button">保存门店</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* FLY 后台管理 · 完整交互脚本 v1.1（2026-09-08 重写）
+   修复：switchView 缺失导致无法切换视图；补齐门店/款式/系列/账号/角色/新闻/资讯
+   的查询·新增·编辑·删除·状态切换；新增城市分组/数据看板/参数设置/操作日志视图逻辑。 */
+(function () {
+  'use strict';
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) {
+    if (typeof s === 'string') return Array.prototype.slice.call(document.querySelectorAll(s));
+    if (s && typeof s.forEach === 'function') return Array.prototype.slice.call(s);
+    return [];
+  };
+
+  /* ============ 通用 ============ */
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    if (!t) return;
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(t._t); t._t = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+  function nowStamp() {
+    var n = new Date();
+    return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0') + ' ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0');
+  }
+  function randId(prefix) { return prefix + String(Math.floor(Math.random() * 9000) + 1000); }
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  /* ============ 登录 / 角色 ============ */
+  var ROLES = {
+    SUPER_ADMIN: { name: '超级管理员', tag: 'SUPER_ADMIN', account: 'admin', email: 'admin@fly.com' },
+    CONTENT_OPS: { name: '内容运营', tag: 'CONTENT_OPS', account: 'editor', email: 'editor@fly.com' },
+    MERCH_STORE_OPS: { name: '门店商品运营', tag: 'MERCH_STORE_OPS', account: 'merch', email: 'merch@fly.com' }
+  };
+  function currentRole() { return (document.getElementById('rolePick') || {}).value || 'SUPER_ADMIN'; }
+
+  function applyRole(role) {
+    var r = ROLES[role] || ROLES.SUPER_ADMIN;
+    $$('.menu-item').forEach(function (mi) {
+      var ok = mi.dataset.roles.split(',').indexOf(role) > -1;
+      mi.style.display = ok ? '' : 'none';
+      if (mi.classList.contains('has-sub')) {
+        var sm = document.getElementById('sub-' + mi.dataset.sub);
+        if (sm) sm.style.display = ok ? '' : 'none';
+      }
+    });
+    $$('.menu-group').forEach(function (g) {
+      var n = g.nextElementSibling, any = false;
+      while (n && !n.classList.contains('menu-group')) {
+        if (n.classList.contains('menu-item') && n.style.display !== 'none') any = true;
+        if (n.classList.contains('submenu') && n.style.display !== 'none') any = true;
+        n = n.nextElementSibling;
+      }
+      g.style.display = any ? '' : 'none';
+    });
+    $('#avatarTxt').textContent = r.name.slice(0, 1);
+    $('#dispName').textContent = r.name;
+    $('#roleTag').textContent = r.tag;
+    $('#userEmail').textContent = r.email;
+  }
+
+  var VIEW_TITLES = {
+    dashboard: '仪表盘', stores: '门店列表', citygroups: '城市分组',
+    styles: '款式列表', series: '系列管理', accounts: '账号管理', roles: '角色管理',
+    content: '新闻管理', tips: '资讯管理', messages: '留言管理',
+    banners: '首页轮播图',
+    board: '数据看板', settings: '参数设置', logs: '操作日志'
+  };
+
+  /* ============ 视图切换 ============ */
+  function setActiveMenu(v) {
+    $$('.menu-item').forEach(function (m) { m.classList.remove('active'); });
+    $$('.submenu a').forEach(function (a) { a.classList.remove('active'); });
+    var top = $('.menu-item[data-view="' + v + '"]');
+    if (top) { top.classList.add('active'); }
+    // 找到所属子菜单的父级，高亮并展开该子菜单，收起其它
+    var found = null;
+    $$('.submenu').forEach(function (sm) {
+      var link = sm.querySelector('[data-view="' + v + '"]');
+      if (!link) return;
+      var p = sm.previousElementSibling;
+      if (p && p.classList.contains('menu-item')) { p.classList.add('active'); p.classList.add('open'); }
+      sm.classList.add('open');
+      link.classList.add('active');
+      found = sm;
+    });
+    $$('.submenu').forEach(function (sm) {
+      if (found && sm !== found) { sm.classList.remove('open'); var p = sm.previousElementSibling; if (p && p.classList.contains('menu-item')) p.classList.remove('open'); }
+    });
+  }
+
+  function switchView(v, title) {
+    if (!document.getElementById('view-' + v)) { toast('该视图不存在：' + v); return; }
+    $$('.view').forEach(function (s) { s.hidden = true; });
+    document.getElementById('view-' + v).hidden = false;
+    $('#crumb').textContent = title || VIEW_TITLES[v] || '首页';
+    setActiveMenu(v);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (v === 'citygroups') renderCityGroups();
+    if (v === 'board') renderBoard();
+    if (v === 'logs') renderLogs();
+    if (v === 'settings') loadSettings();
+  }
+
+  /* 菜单事件绑定 */
+  function bindNav() {
+    $('#toggle').addEventListener('click', function () { $('#layout').classList.toggle('collapsed'); });
+    // has-sub 顶层：点击展开/收起子菜单（一次只开一个）
+    $$('.menu-item.has-sub').forEach(function (it) {
+      it.addEventListener('click', function (e) {
+        if (e.target.closest('.submenu')) return;
+        var sm = document.getElementById('sub-' + it.dataset.sub);
+        if (!sm) return;
+        var willOpen = !sm.classList.contains('open');
+        $$('.submenu').forEach(function (x) { x.classList.remove('open'); });
+        $$('.menu-item.has-sub').forEach(function (x) { x.classList.remove('open'); });
+        if (willOpen) { sm.classList.add('open'); it.classList.add('open'); }
+      });
+    });
+    // 所有带 data-view 的元素（顶层菜单 + 子菜单项）
+    $$('[data-view]').forEach(function (el) {
+      el.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var v = el.dataset.view;
+        switchView(v, VIEW_TITLES[v]);
+      });
+    });
+    // 顶栏反馈
+    $$('.topbar .btn-icon').forEach(function (b) {
+      if (b.id === 'toggle') return;
+      b.addEventListener('click', function () {
+        var lbl = b.getAttribute('aria-label') || '功能';
+        if (lbl === '全屏') {
+          if (document.fullscreenElement) document.exitFullscreen && document.exitFullscreen();
+          else document.documentElement.requestFullscreen && document.documentElement.requestFullscreen();
+          toast('已切换全屏');
+        } else {
+          toast('「' + lbl + '」为演示入口，待接入');
+        }
+      });
+    });
+    // 面包屑 more
+    $$('.card-h .more').forEach(function (m) {
+      m.addEventListener('click', function () { toast('演示：查看详情（数据为示例）'); });
+    });
+  }
+
+  function doLogin() {
+    var role = currentRole();
+    document.body.classList.remove('logged-out');
+    applyRole(role);
+    switchView('dashboard', '仪表盘');
+    toast('欢迎回来，' + (ROLES[role] || ROLES.SUPER_ADMIN).name);
+    // 若当前角色不可见仪表盘以外模块，默认回仪表盘
+  }
+
+  function bindLogin() {
+    $('#loginForm').addEventListener('submit', function (e) { e.preventDefault(); doLogin(); });
+    $('#logoutBtn').addEventListener('click', function () {
+      document.body.classList.add('logged-out');
+      $('#userMenu').hidden = true;
+      toast('已退出登录');
+    });
+    var ub = $('#userBox');
+    ub.addEventListener('click', function (e) { e.stopPropagation(); var m = $('#userMenu'); m.hidden = !m.hidden; });
+    document.addEventListener('click', function () { $('#userMenu').hidden = true; });
+    $('#rolePick').addEventListener('change', function (e) {
+      var r = ROLES[e.target.value];
+      $('#username').value = r.account;
+      $('#password').value = 'admin1234';
+      $('#loginHint').innerHTML = '将以种子账号 <b>' + r.account + '</b> 登录，角色 ' + r.tag + '。';
+    });
+  }
+
+  /* ============ 图表 ============ */
+  function renderOrderChart() {
+    var data = [42, 55, 48, 63, 71, 68, 86];
+    var labels = ['一', '二', '三', '四', '五', '六', '日'];
+    var W = 600, H = 240, pl = 36, pr = 16, pt = 18, pb = 28, max = 100, min = 0;
+    var iw = W - pl - pr, ih = H - pt - pb;
+    var X = function (i) { return pl + iw * (i / (data.length - 1)); };
+    var Y = function (v) { return pt + ih * (1 - (v - min) / (max - min)); };
+    var grid = '';
+    for (var g = 0; g <= 4; g++) {
+      var gy = pt + ih * g / 4, val = max - (max - min) * g / 4;
+      grid += '<line x1="' + pl + '" y1="' + gy + '" x2="' + (W - pr) + '" y2="' + gy + '" stroke="#ebeef5"/><text x="' + (pl - 6) + '" y="' + (gy + 4) + '" text-anchor="end" font-size="11" fill="#909399">' + val + '</text>';
+    }
+    var pts = data.map(function (v, i) { return [X(i), Y(v)]; });
+    var line = pts.map(function (p, i) { return (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1); }).join(' ');
+    var area = line + ' L ' + X(data.length - 1).toFixed(1) + ' ' + (pt + ih) + ' L ' + pl + ' ' + (pt + ih) + ' Z';
+    var dots = pts.map(function (p, i) {
+      return '<circle cx="' + p[0].toFixed(1) + '" cy="' + p[1].toFixed(1) + '" r="3.5" fill="#fff" stroke="#409eff" stroke-width="2"/><text x="' + p[0].toFixed(1) + '" y="' + (p[1] - 10).toFixed(1) + '" text-anchor="middle" font-size="11" fill="#409eff" font-weight="600">' + data[i] + '</text>';
+    }).join('');
+    var xlab = labels.map(function (l, i) { return '<text x="' + X(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#909399">周' + l + '</text>'; }).join('');
+    $('#orderChart').innerHTML =
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="近7日订单趋势折线图">' +
+      '<defs><linearGradient id="og" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#409eff" stop-opacity=".25"/><stop offset="100%" stop-color="#409eff" stop-opacity="0"/></linearGradient></defs>' +
+      grid + '<path d="' + area + '" fill="url(#og)"/><path d="' + line + '" fill="none" stroke="#409eff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + dots + xlab + '</svg>';
+  }
+
+  /* ============ 门店列表 ============ */
+  var storeModal = null, simPin = null, dragging = false, editingStoreRow = null;
+  var simBounds = { lng0: 116.30, lng1: 116.50, lat0: 39.85, lat1: 40.05 };
+  var TENCENT_MAP_KEY = '';
+
+  function statusTagCls(status) {
+    return { '营业中': 'tag-green', '在售': 'tag-green', '启用': 'tag-green', '已发布': 'tag-green',
+             '待审核': 'tag-orange', '草稿': 'tag-orange', '待回复': 'tag-red',
+             '已下线': 'tag-gray', '停用': 'tag-gray', '已下架': 'tag-gray', '已回复': 'tag-green' }[status] || 'tag-gray';
+  }
+
+  function storeRowData(tr) {
+    var tds = tr.querySelectorAll('td');
+    var tag = tr.querySelector('.tag');
+    return {
+      id: tds[0].textContent.trim(),
+      name: tds[1].textContent.trim(),
+      city: tds[2].textContent.trim(),
+      address: tds[3].textContent.trim(),
+      status: tag ? tag.textContent.trim() : ''
+    };
+  }
+
+  function bindStores() {
+    // 查询 / 重置
+    var sec = $('#view-stores');
+    var kw = sec.querySelector('.filter input');
+    var citySel = sec.querySelectorAll('.filter select')[0];
+    var stSel = sec.querySelectorAll('.filter select')[1];
+    var btns = sec.querySelectorAll('.filter button');
+    btns[0].addEventListener('click', function () { filterStoreRows(kw.value, citySel.value, stSel.value); toast('门店筛选已应用'); });
+    btns[1].addEventListener('click', function () { kw.value = ''; citySel.value = '全部'; stSel.value = '全部'; filterStoreRows('', '全部', '全部'); toast('已重置筛选'); });
+
+    function filterStoreRows(kwv, cityv, stv) {
+      $$('#view-stores tbody tr').forEach(function (tr) {
+        var d = storeRowData(tr);
+        var ok = (!kwv || d.name.indexOf(kwv) > -1) && (cityv === '全部' || d.city === cityv) && (stv === '全部' || d.status === stv);
+        tr.style.display = ok ? '' : 'none';
+      });
+      updatePagerInfo(sec, countVisibleRows(sec));
+    }
+    // 行操作委托：编辑 / 删除
+    sec.querySelector('tbody').addEventListener('click', function (e) {
+      var op = e.target.closest('.op');
+      if (!op) return;
+      var tr = e.target.closest('tr');
+      if (!tr) return;
+      var d = storeRowData(tr);
+      if (op.classList.contains('del') || op.textContent.trim() === '删除') {
+        if (confirm('确认删除门店「' + d.name + '」？')) { tr.remove(); updatePagerInfo(sec, countVisibleRows(sec)); renderCityGroups(); renderBoard(); toast('门店已删除（演示）'); }
+      } else if (op.textContent.trim() === '编辑') {
+        openStoreModal(d, tr);
+      }
+    });
+    $('#btnAddStore').addEventListener('click', function () { openStoreModal(); });
+  }
+
+  function countVisibleRows(sec) {
+    return $$('#' + sec.id + ' tbody tr').filter(function (r) { return r.style.display !== 'none'; }).length;
+  }
+  function updatePagerInfo(sec, n) {
+    var sp = sec.querySelector('.pager span');
+    if (sp && sp.textContent.indexOf('条') > -1 && sp.textContent.indexOf('每页') === -1) sp.textContent = '共 ' + n + ' 条（当前视图）';
+  }
+
+  /* ---- 门店弹窗 + 地图 ---- */
+  function openStoreModal(data, row) {
+    editingStoreRow = row || null;
+    storeModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    $('#storeModal h3').textContent = data ? '编辑门店' : '新增门店';
+    $('#f-name').value = data ? data.name : '';
+    $('#f-city').value = data ? data.city : '北京';
+    $('#f-addr').value = data ? data.address : '';
+    $('#f-status').value = data ? data.status : '营业中';
+    if (TENCENT_MAP_KEY) { loadRealMap(); } else { renderSimMap(); }
+  }
+  function closeStoreModal() {
+    storeModal.hidden = true;
+    document.body.style.overflow = '';
+    editingStoreRow = null;
+  }
+  function setCoord(lat, lng) {
+    if (lng === '' || lng == null) {
+      $('#f-lat').value = ''; $('#f-lng').value = '';
+      $('#coordHint').textContent = '点击地图放置门店位置';
+      return;
+    }
+    $('#f-lat').value = Number(lat).toFixed(6);
+    $('#f-lng').value = Number(lng).toFixed(6);
+    $('#coordHint').textContent = '已选坐标（GCJ-02 火星坐标）';
+  }
+
+  function renderSimMap() {
+    var cv = $('#mapCanvas');
+    var old = cv.querySelector('svg'); if (old) old.remove();
+    var W = 560, H = 300, roads = '';
+    for (var i = 1; i < 6; i++) { var y = H * i / 6; roads += '<line x1="0" y1="' + y + '" x2="' + W + '" y2="' + y + '" stroke="#dfe4ea" stroke-width="6"/>'; }
+    for (var j = 1; j < 8; j++) { var x = W * j / 8; roads += '<line x1="' + x + '" y1="0" x2="' + x + '" y2="' + H + '" stroke="#dfe4ea" stroke-width="6"/>'; }
+    roads += '<line x1="0" y1="' + (H * 0.42) + '" x2="' + W + '" y2="' + (H * 0.42) + '" stroke="#c8d0d8" stroke-width="10"/>';
+    roads += '<line x1="' + (W * 0.55) + '" y1="0" x2="' + (W * 0.55) + '" y2="' + H + '" stroke="#c8d0d8" stroke-width="10"/>';
+    var blocks = '<rect x="' + (W * 0.08) + '" y="' + (H * 0.12) + '" width="' + (W * 0.22) + '" height="' + (H * 0.22) + '" rx="6" fill="#d8efe0"/>' +
+                 '<rect x="' + (W * 0.62) + '" y="' + (H * 0.55) + '" width="' + (W * 0.28) + '" height="' + (H * 0.32) + '" rx="6" fill="#cfe4f5"/>';
+    cv.insertAdjacentHTML('beforeend',
+      '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="100%" style="display:block;cursor:crosshair" role="img" aria-label="模拟地图，可点击放置门店位置">' +
+      '<rect width="' + W + '" height="' + H + '" fill="#eef1f5"/>' + blocks + roads +
+      '<g class="map-pin" id="simPin" transform="translate(' + (W / 2) + ',' + (H / 2) + ')" style="cursor:grab">' +
+      '<path d="M0 0 C-12 -20 -12 -34 0 -34 C12 -34 12 -20 0 0 Z" fill="#f56c6c" stroke="#fff" stroke-width="2"/>' +
+      '<circle cx="0" cy="-22" r="7" fill="#fff"/></g></svg>');
+    simPin = document.getElementById('simPin');
+    var svgEl = cv.querySelector('svg');
+    var toCoord = function (cx, cy) {
+      return { lng: simBounds.lng0 + (cx / W) * (simBounds.lng1 - simBounds.lng0),
+               lat: simBounds.lat1 - (cy / H) * (simBounds.lat1 - simBounds.lat0) };
+    };
+    var moveTo = function (cx, cy) {
+      cx = Math.max(0, Math.min(W, cx)); cy = Math.max(0, Math.min(H, cy));
+      simPin.setAttribute('transform', 'translate(' + cx + ',' + cy + ')');
+      var c = toCoord(cx, cy); setCoord(c.lat, c.lng);
+    };
+    var ptInSvg = function (e) { var r = svgEl.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
+    svgEl.addEventListener('click', function (e) { if (dragging) return; var p = ptInSvg(e); moveTo(p.x, p.y); });
+    simPin.addEventListener('pointerdown', function (e) { e.stopPropagation(); dragging = true; simPin.classList.add('drag'); simPin.setPointerCapture(e.pointerId); });
+    simPin.addEventListener('pointermove', function (e) { if (!dragging) return; var p = ptInSvg(e); moveTo(p.x, p.y); });
+    simPin.addEventListener('pointerup', function () { dragging = false; simPin.classList.remove('drag'); });
+    moveTo(W / 2, H / 2);
+  }
+  function loadRealMap() {
+    var cv = $('#mapCanvas');
+    var s = document.createElement('script');
+    s.src = 'https://map.qq.com/api/gljs?v=1.exp&key=' + encodeURIComponent(TENCENT_MAP_KEY);
+    s.onload = function () {
+      try {
+        var map = new TMap.Map('mapCanvas', { center: new TMap.LatLng(39.9, 116.4), zoom: 11 });
+        var marker = new TMap.MultiMarker({ map: map, geometries: [{ id: 'store', position: new TMap.LatLng(39.9, 116.4) }] });
+        map.on('click', function (e) { var ll = e.latLng; setCoord(ll.getLat(), ll.getLng()); marker.setGeometries([{ id: 'store', position: ll }]); });
+        var hint = cv.querySelector('.sim-hint'); if (hint) hint.remove();
+        $('#mapBadge').textContent = '腾讯地图已接入';
+      } catch (err) { renderSimMap(); }
+    };
+    s.onerror = function () { renderSimMap(); };
+    document.head.appendChild(s);
+  }
+
+  function bindStoreModal() {
+    storeModal = $('#storeModal');
+    $('#storeClose').addEventListener('click', closeStoreModal);
+    $('#storeCancel').addEventListener('click', closeStoreModal);
+    storeModal.addEventListener('click', function (e) { if (e.target === storeModal) closeStoreModal(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !storeModal.hidden) closeStoreModal(); });
+    $('#storeSave').addEventListener('click', function () {
+      var name = $('#f-name').value.trim();
+      var lat = $('#f-lat').value, lng = $('#f-lng').value;
+      if (!name) { toast('请填写门店名称'); return; }
+      if (!lat || !lng) { toast('请在地图上点选门店位置'); return; }
+      var city = $('#f-city').value, addr = $('#f-addr').value.trim() || '—', status = $('#f-status').value;
+      var cls = statusTagCls(status);
+      if (editingStoreRow) {
+        var tds = editingStoreRow.querySelectorAll('td');
+        tds[1].textContent = name; tds[2].textContent = city; tds[3].textContent = addr;
+        var tag = editingStoreRow.querySelector('.tag');
+        tag.className = 'tag ' + cls; tag.textContent = status;
+        tds[5].textContent = nowStamp();
+        toast('门店已更新：' + name);
+      } else {
+        var tr = document.createElement('tr');
+        tr.innerHTML = '<td class="mono">' + esc(randId('S')) + '</td><td>' + esc(name) + '</td><td>' + esc(city) + '</td><td>' + esc(addr) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + esc(nowStamp()) + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
+        $('#view-stores tbody').insertBefore(tr, $('#view-stores tbody').firstChild);
+        toast('已保存门店：' + name);
+      }
+      $('#f-name').value = ''; $('#f-addr').value = '';
+      setCoord('', '');
+      closeStoreModal();
+      var sec = $('#view-stores');
+      updatePagerInfo(sec, countVisibleRows(sec));
+      renderCityGroups(); renderBoard();
+    });
+  }
+
+  /* ============ 城市分组 ============ */
+  function storeRows() {
+    return $$('#view-stores tbody tr').filter(function (r) { return r.style.display !== 'none'; }).map(storeRowData);
+  }
+  function renderCityGroups() {
+    var wrap = $('#cityGroupsWrap');
+    if (!wrap) return;
+    var backBtn = document.getElementById('btnCityBack');
+    if (backBtn && !backBtn._bound) {
+      backBtn._bound = true;
+      backBtn.addEventListener('click', function () { switchView('stores', '门店列表'); });
+    }
+    var groups = {};
+    storeRows().forEach(function (d) {
+      (groups[d.city] = groups[d.city] || []).push(d);
+    });
+    var cities = Object.keys(groups).sort();
+    if (!cities.length) { wrap.innerHTML = '<div style="padding:24px;color:#909399;text-align:center">暂无门店数据，请先在「门店列表」新增门店。</div>'; return; }
+    var html = '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
+    cities.forEach(function (c) { html += '<span class="tag tag-blue" style="font-size:12px;padding:3px 10px">' + c + ' · ' + groups[c].length + ' 家</span>'; });
+    html += '</div>';
+    var openFirst = true;
+    cities.forEach(function (c) {
+      var st = openFirst ? 'open' : ''; openFirst = false;
+      html += '<div class="city-group card" style="border:1px solid #ebeef5;margin-bottom:10px;border-radius:6px;overflow:hidden">' +
+        '<div class="city-group-head" data-city="' + c + '" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;background:#fafafa;font-weight:600;font-size:14px">' +
+        '<span class="arrow" style="display:inline-block;transition:transform .2s;color:#909399">' + (st ? '▾' : '▸') + '</span>' + c +
+        '<span class="tag tag-blue" style="font-size:11px">' + groups[c].length + '</span></div>' +
+        '<div class="city-group-body" style="' + (st ? '' : 'display:none') + ';padding:4px 14px 10px">';
+      groups[c].forEach(function (d) {
+        html += '<div class="city-store" style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed #ebeef5;font-size:13px;cursor:pointer">' +
+          '<b style="min-width:140px;color:#303133">' + esc(d.name) + '</b>' +
+          '<span style="flex:1;color:#606266">' + esc(d.address) + '</span>' +
+          '<span class="tag ' + statusTagCls(d.status) + '">' + esc(d.status) + '</span>' +
+          '<span class="op" data-act="edit">编辑</span></div>';
+      });
+      html += '</div></div>';
+    });
+    wrap.innerHTML = html;
+    $$('#cityGroupsWrap .city-group-head').forEach(function (h) {
+      h.addEventListener('click', function () {
+        var body = h.nextElementSibling, arrow = h.querySelector('.arrow');
+        var show = body.style.display === 'none';
+        body.style.display = show ? '' : 'none';
+        arrow.textContent = show ? '▾' : '▸';
+      });
+    });
+    $$('#cityGroupsWrap .city-store').forEach(function (row) {
+      row.addEventListener('click', function () {
+        var name = row.querySelector('b').textContent;
+        // 定位门店列表对应行并编辑
+        $$('#view-stores tbody tr').forEach(function (tr) {
+          var d = storeRowData(tr);
+          if (d.name === name) { openStoreModal(d, tr); }
+        });
+      });
+    });
+  }
+
+  /* ============ 通用 CRUD 表格（款式/系列/账号/角色） ============ */
+  function tableConfig(viewId) {
+    var cfg = {
+      styles: {
+        label: '款式', btnText: '新增款式', imgLabel: '主图',
+        cols: ['id', 'img', 'name', 'cat', 'series', 'price', 'stock', 'status', 'time'],
+        fields: [
+          { key: 'name', label: '款式名称' },
+          { key: 'cat', label: '分类', type: 'select', options: ['男装', '女装', '童装'] },
+          { key: 'series', label: '所属系列' },
+          { key: 'price', label: '价格（元）' },
+          { key: 'stock', label: '库存' },
+          { key: 'status', label: '状态', type: 'select', options: ['在售', '草稿', '已下架'] },
+          { key: 'img', label: '主图图片', type: 'img', optional: true }
+        ]
+      },
+      series: {
+        label: '系列', btnText: '新增系列',
+        cols: ['id', 'name', 'cat', 'cnt', 'cover', 'status'],
+        fields: [
+          { key: 'name', label: '系列名称' },
+          { key: 'cat', label: '所属分类', type: 'select', options: ['男装', '女装', '童装'] },
+          { key: 'status', label: '状态', type: 'select', options: ['启用', '停用'] }
+        ]
+      },
+      accounts: {
+        label: '账号', btnText: '新增账号',
+        cols: ['id', 'account', 'role', 'display', 'email', 'status', 'last'],
+        fields: [
+          { key: 'account', label: '登录账号' },
+          { key: 'display', label: '显示名' },
+          { key: 'email', label: '邮箱' },
+          { key: 'role', label: '角色', type: 'select', options: ['超级管理员', '内容运营', '门店商品运营'] },
+          { key: 'status', label: '状态', type: 'select', options: ['启用', '停用'] }
+        ]
+      },
+      roles: {
+        label: '角色', btnText: '新增角色',
+        cols: ['code', 'name', 'scope', 'cnt', 'status'],
+        fields: [
+          { key: 'code', label: '角色编码' },
+          { key: 'name', label: '角色名称' },
+          { key: 'scope', label: '菜单范围' },
+          { key: 'status', label: '状态', type: 'select', options: ['启用', '停用'] }
+        ]
+      },
+      banners: {
+        label: '轮播图', btnText: '新增轮播图', imgLabel: 'Banner',
+        cols: ['id', 'img', 'title', 'sub', 'link', 'sort', 'status', 'time'],
+        fields: [
+          { key: 'title', label: '轮播标题' },
+          { key: 'sub', label: '轮播副标题（显示在标题下方）', def: '穿出自我，随心而飞' },
+          { key: 'link', label: '跳转链接（空则默认跳产品页）', def: '/products', optional: true },
+          { key: 'sort', label: '排序（数字越小越靠前）', optional: true },
+          { key: 'status', label: '状态', type: 'select', options: ['显示中', '隐藏'] },
+          { key: 'img', label: '轮播图片', type: 'img', optional: true }
+        ]
+      }
+    };
+    return cfg[viewId];
+  }
+
+  /* 图片缩略图 HTML：有 http(s)/data: 图片则叠在渐变色上做背景；无 URL 用占位渐变 */
+  function imgThumb(url, label, big) {
+    url = url || ''; label = label || '图';
+    var safe = url.replace(/"/g, '&quot;').replace(/'/g, '');
+    var m = /^(https?:|data:)/i.test(url);
+    var grads = [
+      'linear-gradient(135deg,rgba(91,124,250,.85),rgba(122,168,255,.85))',
+      'linear-gradient(135deg,rgba(246,169,108,.85),rgba(240,112,78,.85))',
+      'linear-gradient(135deg,rgba(127,208,160,.85),rgba(47,174,107,.85))',
+      'linear-gradient(135deg,rgba(176,156,255,.85),rgba(123,92,240,.85))',
+      'linear-gradient(135deg,rgba(111,208,224,.85),rgba(42,160,192,.85))',
+      'linear-gradient(135deg,rgba(245,143,176,.85),rgba(238,95,143,.85))'
+    ];
+    var g = grads[Math.abs((url + label).split('').reduce(function (a, ch) { return a + ch.charCodeAt(0); }, 0)) % grads.length];
+    var bg = m ? g + ",url('" + safe + "') center/cover no-repeat" : g;
+    return '<span class="img-th' + (big ? ' banner' : '') + '" data-img="' + safe + '" style="background:' + bg + '" title="点击查看大图"><i>' + esc(label) + '</i></span>';
+  }
+
+  /* 列表"主图"列：不直接渲染图片，显示「查看图片」链接（点击弹大图） */
+  function imgLinkCell(v) {
+    v = v || '';
+    if (!v) return '<span class="dim">未设置</span>';
+    return '<a class="vimg" data-img="' + v.replace(/"/g, '&quot;') + '" title="点击查看大图">查看图片</a>';
+  }
+
+  /* 大图查看弹层 */
+  function openImgViewer(v) {
+    v = v || '';
+    if (!v) { toast('该记录尚未设置图片'); return; }
+    var m2 = document.createElement('div');
+    m2.className = 'modal-mask'; m2.id = 'imgViewerMask';
+    var safe = v.replace(/"/g, '&quot;').replace(/'/g, '');
+    m2.innerHTML = '<div class="img-viewer"><button class="modal-x" type="button">&times;</button>' +
+      '<img src="' + safe + '" alt="图片预览" onerror="var p=this;var h=document.createElement(\'div\');h.className=\'img-v-placeholder\';h.textContent=\'图片无法加载（外链已失效或当前离线）\';p.parentNode.replaceChild(h,p);"></div>';
+    document.body.appendChild(m2);
+    m2.addEventListener('click', function (e) { if (e.target === m2 || e.target.classList.contains('modal-x')) m2.remove(); });
+  }
+
+  /* 本地图片 → 等比压缩 dataURL（无 canvas 环境直接返回原图，如无头测试） */
+  function fileToDataUrl(file, cb) {
+    if (!/^image\//.test(file.type)) { toast('仅支持图片文件'); return; }
+    if (file.size > 10 * 1024 * 1024) { toast('图片过大，请选择 10MB 以内的图片'); return; }
+    var rd = new FileReader();
+    rd.onload = function () {
+      var raw = rd.result;
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var max = 1600, w = img.width, h = img.height;
+          if (w > max || h > max) { var r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+          var c = document.createElement('canvas'); c.width = w; c.height = h;
+          var ctx = c.getContext && c.getContext('2d');
+          if (!ctx) { cb(raw); return; }
+          ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          cb(c.toDataURL('image/jpeg', 0.85));
+        } catch (err) { cb(raw); }
+      };
+      img.onerror = function () { toast('图片解析失败，请换一张再试'); };
+      img.src = raw;
+    };
+    rd.onerror = function () { toast('读取文件失败'); };
+    rd.readAsDataURL(file);
+  }
+
+  function rowDataOf(viewId, tr) {
+    var tds = tr.querySelectorAll('td');
+    var out = {};
+    var cfg = tableConfig(viewId);
+    cfg.cols.forEach(function (c, i) {
+      var td = tds[i];
+      if (!td) return;
+      if (c === 'img') {
+        var sp = td.querySelector('[data-img]');
+        out[c] = sp ? (sp.getAttribute('data-img') || '') : td.textContent.trim();
+      } else { out[c] = td.textContent.trim(); }
+    });
+    return out;
+  }
+  function renderTag(tr, colIdx, status) {
+    var td = tr.querySelectorAll('td')[colIdx];
+    var tag = td.querySelector('.tag');
+    if (tag) { tag.className = 'tag ' + statusTagCls(status); tag.textContent = status; }
+    else { td.innerHTML = '<span class="tag ' + statusTagCls(status) + '">' + status + '</span>'; }
+  }
+
+  function openTableModal(viewId, data, tr) {
+    var cfg = tableConfig(viewId);
+    // 构造简易 modal DOM
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask'; mask.id = 'genericModal';
+    var rowsHtml = cfg.fields.map(function (f) {
+      var val = data ? (data[f.key] || '') : (f.def || '');
+      var inner;
+      if (f.type === 'select') {
+        inner = '<select>' + f.options.map(function (o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>';
+        return '<label>' + f.label + inner + '</label>';
+      }
+      if (f.type === 'img') {
+        var u = (val || '').replace(/"/g, '&quot;').replace(/'/g, '');
+        var has = /^(https?:|data:)/i.test(val);
+        var bg = has ? 'url("' + u + '") center/cover no-repeat' : '';
+        return '<label style="grid-column:1/-1">' + f.label +
+          '<span class="imgpick">' +
+            '<span class="img-prev"' + (bg ? ' style="background-image:' + bg + '"' : '') + '></span>' +
+            '<span class="imgpick-actions">' +
+              '<button type="button" class="btn primary" data-act="pick"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加图片</button>' +
+              '<button type="button" class="btn" data-act="clr">移除图片</button>' +
+              '<a href="javascript:;" class="op" data-act="paste" style="font-size:12px;cursor:pointer">或粘贴图片链接</a>' +
+            '</span>' +
+            '<input type="file" class="imgFileIn" accept="image/*" hidden>' +
+          '</span>' +
+          '<input type="text" class="imgUrlIn" placeholder="粘贴图片 URL（http/https）" style="display:none;margin-top:6px;box-sizing:border-box">' +
+          '<span class="hint" style="display:block;color:#909399;font-size:12px;font-weight:400;margin-top:4px">点击「添加图片」会打开文件管理器选择本地图片，自动等比压缩后用于演示展示；正式环境改由「素材库 / 上传」接口返回图片 URL（见技术文档 · 图片存储）</span></label>';
+      }
+      inner = '<input type="text" value="' + val.replace(/"/g, '&quot;') + '" placeholder="请输入' + f.label + '">';
+      return '<label>' + f.label + inner + '</label>';
+    }).join('');
+    mask.innerHTML = '<div class="modal" style="width:min(560px,100%)">' +
+      '<div class="modal-head"><h3>' + (data ? '编辑' : '新增') + cfg.label + '</h3><button class="modal-x" type="button">&times;</button></div>' +
+      '<div class="modal-body"><div class="form-grid" style="grid-template-columns:1fr 1fr">' + rowsHtml + '</div></div>' +
+      '<div class="modal-foot"><button class="btn" data-act="cancel">取消</button><button class="btn primary" data-act="save">保存</button></div></div>';
+    document.body.appendChild(mask);
+    var close = function () { mask.remove(); };
+    // —— 图片字段：文件选择 / 移除 / 粘贴链接，统一维护 curImg ——
+    var imgFieldKey = null;
+    cfg.fields.forEach(function (f) { if (f.type === 'img') imgFieldKey = f.key; });
+    var curImg = (data && imgFieldKey) ? (data[imgFieldKey] || '') : '';
+    var imgPrevEl = mask.querySelector('.imgpick .img-prev');
+    function refreshImgPrev() {
+      if (!imgPrevEl) return;
+      var v = (curImg || '').replace(/"/g, '&quot;').replace(/'/g, '');
+      imgPrevEl.style.backgroundImage = v ? 'url("' + v + '")' : '';
+    }
+    var imgPickBox = mask.querySelector('.imgpick');
+    if (imgPickBox) {
+      var fileIn = imgPickBox.querySelector('.imgFileIn');
+      var pickBtn = imgPickBox.querySelector('[data-act="pick"]');
+      var clrBtn = imgPickBox.querySelector('[data-act="clr"]');
+      var pasteLink = imgPickBox.querySelector('[data-act="paste"]');
+      var urlIn = mask.querySelector('.imgUrlIn');
+      refreshImgPrev();
+      if (pickBtn) pickBtn.addEventListener('click', function (e) { e.preventDefault(); if (fileIn) fileIn.click(); });
+      if (fileIn) fileIn.addEventListener('change', function () {
+        if (!fileIn.files || !fileIn.files[0]) return;
+        var picked = fileIn.files[0];
+        if (apiOnline()) {
+          uploadImg(picked, function (url) {
+            curImg = url; urlIn.value = url; urlIn.style.display = 'none'; refreshImgPrev();
+            toast('图片已上传到服务器');
+          });
+        } else {
+          fileToDataUrl(picked, function (d) {
+            curImg = d; urlIn.value = ''; urlIn.style.display = 'none'; refreshImgPrev();
+          });
+        }
+      });
+      if (clrBtn) clrBtn.addEventListener('click', function () {
+        curImg = ''; urlIn.value = ''; urlIn.style.display = 'none'; refreshImgPrev();
+      });
+      if (pasteLink) pasteLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        var show = urlIn.style.display === 'none';
+        urlIn.style.display = show ? '' : 'none';
+        if (show) urlIn.focus();
+      });
+      if (urlIn) urlIn.addEventListener('input', function () {
+        var v = urlIn.value.trim();
+        curImg = /^https?:\/\//i.test(v) ? v : '';
+        refreshImgPrev();
+      });
+    }
+    mask.addEventListener('click', function (e) {
+      if (e.target === mask || e.target.classList.contains('modal-x')) close();
+    });
+    mask.querySelector('[data-act="cancel"]').addEventListener('click', close);
+    mask.querySelector('[data-act="save"]').addEventListener('click', function () {
+      var vals = {};
+      var inputs = mask.querySelectorAll('.form-grid label');
+      cfg.fields.forEach(function (f, i) {
+        if (f.type === 'img') { vals[f.key] = curImg; return; }
+        var el = inputs[i].querySelector('input,select');
+        vals[f.key] = el ? el.value.trim() : '';
+      });
+      var emptyField = cfg.fields.find(function (f) { return f.key !== 'id' && !f.optional && vals[f.key] === ''; });
+      if (emptyField) { toast('请填写：' + emptyField.label); return; }
+      saveTableRow(viewId, data, tr, vals);
+      close();
+    });
+  }
+
+  function colIndexOf(viewId, key) { return tableConfig(viewId).cols.indexOf(key); }
+
+  function saveTableRow(viewId, data, tr, vals) {
+    var cfg = tableConfig(viewId);
+    var idPrefix = { styles: 'ST', series: 'SE', accounts: 'U', roles: 'R', banners: 'BN' }[viewId] || 'X';
+    if (tr) { // 编辑
+      cfg.cols.forEach(function (c) {
+        var idx = colIndexOf(viewId, c);
+        var td = tr.querySelectorAll('td')[idx];
+        if (!td) return;
+        if (c === 'status') { renderTag(tr, idx, vals.status); }
+        else if (c === 'time' || c === 'last') { td.textContent = nowStamp(); }
+        else if (c === 'cover') { /* 封面编辑独立演示，暂保留原状 */ }
+        else if (c === 'img') { td.innerHTML = viewId === 'banners' ? imgThumb(vals.img, cfg.imgLabel || '图', true) : imgLinkCell(vals.img); }
+        else {
+          var tg = td.querySelector('.tag');
+          if (tg) { tg.textContent = vals[c]; tg.className = 'tag tag-blue'; }
+          else { td.textContent = vals[c] || td.textContent; }
+        }
+      });
+      toast('已更新' + cfg.label + '：' + (vals.name || vals.title || vals.display || vals.account || vals.code));
+    } else { // 新增，插入表头下
+      var html = '<tr>';
+      cfg.cols.forEach(function (c) {
+        var v;
+        if (c === 'id') v = '<span class="mono">' + esc(randId(idPrefix)) + '</span>';
+        else if (c === 'code') v = '<span class="mono">' + esc(vals.code) + '</span>';
+        else if (c === 'status') v = '<span class="tag ' + statusTagCls(vals.status) + '">' + esc(vals.status) + '</span>';
+        else if (c === 'time' || c === 'last') v = esc(nowStamp());
+        else if (c === 'cover') v = '<span class="tag tag-gray">未设</span>';
+        else if (c === 'img') v = viewId === 'banners' ? imgThumb(vals.img, cfg.imgLabel || '图', true) : imgLinkCell(vals.img);
+        else if (c === 'sort') v = esc(vals.sort || '0');
+        else if (c === 'cnt') v = '0';
+        else if (c === 'role') v = '<span class="tag tag-blue">' + esc(vals.role) + '</span>';
+        else v = esc(vals[c] || '—');
+        html += '<td>' + v + '</td>';
+      });
+      html += '<td><span class="op">编辑</span>';
+      if (viewId === 'styles') html += '<span class="op">上下架</span>';
+      if (viewId === 'roles') html += '<span class="op">授权</span>';
+      html += '<span class="op del">删除</span></td></tr>';
+      var tb = $('#view-' + viewId + ' tbody');
+      var ntr = document.createElement('tr');
+      ntr.innerHTML = html;
+      tb.insertBefore(ntr, tb.firstChild);
+      toast('已新增' + cfg.label);
+    }
+    var sec = $('#view-' + viewId);
+    if (sec) updatePagerInfo(sec, countVisibleRows(sec));
+    if (viewId === 'banners' && apiOnline()) pushBanners();
+    renderBoard();
+  }
+
+  /* ================= 后端 API 接入（首页轮播 → fly.db → 官网首页） ================= */
+  var TOKEN_KEY = 'fly_admin_token', USER_KEY = 'fly_admin_user';
+  var api = { token: '', user: '' };
+  try {
+    api.token = localStorage.getItem(TOKEN_KEY) || '';
+    api.user = localStorage.getItem(USER_KEY) || '';
+  } catch (e) { api.token = ''; api.user = ''; }
+
+  function apiAvailable() {
+    return typeof fetch === 'function' && /^https?:$/.test(location.protocol);
+  }
+  function apiOnline() { return apiAvailable() && !!api.token; }
+
+  function fmtApiTime(iso) {
+    if (!iso) return nowStamp();
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return nowStamp();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0') + ' ' + String(d.getHours()).padStart(2, '0') + ':' +
+      String(d.getMinutes()).padStart(2, '0');
+  }
+
+  function apiCall(path, opts) {
+    opts = opts || {};
+    var heads = { 'Accept': 'application/json' };
+    if (api.token) heads['Authorization'] = 'Bearer ' + api.token;
+    if (opts.json) heads['Content-Type'] = 'application/json';
+    return fetch(path, {
+      method: opts.method || 'GET',
+      headers: heads,
+      body: opts.body || undefined,
+      credentials: 'same-origin'
+    }).then(function (r) {
+      var ct = '';
+      try { ct = r.headers.get('content-type') || ''; } catch (e) { }
+      return (ct.indexOf('application/json') > -1 ? r.json() : r.text()).then(function (data) {
+        if (!r.ok) {
+          if (r.status === 401) { apiLogout(true); throw new Error('登录已失效，请重新连接'); }
+          var msg = (data && data.detail) ? data.detail : ('请求失败（' + r.status + '）');
+          throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+        }
+        return data;
+      });
+    });
+  }
+
+  function apiLogin(user, pass) {
+    return fetch('/api/admin/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'username=' + encodeURIComponent(user) + '&password=' + encodeURIComponent(pass)
+    }).then(function (r) {
+      var ct = '';
+      try { ct = r.headers.get('content-type') || ''; } catch (e) { }
+      return (ct.indexOf('application/json') > -1 ? r.json() : r.text()).then(function (d) {
+        if (!r.ok) throw new Error((d && d.detail) ? d.detail : '登录失败');
+        return d;
+      });
+    });
+  }
+
+  function apiLogout(silent) {
+    api.token = ''; api.user = '';
+    try { localStorage.removeItem(TOKEN_KEY); localStorage.removeItem(USER_KEY); } catch (e) { }
+    refreshApiBar();
+    if (!silent) toast('已断开后端连接，恢复本地演示模式');
+  }
+
+  function uploadImg(file, cb) {
+    if (!/^image\//.test(file.type)) { toast('仅支持图片文件'); return; }
+    var fd = new FormData();
+    fd.append('file', file);
+    var heads = {};
+    if (api.token) heads['Authorization'] = 'Bearer ' + api.token;
+    fetch('/api/admin/upload', { method: 'POST', headers: heads, body: fd })
+      .then(function (r) {
+        var ct = '';
+        try { ct = r.headers.get('content-type') || ''; } catch (e) { }
+        return (ct.indexOf('application/json') > -1 ? r.json() : r.text()).then(function (d) {
+          if (!r.ok) throw new Error((d && d.detail) ? d.detail : '上传失败');
+          return d;
+        });
+      })
+      .then(function (d) { cb(d.url); })
+      .catch(function (err) { toast('图片上传失败：' + err.message); });
+  }
+
+  function renderBannerRows(frames, updatedAt) {
+    var tb = document.getElementById('bnrTbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    if (!frames.length) {
+      tb.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#909399;padding:26px">后端暂无轮播帧，点击右上角「新增轮播图」添加</td></tr>';
+      return;
+    }
+    var stamp = fmtApiTime(updatedAt);
+    frames.forEach(function (f, i) {
+      var tr = document.createElement('tr');
+      var active = f.active !== false;
+      tr.innerHTML =
+        '<td class="mono">BN' + String(i + 1).padStart(3, '0') + '</td>' +
+        '<td>' + imgThumb(f.image || '', 'Banner ' + (i + 1), true) + '</td>' +
+        '<td>' + esc(f.title || f.kicker || '（未命名）') + '</td>' +
+        '<td>' + esc(f.sub || '—') + '</td>' +
+        '<td>' + esc(f.link || '—') + '</td>' +
+        '<td>' + (i + 1) + '</td>' +
+        '<td><span class="tag ' + (active ? 'tag-green' : 'tag-gray') + '">' + (active ? '显示中' : '隐藏') + '</span></td>' +
+        '<td>' + esc(stamp) + '</td>' +
+        '<td><span class="op">编辑</span><span class="op del">删除</span></td>';
+      tb.appendChild(tr);
+    });
+    var sec = document.getElementById('view-banners');
+    if (sec) updatePagerInfo(sec, countVisibleRows(sec));
+  }
+
+  function loadBanners(silent) {
+    if (!apiOnline()) return Promise.resolve();
+    return apiCall('/api/admin/home/carousel').then(function (d) {
+      renderBannerRows(d.frames || [], d.updated_at);
+      if (!silent) toast('已拉取后端轮播：' + (d.frames || []).length + ' 帧');
+    }).catch(function (err) {
+      if (!silent) toast('拉取失败：' + err.message);
+    });
+  }
+
+  function pushBanners() {
+    var tb = document.getElementById('bnrTbody');
+    if (!tb || !apiOnline()) return;
+    var rows = [];
+    $$('#bnrTbody tr').forEach(function (tr) {
+      var d = rowDataOf('banners', tr);
+      if (!d || (!d.img && !d.title)) return;
+      var sort = parseInt(d.sort, 10);
+      rows.push({
+        image: d.img || '',
+        title: (d.title && d.title !== '—') ? d.title : '',
+        sub: (d.sub && d.sub !== '—') ? d.sub : '',
+        link: (d.link && d.link !== '—') ? d.link : '',
+        active: d.status !== '隐藏',
+        sort: isNaN(sort) ? rows.length + 1 : sort
+      });
+    });
+    rows.sort(function (a, b) { return a.sort - b.sort; });
+    rows.forEach(function (r) { delete r.sort; });
+    var body = JSON.stringify({ autoplay: 5, frames: rows });
+    return apiCall('/api/admin/home/carousel', { method: 'PUT', json: true, body: body })
+      .then(function (d) {
+        toast('已发布到官网首页（版本 ' + (d.version_no || '-') + '，共 ' + rows.length + ' 帧）');
+        return loadBanners(true);
+      })
+      .catch(function (err) { toast('同步后端失败：' + err.message); });
+  }
+
+  function openApiLogin() {
+    var mask = document.createElement('div');
+    mask.className = 'modal-mask'; mask.id = 'apiLoginMask';
+    mask.innerHTML =
+      '<div class="modal" style="width:min(430px,100%)">' +
+      '<div class="modal-head"><h3>连接后端服务</h3><button class="modal-x" type="button">&times;</button></div>' +
+      '<div class="modal-body"><div class="form-grid" style="grid-template-columns:1fr">' +
+      '<label>账号<input id="apiUser" type="text" value="admin" placeholder="后台账号"></label>' +
+      '<label>密码<input id="apiPass" type="password" value="admin1234" placeholder="登录密码"></label>' +
+      '</div><p style="color:#909399;font-size:12px;margin:12px 0 0;line-height:1.7">' +
+      '使用后端账号连接（默认 admin / admin1234，由 python -m app.seed 生成）。<br>连接后本页的轮播改动会写入 fly.db 的 home 区块并立即发布，前台首页刷新即可看到。</p></div>' +
+      '<div class="modal-foot"><button class="btn" data-act="cancel">取消</button>' +
+      '<button class="btn primary" data-act="ok">连接</button></div></div>';
+    document.body.appendChild(mask);
+    var close = function () { mask.remove(); };
+    mask.addEventListener('click', function (e) {
+      if (e.target === mask || e.target.classList.contains('modal-x')) close();
+    });
+    mask.querySelector('[data-act="cancel"]').addEventListener('click', close);
+    mask.querySelector('[data-act="ok"]').addEventListener('click', function () {
+      var u = document.getElementById('apiUser').value.trim();
+      var p = document.getElementById('apiPass').value;
+      if (!u || !p) { toast('请输入账号与密码'); return; }
+      var btn = mask.querySelector('[data-act="ok"]');
+      btn.disabled = true; btn.textContent = '连接中…';
+      apiLogin(u, p).then(function (d) {
+        api.token = d.access_token || '';
+        api.user = u;
+        try { localStorage.setItem(TOKEN_KEY, api.token); localStorage.setItem(USER_KEY, u); } catch (e) { }
+        close();
+        refreshApiBar();
+        toast('已连接后端：' + u);
+        loadBanners();
+      }).catch(function (err) {
+        btn.disabled = false; btn.textContent = '连接';
+        toast('连接失败：' + err.message);
+      });
+    });
+  }
+
+  function refreshApiBar() {
+    var st = document.getElementById('apiState');
+    if (!st) return;
+    var conn = document.getElementById('btnApiConnect');
+    var ref = document.getElementById('btnApiRefresh');
+    var out = document.getElementById('btnApiLogout');
+    if (!apiAvailable()) {
+      st.className = 'tag tag-gray'; st.textContent = '离线（本地演示）';
+      if (conn) { conn.disabled = true; conn.textContent = '需通过 http 打开'; }
+      if (ref) ref.hidden = true;
+      if (out) out.hidden = true;
+      return;
+    }
+    if (api.token) {
+      st.className = 'tag tag-green'; st.textContent = '已连接：' + (api.user || 'admin');
+      if (conn) conn.hidden = true;
+      if (ref) ref.hidden = false;
+      if (out) out.hidden = false;
+    } else {
+      st.className = 'tag tag-gray'; st.textContent = '未连接后端';
+      if (conn) { conn.hidden = false; conn.disabled = false; conn.textContent = '连接后端'; }
+      if (ref) ref.hidden = true;
+      if (out) out.hidden = true;
+    }
+  }
+
+  function initBannerApi() {
+    var c = document.getElementById('btnApiConnect');
+    var r = document.getElementById('btnApiRefresh');
+    var o = document.getElementById('btnApiLogout');
+    if (c) c.addEventListener('click', openApiLogin);
+    if (r) r.addEventListener('click', function () { loadBanners(); });
+    if (o) o.addEventListener('click', function () { apiLogout(false); });
+    refreshApiBar();
+    if (apiOnline()) loadBanners(true);
+  }
+
+  function bindTableViews() {
+    ['styles', 'series', 'accounts', 'roles', 'banners'].forEach(function (viewId) {
+      var sec = $('#view-' + viewId);
+      if (!sec) return;
+      var filter = sec.querySelector('.filter');
+      var inputs = filter.querySelectorAll('input,select');
+      var btns = filter.querySelectorAll('button');
+      var kw = inputs[0];
+      var sel1 = inputs[1] || null;
+      var sel2 = inputs[2] || null;
+      btns[0].addEventListener('click', function () {
+        $$('#' + viewId + ' tbody tr').forEach(function (tr) {
+          var d = rowDataOf(viewId, tr);
+          var txt = JSON.stringify(d);
+          var ok = (!kw.value || txt.indexOf(kw.value) > -1);
+          if (ok && sel1 && sel1.value !== '全部') ok = (txt.indexOf(sel1.value) > -1);
+          if (ok && sel2 && sel2.value !== '全部') ok = (txt.indexOf(sel2.value) > -1);
+          tr.style.display = ok ? '' : 'none';
+        });
+        updatePagerInfo(sec, countVisibleRows(sec));
+        toast(viewId === 'styles' ? '款式筛选已应用' : '筛选已应用');
+      });
+      btns[1].addEventListener('click', function () {
+        $$(filter.querySelectorAll('input,select')).forEach(function (el) { if (el.tagName === 'INPUT') el.value = ''; else el.value = '全部'; });
+        $$('#' + viewId + ' tbody tr').forEach(function (tr) { tr.style.display = ''; });
+        updatePagerInfo(sec, countVisibleRows(sec));
+        toast('已重置筛选');
+      });
+      // 新增按钮（filter 内最后一个 primary 或含新增文本）
+      var addBtn = null;
+      $$(filter.querySelectorAll('button')).forEach(function (b) { if (b.textContent.indexOf(cfgAddText(viewId)) > -1 || b.id === 'btnAddStore') addBtn = b; });
+      if (!addBtn && btns.length >= 3) addBtn = btns[btns.length - 1];
+      if (addBtn) addBtn.addEventListener('click', function () { openTableModal(viewId); });
+      // 行内操作委托
+      sec.querySelector('tbody').addEventListener('click', function (e) {
+        var vimg = e.target.closest('[data-img]');
+        if (vimg) { openImgViewer(vimg.getAttribute('data-img')); return; }
+        var op = e.target.closest('.op');
+        if (!op) return;
+        var tr = e.target.closest('tr');
+        var d = rowDataOf(viewId, tr);
+        var act = op.textContent.trim();
+        if (op.classList.contains('del') || act === '删除') {
+          if (confirm('确认删除？')) {
+            tr.remove(); updatePagerInfo(sec, countVisibleRows(sec));
+            if (viewId === 'banners' && apiOnline()) { pushBanners(); } else { toast('已删除（演示）'); }
+            renderBoard();
+          }
+        } else if (act === '编辑') { openTableModal(viewId, d, tr); }
+        else if (act === '上下架') {
+          var stIdx = colIndexOf(viewId, 'status');
+          var st = tr.querySelectorAll('td')[stIdx].querySelector('.tag').textContent.trim();
+          var next = st === '在售' ? '已下架' : (st === '已下架' ? '在售' : st);
+          renderTag(tr, stIdx, next);
+          toast(next === '在售' ? '已上架（演示）' : '已下架（演示）');
+        }
+        else if (act === '授权') { toast('演示：角色授权矩阵待接入'); }
+      });
+    });
+    function cfgAddText(viewId) { return tableConfig(viewId).btnText; }
+  }
+
+  /* ============ 新闻 / 资讯 ============ */
+  function articleRow(viewId, tr) {
+    var tds = tr.querySelectorAll('td');
+    return {
+      id: tds[0].textContent.trim(), title: tds[1].textContent.trim(),
+      cat: tds[2].textContent.trim(), status: tds[4].textContent.trim(),
+      pub: tds[5].textContent.trim()
+    };
+  }
+  function bindContent() {
+    var types = [
+      { viewId: 'content', catSelIdx: 1, stSelIdx: 2, btnNew: 'btnNewArticle', editorCat: 'ed-cat' },
+      { viewId: 'tips', catSelIdx: 1, stSelIdx: null, btnNew: 'btnNewTip', editorCat: null }
+    ];
+    types.forEach(function (t) {
+      var sec = $('#view-' + t.viewId);
+      if (!sec) return;
+      var filter = sec.querySelector('.filter');
+      var kw = filter.querySelector('input');
+      var sels = filter.querySelectorAll('select');
+      var btns = filter.querySelectorAll('button');
+      // 查询重置
+      btns[0].addEventListener('click', function () {
+        $$('#' + t.viewId + ' tbody tr').forEach(function (tr) {
+          var d = articleRow(t.viewId, tr);
+          var ok = (!kw.value || d.title.indexOf(kw.value) > -1 || d.cat.indexOf(kw.value) > -1);
+          if (ok && t.catSelIdx && sels[t.catSelIdx - 1] && sels[t.catSelIdx - 1].value !== '全部') ok = d.cat === sels[t.catSelIdx - 1].value;
+          if (ok && t.stSelIdx && sels[t.stSelIdx - 1] && sels[t.stSelIdx - 1].value !== '全部') ok = d.status === sels[t.stSelIdx - 1].value;
+          tr.style.display = ok ? '' : 'none';
+        });
+        updatePagerInfo(sec, countVisibleRows(sec));
+        toast('筛选已应用');
+      });
+      if (btns.length > 1) btns[1].addEventListener('click', function () {
+        $$(filter.querySelectorAll('input,select')).forEach(function (el) { if (el.tagName === 'INPUT') el.value = ''; else el.value = '全部'; });
+        $$('#' + t.viewId + ' tbody tr').forEach(function (tr) { tr.style.display = ''; });
+        updatePagerInfo(sec, countVisibleRows(sec));
+        toast('已重置');
+      });
+      // 行操作（编辑回填编辑器 / 删除）
+      sec.querySelector('tbody').addEventListener('click', function (e) {
+        var op = e.target.closest('.op');
+        if (!op) return;
+        var tr = e.target.closest('tr');
+        var d = articleRow(t.viewId, tr);
+        if (op.classList.contains('del') || op.textContent.trim() === '删除') {
+          if (confirm('确认删除「' + d.title + '」？')) { tr.remove(); updatePagerInfo(sec, countVisibleRows(sec)); renderBoard(); toast('已删除（演示）'); }
+        } else if (op.textContent.trim() === '编辑') {
+          // 回填编辑器（news/tips 共用编辑区，分类选项不同）
+          $('#ed-title').value = d.title;
+          var cats = $$('#ed-cat option').map(function (o) { return o.value; });
+          if (cats.indexOf(d.cat) > -1) $('#ed-cat').value = d.cat;
+          if (d.status === '已下线') { /* 保留状态提示 */ }
+          $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+          $('#ed-title').focus();
+          editingArticle = { viewId: t.viewId, tr: tr, d: d };
+          toast('已载入编辑器，可修改后保存（将覆盖原记录）');
+        }
+      });
+    });
+    // 发布 / 存草稿（若处于编辑态则覆盖原行）
+    $('#btnPublish').addEventListener('click', function () {
+      var title = $('#ed-title').value.trim();
+      var body = ($('#ed-body').innerText !== undefined ? $('#ed-body').innerText : $('#ed-body').textContent).trim();
+      if (!title) { toast('请填写新闻标题'); return; }
+      if (!body) { toast('请填写新闻正文'); return; }
+      if (editingArticle) { updateArticleRow(editingArticle, '已发布'); }
+      else { addArticleRow(title, $('#ed-cat').value, '已发布'); }
+      toast('新闻已发布：' + title);
+      $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
+    });
+    $('#btnSaveDraft').addEventListener('click', function () {
+      var title = $('#ed-title').value.trim();
+      if (!title) { toast('请填写新闻标题'); return; }
+      if (editingArticle) { updateArticleRow(editingArticle, '草稿'); }
+      else { addArticleRow(title, $('#ed-cat').value, '草稿'); }
+      toast('已存为草稿：' + title);
+      $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
+    });
+    $('#btnNewArticle').addEventListener('click', function () {
+      $('#view-content').scrollIntoView && null;
+      editingArticle = null;
+      $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      $('#ed-title').focus();
+    });
+    $('#btnNewTip').addEventListener('click', function () {
+      editingArticle = null;
+      var title = $('#ed-title').value.trim();
+      if (!title) { toast('请先在下方编辑器填写标题，或使用列表编辑'); return; }
+      addTipRow(title, '公司公告', '已发布');
+      toast('资讯已发布');
+      $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
+    });
+    // 追加提示：新闻 tab 增加 tips 支持——tips 行编辑时 cat 固定公司公告类（演示）
+  }
+
+  var editingArticle = null;
+  function addArticleRow(title, cat, status) {
+    var t = $('#newsTbody');
+    var id = randId('N');
+    var cls = statusTagCls(status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="mono">' + esc(id) + '</td><td>' + esc(title) + '</td><td>' + esc(cat) + '</td><td>' + esc($('#dispName').textContent) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + (status === '已发布' ? esc(nowStamp()) : '--') + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
+    t.insertBefore(tr, t.firstChild);
+    updatePagerInfo($('#view-content'), countVisibleRows($('#view-content')));
+    renderBoard();
+  }
+  function addTipRow(title, col, status) {
+    var t = $('#tipTbody');
+    var id = randId('T');
+    var cls = statusTagCls(status);
+    var tr = document.createElement('tr');
+    tr.innerHTML = '<td class="mono">' + esc(id) + '</td><td>' + esc(title) + '</td><td>' + esc(col) + '</td><td>' + esc($('#dispName').textContent) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + (status === '已发布' ? esc(nowStamp()) : '--') + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
+    t.insertBefore(tr, t.firstChild);
+    updatePagerInfo($('#view-tips'), countVisibleRows($('#view-tips')));
+  }
+  function updateArticleRow(ref, status) {
+    var tr = ref.tr, d = ref.d;
+    var tds = tr.querySelectorAll('td');
+    tds[1].textContent = $('#ed-title').value.trim();
+    // 资讯行复用新闻编辑器：仅保留其原始栏目，不覆盖为新闻分类
+    var cat = (ref.viewId === 'tips') ? d.cat : $('#ed-cat').value;
+    tds[2].textContent = cat;
+    var cls = statusTagCls(status);
+    var tag = tr.querySelector('.tag');
+    tag.className = 'tag ' + cls; tag.textContent = status;
+    tds[5].textContent = status === '已发布' ? nowStamp() : '--';
+    editingArticle = null;
+    var sec = $('#view-' + ref.viewId);
+    if (sec) updatePagerInfo(sec, countVisibleRows(sec));
+    renderBoard();
+  }
+
+  /* 富文本 */
+  function fmt(cmd) { document.execCommand(cmd); $('#ed-body').focus(); }
+
+  /* ============ 留言 ============ */
+  function refreshMsgBadge() {
+    var pending = $$('#msgList .msg-card .tag.tag-red').length;
+    var badge = $('.menu-item[data-view="messages"] .tag');
+    if (badge) badge.textContent = pending;
+    var card4 = $$('.stat .num')[3]; if (card4) card4.textContent = pending;
+  }
+  function bindMessages() {
+    var list = $('#msgList');
+    list.addEventListener('click', function (e) {
+      var card = e.target.closest('.msg-card'); if (!card) return;
+      var btn = e.target.closest('.btn');
+      if (btn && btn.closest('.reply-bar')) {
+        var inp = card.querySelector('.reply-bar input');
+        var txt = inp.value.trim();
+        if (!txt) { toast('请输入回复内容'); return; }
+        var old = card.querySelector('.msg-reply');
+        var rep = document.createElement('div'); rep.className = 'msg-reply';
+        rep.innerHTML = '<b>官方回复：</b>' + txt.replace(/</g, '&lt;');
+        if (old) old.replaceWith(rep); else card.insertBefore(rep, card.querySelector('.msg-ops'));
+        var tag = card.querySelector('.msg-top .tag'); tag.className = 'tag tag-green'; tag.textContent = '已回复';
+        inp.value = ''; card.querySelector('.reply-bar').style.display = 'none';
+        toast('已回复留言'); refreshMsgBadge();
+        return;
+      }
+      if (e.target.classList.contains('reply-btn')) {
+        var bar = card.querySelector('.reply-bar');
+        bar.style.display = bar.style.display === 'none' ? 'flex' : 'none';
+        if (bar.style.display === 'flex') card.querySelector('.reply-bar input').focus();
+        return;
+      }
+      if (e.target.classList.contains('del')) {
+        if (confirm('确认删除该留言？')) { card.remove(); toast('留言已删除'); refreshMsgBadge(); }
+      }
+    });
+    // 留言查询/重置
+    var sec = $('#view-messages');
+    var kw = sec.querySelector('.filter input');
+    var sel = sec.querySelector('.filter select');
+    var btns = sec.querySelectorAll('.filter button');
+    btns[0].addEventListener('click', function () {
+      $$('#msgList .msg-card').forEach(function (c) {
+        var txt = c.textContent;
+        var ok = (!kw.value || txt.indexOf(kw.value) > -1) && (sel.value === '全部' || txt.indexOf(sel.value) > -1);
+        c.style.display = ok ? '' : 'none';
+      });
+    });
+    btns[1].addEventListener('click', function () { kw.value = ''; sel.value = '全部'; $$('#msgList .msg-card').forEach(function (c) { c.style.display = ''; }); toast('已重置'); });
+  }
+
+  /* ============ 数据看板 ============ */
+  function renderBoard() {
+    var el = $('#view-board');
+    if (!el) return;
+    var stores = $('#view-stores tbody tr') ? $('#view-stores tbody tr').length : 0;
+    var items = $('#view-styles tbody tr') ? $('#view-styles tbody tr').length : 0;
+    var news = $('#newsTbody tr') ? $('#newsTbody tr').length : 0;
+    var msgs = $$('#msgList .msg-card .tag.tag-red').length;
+    $('#bdStores').textContent = stores;
+    $('#bdItems').textContent = items;
+    $('#bdNews').textContent = news;
+    $('#bdMsgs').textContent = msgs;
+    // 城市条
+    var cityCount = {};
+    storeRows().forEach(function (d) { cityCount[d.city] = (cityCount[d.city] || 0) + 1; });
+    var keys = Object.keys(cityCount).sort();
+    var max = Math.max.apply(null, keys.map(function (k) { return cityCount[k]; }).concat([1]));
+    var bars = keys.map(function (c) {
+      return '<div class="bar-row"><span class="city">' + c + '</span><span class="bar-track"><span class="bar-fill" style="width:' + Math.round(cityCount[c] / max * 100) + '%"></span></span><span class="val">' + cityCount[c] + '</span></div>';
+    }).join('') || '<div style="color:#909399;padding:8px 0">暂无门店</div>';
+    $('#bdCityBars').innerHTML = bars;
+    // 快捷入口
+    $$('#view-board [data-jump]').forEach(function (b) {
+      b.addEventListener('click', function () { switchView(b.dataset.jump, VIEW_TITLES[b.dataset.jump]); });
+    });
+  }
+
+  /* ============ 参数设置 ============ */
+  function loadSettings() {
+    try {
+      var s = JSON.parse(localStorage.getItem('fly_admin_settings') || 'null');
+      if (s) {
+        $('#cfgSiteName').value = s.siteName || '';
+        $('#cfgKeywords').value = s.keywords || '';
+        $('#cfgIcp').value = s.icp || '';
+        $('#cfgPhone').value = s.phone || '';
+        $('#cfgEmail').value = s.email || '';
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function bindSettings() {
+    $('#btnCfgSave').addEventListener('click', function () {
+      var s = {
+        siteName: $('#cfgSiteName').value.trim(),
+        keywords: $('#cfgKeywords').value.trim(),
+        icp: $('#cfgIcp').value.trim(),
+        phone: $('#cfgPhone').value.trim(),
+        email: $('#cfgEmail').value.trim()
+      };
+      try { localStorage.setItem('fly_admin_settings', JSON.stringify(s)); toast('参数已保存（本地演示）'); }
+      catch (e) { toast('保存失败：' + e.message); }
+    });
+    $('#btnCfgReset').addEventListener('click', function () {
+      try { localStorage.removeItem('fly_admin_settings'); } catch (e) { /* ignore */ }
+      $('#cfgSiteName').value = 'FLY 品牌官网';
+      $('#cfgKeywords').value = 'FLY, 服饰, 品牌官网, 门店';
+      $('#cfgIcp').value = '沪ICP备2026XXXXXX号';
+      $('#cfgPhone').value = '400-800-2026';
+      $('#cfgEmail').value = 'service@fly.com';
+      toast('已恢复默认');
+    });
+  }
+
+  /* ============ 操作日志 ============ */
+  var LOGS = [];
+  function seedLogs() {
+    var t = new Date();
+    function ts(offsetMin) { var n = new Date(t.getTime() - offsetMin * 60000); return n.getFullYear() + '-' + String(n.getMonth() + 1).padStart(2, '0') + '-' + String(n.getDate()).padStart(2, '0') + ' ' + String(n.getHours()).padStart(2, '0') + ':' + String(n.getMinutes()).padStart(2, '0') + ':' + String(n.getSeconds()).padStart(2, '0'); }
+    LOGS = [
+      { t: ts(8), user: 'admin', type: '登录', action: '登录后台', obj: '—', detail: 'IP 127.0.0.1 登录成功' },
+      { t: ts(22), user: 'admin', type: '门店', action: '更新', obj: 'S001', detail: '修改门店 北京三里屯店 状态' },
+      { t: ts(36), user: 'editor', type: '内容', action: '发布', obj: 'N001', detail: '发布新闻《FLY 2026 秋冬新品发布》' },
+      { t: ts(55), user: 'merch', type: '款式', action: '上架', obj: 'ST003', detail: '童趣印花卫衣 上架' },
+      { t: ts(80), user: 'admin', type: '系统', action: '新增', obj: 'U004', detail: '新增后台账号 temp01' },
+      { t: ts(130), user: 'admin', type: '门店', action: '删除', obj: 'S099', detail: '删除演示门店' },
+      { t: ts(200), user: 'editor', type: '内容', action: '存草稿', obj: 'N004', detail: '新闻存为草稿' },
+      { t: ts(320), user: 'admin', type: '登录', action: '登录后台', obj: '—', detail: 'IP 127.0.0.1 登录成功' }
+    ];
+  }
+  function renderLogs(list) {
+    var rows = list || LOGS;
+    var tb = $('#logTbody');
+    if (!tb) return;
+    tb.innerHTML = rows.map(function (l) {
+      var tCls = { '登录': 'tag-blue', '系统': 'tag-orange', '门店': 'tag-green', '内容': 'tag-green', '款式': 'tag-green' }[l.type] || 'tag-gray';
+      return '<tr><td class="mono">' + l.t + '</td><td>' + l.user + '</td><td><span class="tag ' + tCls + '">' + l.type + '</span></td><td>' + l.action + '</td><td class="mono">' + l.obj + '</td><td>' + l.detail + '</td></tr>';
+    }).join('') || '<tr><td colspan="6" style="text-align:center;color:#909399;padding:20px">暂无日志</td></tr>';
+    $('#logCount').textContent = '共 ' + rows.length + ' 条';
+  }
+  function bindLogs() {
+    $('#btnLogQuery').addEventListener('click', function () {
+      var u = $('#logUserKw').value.trim();
+      var tp = $('#logTypeSel').value;
+      var list = LOGS.filter(function (l) { return (!u || l.user.indexOf(u) > -1) && (!tp || l.type === tp); });
+      renderLogs(list);
+      toast('日志筛选已应用');
+    });
+    $('#btnLogReset').addEventListener('click', function () {
+      $('#logUserKw').value = ''; $('#logTypeSel').value = '';
+      renderLogs(LOGS);
+      toast('已重置');
+    });
+    $('#btnLogClear').addEventListener('click', function () {
+      if (confirm('确认清空全部操作日志？（演示）')) { LOGS = []; renderLogs(); toast('日志已清空'); }
+    });
+  }
+
+  /* ============ 分页器（演示反馈） ============ */
+  function bindPagers() {
+    $$('.pager').forEach(function (pager) {
+      pager.addEventListener('click', function (e) {
+        var pg = e.target.closest('.pg');
+        if (!pg) return;
+        if (pg.textContent.trim() === '上一页' || pg.textContent.trim() === '下一页') { toast('演示：分页为示例数据'); return; }
+        $$(pager.querySelectorAll('.pg.active')).forEach(function (a) { a.classList.remove('active'); });
+        pg.classList.add('active');
+        toast('第 ' + pg.textContent.trim() + ' 页（演示数据）');
+      });
+    });
+  }
+
+  /* ============ 初始化 ============ */
+  function init() {
+    var d = new Date();
+    $('#today').textContent = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + ' 数据更新于 ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    bindNav();
+    bindLogin();
+    bindStores();
+    bindStoreModal();
+    bindTableViews();
+    initBannerApi();
+    bindContent();
+    bindMessages();
+    bindSettings();
+    bindLogs();
+    bindPagers();
+    renderOrderChart();
+    seedLogs();
+    refreshMsgBadge();
+    renderBoard();
+    $('#rolePick').dispatchEvent(new Event('change'));
+  }
+
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', init); }
+  else { init(); }
+
+  window.fmt = fmt;
+})();
+
+</script>
+</body>
+</html>
