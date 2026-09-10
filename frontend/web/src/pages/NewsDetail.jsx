@@ -1,12 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import SiteNav from "../components/SiteNav.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
-import { formatDate, getNewsByCat, getNewsDetail } from "../data/siteData.js";
+import { formatDate } from "../data/siteData.js";
+import { fetchNewsDetail, fetchNewsList, localDetail, localList } from "../data/newsApi.js";
 
 const CAT_LABEL = { company: "企业新闻", industry: "行业资讯" };
 
-// 正文节点渲染：lead/p/h/quote/img
+// 正文节点渲染：lead/p/h/quote/img（仅当后端未返回 HTML 时使用，例如本地兜底数据）
 function Body({ nodes }) {
   return (
     <div className="art-body">
@@ -35,13 +36,49 @@ function Body({ nodes }) {
 
 export default function NewsDetail() {
   const { category, slug } = useParams();
-  const article = getNewsDetail(category, slug);
-  const related = article ? getNewsByCat(article.cat).filter(n => n.slug !== article.slug).slice(0, 2) : [];
+  // 以数据库为准：接口确认不存在 → 跳列表；接口不可用 → 才回退本地默认
+  const [article, setArticle] = useState(null);
+  const [related, setRelated] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [fallback, setFallback] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    setArticle(null);
+    setFallback(false);
+
+    fetchNewsDetail(category, slug).then((res) => {
+      if (!alive) return;
+      if (res.ok) {
+        setArticle(res.article); // 可能为 null：后端确认该文不存在或未发布
+      } else {
+        setArticle(localDetail(category, slug)); // 接口不可用 → 本地兜底
+        setFallback(true);
+      }
+      setLoading(false);
+    });
+
+    return () => { alive = false; };
+  }, [category, slug]);
+
+  // 相关阅读独立拉取，不阻塞正文
+  useEffect(() => {
+    let alive = true;
+    fetchNewsList(category).then((res) => {
+      if (!alive) return;
+      const base = res.ok ? res.items : localList(category);
+      setRelated(base.filter((n) => n.slug !== slug).slice(0, 2));
+    });
+    return () => { alive = false; };
+  }, [category, slug]);
 
   useEffect(() => {
     if (article) document.title = `${article.title} · FLY`;
   }, [article]);
 
+  // 加载中不渲染兜底内容，避免「本地默认」闪现；接口确认不存在再跳列表
+  if (loading) return null;
   if (!article) return <Navigate to="/news/company" replace />;
 
   return (
@@ -62,7 +99,7 @@ export default function NewsDetail() {
               <div className="cat">{CAT_LABEL[article.cat]}</div>
               <h1>{article.title}</h1>
               <div className="meta-row">
-                <span>{formatDate(article.date)}</span>·<span>{article.place}</span>·<span>{article.editor}</span>
+                <span>{formatDate(article.date)}</span>·<span>{article.place || article.editor}</span>
               </div>
             </header>
 
@@ -70,7 +107,21 @@ export default function NewsDetail() {
               <img src={article.cover} alt={article.title} />
             </figure>
 
-            <Body nodes={article.body} />
+            {fallback && (
+              <p className="news-note">后端暂不可用，当前展示本地默认内容</p>
+            )}
+
+            {article.html ? (
+              <>
+                {article.lead ? <p className="art-lead">{article.lead}</p> : null}
+                <div
+                  className="art-body"
+                  dangerouslySetInnerHTML={{ __html: article.html }}
+                />
+              </>
+            ) : (
+              <Body nodes={article.body || []} />
+            )}
 
             <footer className="art-foot">
               <div className="tags">

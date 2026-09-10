@@ -1,0 +1,129 @@
+REM ============================================
+REM 0. 进入项目目录
+REM ============================================
+cd /d D:\FLY网站
+
+
+REM ============================================
+REM 1. 测试 SSH（应返回 Hi 你的用户名!）
+REM ============================================
+ssh -T git@github.com
+
+
+REM ============================================
+REM 2. 如果还没初始化仓库，执行一次
+REM ============================================
+git init
+
+
+REM ============================================
+REM 3. 配置 Git 身份（全局只做一次） 要和github上的一致才能推送成功
+REM ============================================
+git config --global user.name "你的GitHub用户名"
+git config --global user.email "你的GitHub邮箱"
+
+
+REM ============================================
+REM 4. 可选但强烈建议：创建 .gitignore
+REM    如果已有 .gitignore，请用 notepad .gitignore 手动编辑，不要覆盖
+REM ============================================
+echo node_modules/ > .gitignore
+echo dist/ >> .gitignore
+echo .env >> .gitignore
+echo .DS_Store >> .gitignore
+
+git add .gitignore
+git commit -m "chore: 添加 .gitignore"
+
+
+REM ============================================
+REM 5. 第一次全量提交，建立安全网
+REM    此时 frontend\web\static 也在版本里，删了能恢复
+REM ============================================
+git status
+git add -A
+git commit -m "feat: FLY 品牌官网初始代码库"
+
+
+REM ============================================
+REM 6. 现在删除 static 才安全
+REM    6.1 先从 Git 索引移除（磁盘文件先保留）
+REM ============================================
+git rm -r --cached frontend/web/static
+
+REM 6.2 再物理删除磁盘目录
+if exist "frontend\web\static" rmdir /s /q "frontend\web\static"
+
+REM 6.3 提交清理结果
+git commit -m "chore: 移除冗余的 static 资源目录（与 bak/ 及 public/pic/ 重复）"
+
+
+REM ============================================
+REM 7. 去 GitHub 网页建空仓库
+REM    仓库名：FLY
+REM    不要勾 Add README、.gitignore、license
+REM ============================================
+
+
+REM ============================================
+REM 8. 关联远程仓库
+REM    先看有没有 origin
+REM ============================================
+git remote -v
+
+REM 如果输出里有 origin，执行这一条改地址：
+git remote set-url origin git@github.com:你的用户名/FLY.git
+
+REM 如果什么都没输出，执行这一条添加：
+REM git remote add origin git@github.com:你的用户名/FLY.git
+
+REM 再次确认
+git remote -v
+
+
+REM ============================================
+REM 9. 确认分支名是 main
+REM ============================================
+git branch
+
+REM 如果显示 * master，执行：
+REM git branch -M main
+
+REM 如果显示 * main，跳过上面那条
+
+
+REM ============================================
+REM 10. 推送到 GitHub
+REM ============================================
+git push -u origin main
+
+
+REM ============================================
+REM 11. 验证
+REM ============================================
+git status
+git log --oneline
+
+
+
+
+
+
+送新版本（日常改动）
+cmd
+cd /d D:\FLY网站
+
+REM 1. 先看当前改了什么（非常重要，别跳过）
+git status
+
+REM 2. 想看具体改动内容
+git diff
+
+REM 3. 全部加入暂存区
+git add -A
+
+REM 4. 提交（把引号里的描述换成你这次的实际改动）
+git commit -m "feat: 描述这次改了什么"
+
+REM 5. 推送到 GitHub
+git push

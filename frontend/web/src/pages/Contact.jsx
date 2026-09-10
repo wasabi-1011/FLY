@@ -7,17 +7,21 @@ import AboutTabs from "../components/AboutTabs.jsx";
 import { CONTACT, CONTACT_TOPICS } from "../data/aboutData.js";
 
 // /contact 联系我们：联系信息 + 留言/合作垂询表单
-// 表单当前为纯前端演示（校验 + 成功态）；二期提交到后台「留言管理」接口，与后台 CONTENT_OPS 留言模块闭环。
+// 表单提交到 POST /api/contact，写入 contact_messages 表，后台「留言管理」可查看处理。
+const TOPIC_TO_COOP = { business: "hq", media: "media", channel: "channel" };
+
 export default function Contact() {
   const [form, setForm] = useState({ name: "", contact: "", topic: "business", content: "" });
   const [err, setErr] = useState({});
   const [sent, setSent] = useState(null);
+  const [sending, setSending] = useState(false);
+  const [fail, setFail] = useState("");
 
   useEffect(() => { document.title = "联系我们 · FLY"; }, []);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const submit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
     const next = {};
     if (!form.name.trim()) next.name = "请填写称呼";
@@ -28,11 +32,39 @@ export default function Contact() {
     else if (form.content.trim().length < 10) next.content = "内容至少 10 个字";
     setErr(next);
     if (Object.keys(next).length) return;
-    const no = `MS${Date.now().toString().slice(-8)}`;
-    setSent({ no, topic: CONTACT_TOPICS.find((t) => t.v === form.topic)?.l });
+
+    const val = form.contact.trim();
+    const isEmail = /^[\w.+-]+@[\w-]+(\.[\w-]+)+$/.test(val);
+    const payload = {
+      name: form.name.trim(),
+      contact: val,
+      contact_type: isEmail ? "email" : "phone",
+      coop_type: TOPIC_TO_COOP[form.topic] || null,
+      content: form.content.trim(),
+    };
+
+    setSending(true);
+    setFail("");
+    try {
+      const r = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.detail || "提交失败，请稍后再试");
+      setSent({
+        no: "M" + String(d.id ?? "000").padStart(3, "0"),
+        topic: CONTACT_TOPICS.find((t) => t.v === form.topic)?.l,
+      });
+    } catch (e2) {
+      setFail(e2.message || "网络异常，提交失败");
+    } finally {
+      setSending(false);
+    }
   };
 
-  const again = () => { setSent(null); setForm({ name: "", contact: "", topic: "business", content: "" }); setErr({}); };
+  const again = () => { setSent(null); setForm({ name: "", contact: "", topic: "business", content: "" }); setErr({}); setFail(""); };
 
   return (
     <>
@@ -73,7 +105,7 @@ export default function Contact() {
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
                 <h3>留言已收到</h3>
                 <p>编号 <b>{sent.no}</b> · 类型「{sent.topic}」</p>
-                <p className="dim">我们会尽快通过你留下的联系方式回复（当前为演示环境，留言仅在本页展示，二期将提交至后台「留言管理」）。</p>
+                <p className="dim">留言已进入后台「留言管理」，我们会尽快通过你留下的联系方式回复。</p>
                 <button className="btn" onClick={again}>再写一条</button>
               </div>
             ) : (
@@ -102,9 +134,10 @@ export default function Contact() {
                   {err.content && <em className="f-err">{err.content}</em>}
                 </label>
                 <div className="f-actions">
-                  <button type="submit" className="btn">提交留言</button>
-                  <span className="f-hint">演示环境 · 二期对接后台留言管理接口</span>
+                  <button type="submit" className="btn" disabled={sending}>{sending ? "提交中…" : "提交留言"}</button>
+                  <span className="f-hint">留言进入后台留言管理 · 由专人跟进</span>
                 </div>
+                {fail && <em className="f-err" style={{ marginTop: 10 }}>{fail}</em>}
               </form>
             )}
           </section>

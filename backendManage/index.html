@@ -237,9 +237,7 @@
   .reply-bar{display:flex;gap:8px;margin-top:8px;}
   .reply-bar input{flex:1;height:32px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;}
   .reply-bar input:focus{outline:none;border-color:#409eff;}
-  /* 图片缩略图（款式主图 / 轮播 Banner）与弹窗图片预览 */
-  .img-th{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:64px;height:40px;padding:0 6px;border-radius:6px;overflow:hidden;font-style:normal;font-size:11px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);background:#eef1f7 center/cover no-repeat;border:1px solid rgba(255,255,255,.55);vertical-align:middle}
-  .img-th.banner{min-width:160px;height:56px}
+  /* 弹窗图片预览与选择器 */
   .img-prev{display:block;width:100%;height:72px;border-radius:6px;background:repeating-linear-gradient(45deg,#f5f7fa,#f5f7fa 10px,#eef1f7 10px,#eef1f7 20px) center/cover no-repeat;border:1px dashed #dcdfe6}
   .imgpick{display:flex;align-items:center;gap:12px}
   .imgpick .img-prev{width:220px;height:84px;flex:none;margin:0}
@@ -315,7 +313,7 @@
         <svg class="ico-sm sub" data-page-node-id="cEd2zdDuYn4a5yLDlKP27w"><polyline points="9 6 15 12 9 18" data-page-node-id="RYA4DRwMbl1CVcn5LwMT6d"/></svg>
       </div>
       <div class="submenu" id="sub-content" data-page-node-id="lJvhRu4A5esmhvMRl3UozD">
-        <a data-view="content" class="active" data-page-node-id="FiOkLD0nTDEcDRblHto0WR">新闻管理</a><a data-view="tips" data-page-node-id="WK2I441xn10jOyhBZKiQKs">资讯管理</a>
+        <a data-view="content" class="active" data-page-node-id="FiOkLD0nTDEcDRblHto0WR">新闻与资讯管理</a>
       </div>
 
       <div class="menu-item has-sub" data-sub="web" data-roles="SUPER_ADMIN,CONTENT_OPS" data-page-node-id="WEB_MENU_ROOT_2026A">
@@ -376,6 +374,14 @@
     </header>
 
     <main class="content" data-page-node-id="kRODtjMCQAr5Epb6vYxQdz">
+      <!-- ===== 全局后端连接条（所有模块共用同一个，避免各视图各写一套导致某个页面按钮失效） ===== -->
+      <div class="card api-bar" id="globalApiBar" style="position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:16px;flex-wrap:wrap">
+        <span class="api-state tag tag-gray">未连接后端</span>
+        <span class="api-bar-hint" style="flex:1;min-width:240px;color:#909399;font-size:13px">连接后端后，「内容管理 / 网页管理 / 留言管理」等模块的增删改都会写入 fly.db 并即时同步官网前台；未连接时为本地演示（刷新即还原）。</span>
+        <button class="btn primary btn-api-connect">连接后端</button>
+        <button class="btn btn-api-refresh" hidden>重新拉取</button>
+        <button class="btn btn-api-logout" hidden>断开</button>
+      </div>
       <!-- ===== Dashboard ===== -->
       <section class="view" id="view-dashboard" data-page-node-id="wR9KbJIQcJ5U8uuSb6Bdp6">
         <div class="page-head" data-page-node-id="uEdNm5izGLEXfbr71qGMSv"><h2 data-page-node-id="aJkfGnxCfQhNAMsVqutw9u">仪表盘</h2><span class="sub" id="today" data-page-node-id="tlaq76r8T4AjsKG2Voe4TS"></span></div>
@@ -585,38 +591,46 @@
         </div>
       </section>
 
-      <!-- ===== 新闻管理 ===== -->
+      <!-- ===== 新闻与资讯管理（合并原「新闻管理 + 资讯管理」，同源 articles 表，以分类区分） ===== -->
       <section class="view" id="view-content" hidden>
-        <div class="page-head"><h2>新闻管理</h2><span class="sub">企业新闻 · 编辑发布 · 上线即时同步前台</span></div>
+        <div class="page-head"><h2>新闻与资讯管理</h2><span class="sub">企业新闻 · 行业资讯 · 同源 articles 表，以「分类」区分 · 上线即时同步前台</span></div>
         <div class="card">
           <div class="filter">
-            <label>标题 <input type="text" placeholder="请输入新闻标题"></label>
-            <label>分类 <select><option>全部</option><option>品牌动态</option><option>门店开业</option><option>社会责任</option><option>行业资讯</option></select></label>
-            <label>状态 <select><option>全部</option><option>已发布</option><option>草稿</option><option>已下线</option></select></label>
-            <button class="btn primary">查询</button>
-            <button class="btn">重置</button>
-            <span class="spacer"></span>
-            <button class="btn primary" id="btnNewArticle"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>发布新闻</button>
+            <label>标题 <input type="text" class="f-kw" placeholder="请输入标题关键词"></label>
+            <label>分类 <select class="f-cat"><option value="">全部</option><option value="company">企业新闻</option><option value="industry">行业资讯</option></select></label>
+            <label>状态 <select class="f-st"><option value="">全部</option><option value="online">已发布</option><option value="draft">草稿</option><option value="offline">已下线</option></select></label>
+            <button class="btn primary" id="btnQueryArticle">查询</button>
+            <button class="btn" id="btnResetArticle">重置</button>
           </div>
           <table>
             <thead><tr><th>ID</th><th>标题</th><th>分类</th><th>作者</th><th>状态</th><th>发布时间</th><th>操作</th></tr></thead>
             <tbody id="newsTbody">
-              <tr><td class="mono">N001</td><td>FLY 2026 秋冬新品发布</td><td>品牌动态</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 10:00</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">N002</td><td>北京三里屯旗舰店盛大开业</td><td>门店开业</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-05 09:30</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">N003</td><td>携手环保组织发布绿色制造白皮书</td><td>社会责任</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-04 15:12</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">N004</td><td>2026 秋季面料趋势解读</td><td>行业资讯</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">N005</td><td>成都春熙店升级焕新</td><td>门店开业</td><td>内容编辑小王</td><td><span class="tag tag-gray">已下线</span></td><td>2026-08-30 11:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N001</td><td>FLY 2026 秋冬新品发布</td><td>企业新闻</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 10:00</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N002</td><td>北京三里屯旗舰店盛大开业</td><td>企业新闻</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-05 09:30</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N003</td><td>携手环保组织发布绿色制造白皮书</td><td>企业新闻</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-04 15:12</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N004</td><td>2026 秋冬面料趋势观察</td><td>行业资讯</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-07 16:40</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N005</td><td>可持续时尚消费洞察报告</td><td>行业资讯</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 14:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N006</td><td>2026 秋季面料趋势解读</td><td>行业资讯</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N007</td><td>成都春熙店升级焕新</td><td>企业新闻</td><td>内容编辑小王</td><td><span class="tag tag-gray">已下线</span></td><td>2026-08-30 11:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
+              <tr><td class="mono">N008</td><td>门店取货服务上线说明</td><td>企业新闻</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
             </tbody>
           </table>
-          <div class="pager"><span>共 28 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+          <div class="pager"><span>共 8 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
         </div>
         <div class="card" style="margin-top:14px">
-          <div class="card-h">编辑 / 发布新闻</div>
+          <div class="card-h">编辑 / 发布内容</div>
           <div class="editor-card" id="articleEditor">
             <div class="form-grid">
-              <label class="ed-field">标题<input id="ed-title" type="text" placeholder="请输入新闻标题"></label>
+              <label class="ed-field">标题<input id="ed-title" type="text" placeholder="请输入标题"></label>
               <label class="ed-field">分类
-                <select id="ed-cat"><option>品牌动态</option><option>门店开业</option><option>社会责任</option><option>行业资讯</option></select>
+                <select id="ed-cat"><option value="company">企业新闻</option><option value="industry">行业资讯</option></select>
+              </label>
+              <label class="ed-field">摘要<input id="ed-summary" type="text" placeholder="列表页展示的一句话摘要（选填）"></label>
+              <label class="ed-field">封面图片
+                <span style="display:flex;gap:8px;align-items:center">
+                  <input id="ed-cover" type="text" placeholder="选择封面图片（选填）" style="flex:1">
+                  <button class="btn" type="button" id="btnEdCover">选择图片</button>
+                </span>
               </label>
             </div>
             <div>
@@ -628,10 +642,10 @@
                 <button type="button" title="无序列表" onclick="fmt('insertUnorderedList')">•</button>
                 <button type="button" title="清除格式" onclick="fmt('removeFormat')">T̶</button>
               </div>
-              <div class="ed-area" id="ed-body" contenteditable="true" aria-label="新闻正文（可编辑富文本）"></div>
+              <div class="ed-area" id="ed-body" contenteditable="true" aria-label="正文（可编辑富文本）"></div>
             </div>
             <div class="ed-foot">
-              <span class="ed-hint">支持粗体 / 斜体 / 列表等富文本，<b>保存后需在上方列表手动刷新查看</b></span>
+              <span class="ed-hint">支持粗体 / 斜体 / 列表等富文本；选择「分类」即可发布企业新闻或行业资讯，发布后前台对应列表立即可见。</span>
               <div style="display:flex;gap:10px">
                 <button class="btn" id="btnSaveDraft">存草稿</button>
                 <button class="btn primary" id="btnPublish">发布</button>
@@ -641,40 +655,9 @@
         </div>
       </section>
 
-      <!-- ===== 资讯管理 ===== -->
-      <section class="view" id="view-tips" hidden>
-        <div class="page-head"><h2>资讯管理</h2><span class="sub">企业资讯 / 公告 · 编辑发布</span></div>
-        <div class="card">
-          <div class="filter">
-            <label>标题 <input type="text" placeholder="请输入资讯标题"></label>
-            <label>栏目 <select><option>全部</option><option>公司公告</option><option>会员资讯</option><option>促销活动</option></select></label>
-            <button class="btn primary">查询</button>
-            <button class="btn">重置</button>
-            <span class="spacer"></span>
-            <button class="btn primary" id="btnNewTip"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>发布资讯</button>
-          </div>
-          <table>
-            <thead><tr><th>ID</th><th>标题</th><th>栏目</th><th>作者</th><th>状态</th><th>发布时间</th><th>操作</th></tr></thead>
-            <tbody id="tipTbody">
-              <tr><td class="mono">T001</td><td>会员积分规则更新公告</td><td>公司公告</td><td>超级管理员</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-07 16:40</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">T002</td><td>秋季会员专属 8 折券发放</td><td>促销活动</td><td>内容编辑小王</td><td><span class="tag tag-green">已发布</span></td><td>2026-09-06 14:20</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-              <tr><td class="mono">T003</td><td>门店取货服务上线说明</td><td>会员资讯</td><td>超级管理员</td><td><span class="tag tag-orange">草稿</span></td><td>--</td><td><span class="op" data-edit="1">编辑</span><span class="op del" data-del="1">删除</span></td></tr>
-            </tbody>
-          </table>
-          <div class="pager"><span>共 16 条</span></div>
-        </div>
-      </section>
-
       <!-- ===== 网页管理 · 首页轮播图 ===== -->
       <section class="view" id="view-banners" hidden>
         <div class="page-head"><h2>首页轮播图</h2><span class="sub">网页管理 · 官网首页 Banner 图片管理（连接后端后，改动将写入 fly.db 并即时发布到官网首页）</span></div>
-        <div class="card" id="bannerApiBar" style="display:flex;align-items:center;gap:12px;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap">
-          <span id="apiState" class="tag tag-gray">未连接后端</span>
-          <span style="flex:1;min-width:220px;color:#909399;font-size:13px">未连接时仅为本地演示（刷新后还原）；连接后每一次增删改都会同步到后端首页轮播区块。</span>
-          <button class="btn primary" id="btnApiConnect">连接后端</button>
-          <button class="btn" id="btnApiRefresh" hidden>重新拉取</button>
-          <button class="btn" id="btnApiLogout" hidden>断开</button>
-        </div>
         <div class="card">
           <div class="filter">
             <label>标题 <input type="text" placeholder="请输入轮播标题"></label>
@@ -687,10 +670,10 @@
           <table>
             <thead><tr><th>ID</th><th>图片</th><th>标题</th><th>副标题</th><th>跳转链接</th><th>排序</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
             <tbody id="bnrTbody">
-              <tr><td class="mono">BN001</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flyfw2026/640/240" style="background:linear-gradient(135deg,rgba(91,124,250,.82),rgba(143,111,255,.82)),url('https://picsum.photos/seed/flyfw2026/640/240') center/cover no-repeat"><i>Banner 1</i></span></td><td>FLY 2026 秋冬新品首发</td><td>穿出自我，随心而飞</td><td>/collection/2026fw</td><td>1</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-08 10:20</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">BN002</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flycitytour/640/240" style="background:linear-gradient(135deg,rgba(64,158,255,.82),rgba(88,190,231,.82)),url('https://picsum.photos/seed/flycitytour/640/240') center/cover no-repeat"><i>Banner 2</i></span></td><td>城市旗舰店巡礼</td><td>让「看到」变为「找到」</td><td>/stores</td><td>2</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-07 17:42</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">BN003</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flymemberday/640/240" style="background:linear-gradient(135deg,rgba(250,140,86,.82),rgba(245,108,78,.82)),url('https://picsum.photos/seed/flymemberday/640/240') center/cover no-repeat"><i>Banner 3</i></span></td><td>会员日 · 双倍积分</td><td>会员专属 · 双倍礼遇</td><td>/member</td><td>3</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-06 15:08</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">BN004</td><td><span class="img-th banner" data-img="https://picsum.photos/seed/flyfreshseason/640/240" style="background:linear-gradient(135deg,rgba(127,208,160,.82),rgba(47,174,107,.82)),url('https://picsum.photos/seed/flyfreshseason/640/240') center/cover no-repeat"><i>Banner 4</i></span></td><td>焕新季 · 满 999 减 150</td><td>焕新季 · 满减不止</td><td>/promo/fresh</td><td>4</td><td><span class="tag tag-gray">隐藏</span></td><td>2026-09-05 11:30</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN001</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyfw2026/640/240" title="点击查看大图">查看图片</a></td><td>FLY 2026 秋冬新品首发</td><td>穿出自我，随心而飞</td><td>/collection/2026fw</td><td>1</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-08 10:20</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN002</td><td><a class="vimg" data-img="https://picsum.photos/seed/flycitytour/640/240" title="点击查看大图">查看图片</a></td><td>城市旗舰店巡礼</td><td>让「看到」变为「找到」</td><td>/stores</td><td>2</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-07 17:42</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN003</td><td><a class="vimg" data-img="https://picsum.photos/seed/flymemberday/640/240" title="点击查看大图">查看图片</a></td><td>会员日 · 双倍积分</td><td>会员专属 · 双倍礼遇</td><td>/member</td><td>3</td><td><span class="tag tag-green">显示中</span></td><td>2026-09-06 15:08</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
+              <tr><td class="mono">BN004</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyfreshseason/640/240" title="点击查看大图">查看图片</a></td><td>焕新季 · 满 999 减 150</td><td>焕新季 · 满减不止</td><td>/promo/fresh</td><td>4</td><td><span class="tag tag-gray">隐藏</span></td><td>2026-09-05 11:30</td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
             </tbody>
           </table>
           <div class="pager"><span>共 4 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
@@ -699,29 +682,29 @@
 
       <!-- ===== 留言管理 ===== -->
       <section class="view" id="view-messages" hidden>
-        <div class="page-head"><h2>留言管理</h2><span class="sub">前台留言 · 查看/回复/删除</span></div>
+        <div class="page-head"><h2>留言管理</h2><span class="sub">前台留言 · 查看/处理/删除 · 数据来源 contact_messages 表</span></div>
         <div class="card">
           <div class="filter">
-            <label>关键词 <input type="text" placeholder="留言内容关键词"></label>
-            <label>状态 <select><option>全部</option><option>待回复</option><option>已回复</option></select></label>
+            <label>关键词 <input type="text" placeholder="姓名 / 公司 / 留言内容关键词"></label>
+            <label>状态 <select class="f-st"><option value="">全部</option><option value="pending">待处理</option><option value="contacted">已联系</option><option value="closed">已关闭</option></select></label>
             <button class="btn primary">查询</button>
             <button class="btn">重置</button>
           </div>
           <div id="msgList">
             <div class="msg-card">
-              <div class="msg-top"><span class="msg-name">张女士</span><span class="tag tag-red">待回复</span><span class="msg-meta">北京 · 2026-09-08 09:12 · 留言编号 M034</span></div>
+              <div class="msg-top"><span class="msg-name">张女士</span><span class="tag tag-red">待处理</span><span class="msg-meta">北京 · 2026-09-08 09:12 · 留言编号 M034</span></div>
               <div class="msg-txt">想问下三里屯店最近上新了哪些秋冬款，周末想带孩子去买童装。</div>
               <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
               <div class="reply-bar" style="display:none"><input type="text" placeholder="输入回复内容..."><button class="btn primary">发送</button></div>
             </div>
             <div class="msg-card">
-              <div class="msg-top"><span class="msg-name">李先生</span><span class="tag tag-red">待回复</span><span class="msg-meta">上海 · 2026-09-08 08:47 · 留言编号 M033</span></div>
+              <div class="msg-top"><span class="msg-name">李先生</span><span class="tag tag-red">待处理</span><span class="msg-meta">上海 · 2026-09-08 08:47 · 留言编号 M033</span></div>
               <div class="msg-txt">网上下单了真皮短靴，多久能发货？门店自取怎么操作？</div>
               <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
               <div class="reply-bar" style="display:none"><input type="text" placeholder="输入回复内容..."><button class="btn primary">发送</button></div>
             </div>
             <div class="msg-card">
-              <div class="msg-top"><span class="msg-name">王先生</span><span class="tag tag-green">已回复</span><span class="msg-meta">广州 · 2026-09-07 18:05 · 留言编号 M032</span></div>
+              <div class="msg-top"><span class="msg-name">王先生</span><span class="tag tag-green">已联系</span><span class="msg-meta">广州 · 2026-09-07 18:05 · 留言编号 M032</span></div>
               <div class="msg-txt">请问成都春熙店现在营业时间正常吗？</div>
               <div class="msg-reply"><b>官方回复：</b>您好，成都春熙店营业时间为每日 10:00-22:00，节假日正常营业，欢迎光临。</div>
               <div class="msg-ops"><span class="op reply-btn">回复</span><span class="op del">删除</span></div>
@@ -759,7 +742,7 @@
           <div class="card"><div class="card-h">快捷入口</div><div class="card-b" style="display:flex;flex-direction:column;gap:10px">
             <button class="btn" data-jump="stores">门店管理</button>
             <button class="btn" data-jump="styles">款式管理</button>
-            <button class="btn" data-jump="content">新闻管理</button>
+            <button class="btn" data-jump="content">新闻与资讯管理</button>
             <button class="btn" data-jump="messages">留言管理</button>
             <button class="btn" data-jump="banners">网页管理</button>
           </div></div>
@@ -928,7 +911,7 @@
   var VIEW_TITLES = {
     dashboard: '仪表盘', stores: '门店列表', citygroups: '城市分组',
     styles: '款式列表', series: '系列管理', accounts: '账号管理', roles: '角色管理',
-    content: '新闻管理', tips: '资讯管理', messages: '留言管理',
+    content: '新闻与资讯管理', messages: '留言管理',
     banners: '首页轮播图',
     board: '数据看板', settings: '参数设置', logs: '操作日志'
   };
@@ -957,6 +940,7 @@
 
   function switchView(v, title) {
     if (!document.getElementById('view-' + v)) { toast('该视图不存在：' + v); return; }
+    currentView = v;
     $$('.view').forEach(function (s) { s.hidden = true; });
     document.getElementById('view-' + v).hidden = false;
     $('#crumb').textContent = title || VIEW_TITLES[v] || '首页';
@@ -966,6 +950,8 @@
     if (v === 'board') renderBoard();
     if (v === 'logs') renderLogs();
     if (v === 'settings') loadSettings();
+    // 已连接后端时，切到需要数据的视图自动拉取最新内容
+    if (apiOnline() && API_LOADERS[v]) API_LOADERS[v](true);
   }
 
   /* 菜单事件绑定 */
@@ -1364,24 +1350,6 @@
     return cfg[viewId];
   }
 
-  /* 图片缩略图 HTML：有 http(s)/data: 图片则叠在渐变色上做背景；无 URL 用占位渐变 */
-  function imgThumb(url, label, big) {
-    url = url || ''; label = label || '图';
-    var safe = url.replace(/"/g, '&quot;').replace(/'/g, '');
-    var m = /^(https?:|data:)/i.test(url);
-    var grads = [
-      'linear-gradient(135deg,rgba(91,124,250,.85),rgba(122,168,255,.85))',
-      'linear-gradient(135deg,rgba(246,169,108,.85),rgba(240,112,78,.85))',
-      'linear-gradient(135deg,rgba(127,208,160,.85),rgba(47,174,107,.85))',
-      'linear-gradient(135deg,rgba(176,156,255,.85),rgba(123,92,240,.85))',
-      'linear-gradient(135deg,rgba(111,208,224,.85),rgba(42,160,192,.85))',
-      'linear-gradient(135deg,rgba(245,143,176,.85),rgba(238,95,143,.85))'
-    ];
-    var g = grads[Math.abs((url + label).split('').reduce(function (a, ch) { return a + ch.charCodeAt(0); }, 0)) % grads.length];
-    var bg = m ? g + ",url('" + safe + "') center/cover no-repeat" : g;
-    return '<span class="img-th' + (big ? ' banner' : '') + '" data-img="' + safe + '" style="background:' + bg + '" title="点击查看大图"><i>' + esc(label) + '</i></span>';
-  }
-
   /* 列表"主图"列：不直接渲染图片，显示「查看图片」链接（点击弹大图） */
   function imgLinkCell(v) {
     v = v || '';
@@ -1568,7 +1536,7 @@
         if (c === 'status') { renderTag(tr, idx, vals.status); }
         else if (c === 'time' || c === 'last') { td.textContent = nowStamp(); }
         else if (c === 'cover') { /* 封面编辑独立演示，暂保留原状 */ }
-        else if (c === 'img') { td.innerHTML = viewId === 'banners' ? imgThumb(vals.img, cfg.imgLabel || '图', true) : imgLinkCell(vals.img); }
+        else if (c === 'img') { td.innerHTML = imgLinkCell(vals.img); }
         else {
           var tg = td.querySelector('.tag');
           if (tg) { tg.textContent = vals[c]; tg.className = 'tag tag-blue'; }
@@ -1585,7 +1553,7 @@
         else if (c === 'status') v = '<span class="tag ' + statusTagCls(vals.status) + '">' + esc(vals.status) + '</span>';
         else if (c === 'time' || c === 'last') v = esc(nowStamp());
         else if (c === 'cover') v = '<span class="tag tag-gray">未设</span>';
-        else if (c === 'img') v = viewId === 'banners' ? imgThumb(vals.img, cfg.imgLabel || '图', true) : imgLinkCell(vals.img);
+        else if (c === 'img') v = imgLinkCell(vals.img);
         else if (c === 'sort') v = esc(vals.sort || '0');
         else if (c === 'cnt') v = '0';
         else if (c === 'role') v = '<span class="tag tag-blue">' + esc(vals.role) + '</span>';
@@ -1641,9 +1609,17 @@
       body: opts.body || undefined,
       credentials: 'same-origin'
     }).then(function (r) {
+      // 204/205 无响应体：直接返回 null，避免对空体调用 r.json() 抛错（DELETE 返回 204 + content-type: application/json）
+      if (r.status === 204 || r.status === 205) {
+        if (!r.ok) throw new Error('请求失败（' + r.status + '）');
+        return null;
+      }
       var ct = '';
       try { ct = r.headers.get('content-type') || ''; } catch (e) { }
-      return (ct.indexOf('application/json') > -1 ? r.json() : r.text()).then(function (data) {
+      var parse = ct.indexOf('application/json') > -1
+        ? r.json().catch(function () { return null; })  // 空体/非法 JSON 一律降级为 null，不再中断后续逻辑
+        : r.text();
+      return parse.then(function (data) {
         if (!r.ok) {
           if (r.status === 401) { apiLogout(true); throw new Error('登录已失效，请重新连接'); }
           var msg = (data && data.detail) ? data.detail : ('请求失败（' + r.status + '）');
@@ -1709,7 +1685,7 @@
       var active = f.active !== false;
       tr.innerHTML =
         '<td class="mono">BN' + String(i + 1).padStart(3, '0') + '</td>' +
-        '<td>' + imgThumb(f.image || '', 'Banner ' + (i + 1), true) + '</td>' +
+        '<td>' + imgLinkCell(f.image) + '</td>' +
         '<td>' + esc(f.title || f.kicker || '（未命名）') + '</td>' +
         '<td>' + esc(f.sub || '—') + '</td>' +
         '<td>' + esc(f.link || '—') + '</td>' +
@@ -1793,7 +1769,7 @@
         close();
         refreshApiBar();
         toast('已连接后端：' + u);
-        loadBanners();
+        loadApiViews(false);
       }).catch(function (err) {
         btn.disabled = false; btn.textContent = '连接';
         toast('连接失败：' + err.message);
@@ -1801,41 +1777,71 @@
     });
   }
 
+  /* 当前视图（供连接条的「重新拉取」和切换视图时的自动加载使用） */
+  var currentView = 'dashboard';
+
+  /* 各视图 → 后端数据加载器（新增模块只需在此登记一行，全局连接条自动支持） */
+  var API_LOADERS = {
+    banners: function (s) { return loadBanners(s); },
+    content: function (s) { return loadNews('content', s); },
+    messages: function (s) { return loadMessages(s); }
+  };
+
+  /* 全局唯一的连接状态条：所有模块共用同一个 DOM 与同一套逻辑 */
   function refreshApiBar() {
-    var st = document.getElementById('apiState');
+    var bar = document.getElementById('globalApiBar');
+    if (!bar) return;
+    var st = bar.querySelector('.api-state');
+    var conn = bar.querySelector('.btn-api-connect');
+    var ref = bar.querySelector('.btn-api-refresh');
+    var out = bar.querySelector('.btn-api-logout');
+    var hint = bar.querySelector('.api-bar-hint');
     if (!st) return;
-    var conn = document.getElementById('btnApiConnect');
-    var ref = document.getElementById('btnApiRefresh');
-    var out = document.getElementById('btnApiLogout');
     if (!apiAvailable()) {
-      st.className = 'tag tag-gray'; st.textContent = '离线（本地演示）';
-      if (conn) { conn.disabled = true; conn.textContent = '需通过 http 打开'; }
+      st.className = 'api-state tag tag-gray'; st.textContent = '离线（本地演示）';
+      if (conn) { conn.hidden = false; conn.disabled = true; conn.textContent = '需通过 http 打开'; }
       if (ref) ref.hidden = true;
       if (out) out.hidden = true;
+      if (hint) hint.textContent = '当前为本地演示模式。请通过 http://localhost:8000/admin/index.html 打开，即可连接后端。';
       return;
     }
     if (api.token) {
-      st.className = 'tag tag-green'; st.textContent = '已连接：' + (api.user || 'admin');
+      st.className = 'api-state tag tag-green'; st.textContent = '已连接：' + (api.user || 'admin');
       if (conn) conn.hidden = true;
       if (ref) ref.hidden = false;
       if (out) out.hidden = false;
+      if (hint) hint.textContent = '已连接后端：所有模块的增删改都会写入 fly.db 并即时同步官网前台。';
     } else {
-      st.className = 'tag tag-gray'; st.textContent = '未连接后端';
+      st.className = 'api-state tag tag-gray'; st.textContent = '未连接后端';
       if (conn) { conn.hidden = false; conn.disabled = false; conn.textContent = '连接后端'; }
       if (ref) ref.hidden = true;
       if (out) out.hidden = true;
+      if (hint) hint.textContent = '未连接时为本地演示（刷新即还原）。连接后「内容管理 / 网页管理 / 留言管理」等模块共用这一处连接。';
     }
   }
 
-  function initBannerApi() {
-    var c = document.getElementById('btnApiConnect');
-    var r = document.getElementById('btnApiRefresh');
-    var o = document.getElementById('btnApiLogout');
-    if (c) c.addEventListener('click', openApiLogin);
-    if (r) r.addEventListener('click', function () { loadBanners(); });
-    if (o) o.addEventListener('click', function () { apiLogout(false); });
+  function loadApiViews(silent) {
+    loadBanners(silent !== false);
+    loadNews('content', silent !== false);
+    loadMessages(silent !== false);
+  }
+
+  function initApiBars() {
+    var bar = document.getElementById('globalApiBar');
+    if (bar) {
+      var c = bar.querySelector('.btn-api-connect');
+      var r = bar.querySelector('.btn-api-refresh');
+      var o = bar.querySelector('.btn-api-logout');
+      if (c) c.addEventListener('click', openApiLogin);
+      if (r) r.addEventListener('click', function () {
+        var fn = API_LOADERS[currentView];
+        if (fn) { fn(false); toast('已重新拉取当前页面数据'); }
+        else { toast('当前页面无需从后端拉取数据'); }
+      });
+      if (o) o.addEventListener('click', function () { apiLogout(false); });
+    }
     refreshApiBar();
-    if (apiOnline()) loadBanners(true);
+    if (apiOnline()) loadApiViews(true);
   }
 
   function bindTableViews() {
@@ -1900,6 +1906,146 @@
     function cfgAddText(viewId) { return tableConfig(viewId).btnText; }
   }
 
+  /* ============ 内容运营：新闻与资讯（合并，同源 articles 表） → articles 表 ============ */
+  var NEWS_SCOPE = {
+    content: {
+      tbody: 'newsTbody', defCat: 'company', label: '新闻与资讯', editor: 'articleEditor',
+      ed: { title: 'ed-title', cat: 'ed-cat', body: 'ed-body', summary: 'ed-summary', cover: 'ed-cover' }
+    }
+  };
+  var CAT_TEXT = { company: '企业新闻', industry: '行业资讯' };
+  var ST_TEXT = { online: '已发布', draft: '草稿', offline: '已下线' };
+  var ST_CLS = { online: 'tag tag-green', draft: 'tag tag-orange', offline: 'tag tag-gray' };
+  var editingNews = { content: null };
+
+  function newsQuery(viewId) {
+    var sec = $('#view-' + viewId);
+    if (!sec) return '';
+    var kw = sec.querySelector('.filter .f-kw') || sec.querySelector('.filter input');
+    var cat = sec.querySelector('.filter .f-cat');
+    var st = sec.querySelector('.filter .f-st');
+    var q = [];
+    if (cat && cat.value) q.push('category=' + encodeURIComponent(cat.value));
+    if (st && st.value) q.push('status=' + encodeURIComponent(st.value));
+    if (kw && kw.value.trim()) q.push('keyword=' + encodeURIComponent(kw.value.trim()));
+    return q.length ? ('?' + q.join('&')) : '';
+  }
+
+  function renderNewsRows(viewId, list) {
+    var tb = document.getElementById(NEWS_SCOPE[viewId].tbody);
+    if (!tb) return;
+    tb.innerHTML = '';
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#909399;padding:26px">后端暂无数据，可在下方编辑器发布一条</td></tr>';
+      return;
+    }
+    list.forEach(function (a) {
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-nid', a.id);
+      tr.setAttribute('data-slug', a.slug || '');
+      tr.innerHTML =
+        '<td class="mono">N' + esc(a.id) + '</td>' +
+        '<td>' + esc(a.title) + '</td>' +
+        '<td>' + esc(CAT_TEXT[a.category] || a.category) + '</td>' +
+        '<td>' + esc(a.author || '—') + '</td>' +
+        '<td><span class="' + (ST_CLS[a.status] || 'tag tag-gray') + '">' + esc(ST_TEXT[a.status] || a.status) + '</span></td>' +
+        '<td>' + esc(a.published_at ? fmtApiTime(a.published_at) : '--') + '</td>' +
+        '<td><span class="op">编辑</span><span class="op del">删除</span></td>';
+      tb.appendChild(tr);
+    });
+    var sec = $('#view-' + viewId);
+    if (sec) updatePagerInfo(sec, countVisibleRows(sec));
+  }
+
+  function loadNews(viewId, silent) {
+    if (!apiOnline()) return Promise.resolve();
+    return apiCall('/api/admin/news' + newsQuery(viewId)).then(function (list) {
+      renderNewsRows(viewId, list || []);
+      renderBoard();
+      if (!silent) toast('已拉取' + NEWS_SCOPE[viewId].label + '：' + (list || []).length + ' 条');
+    }).catch(function (err) { if (!silent) toast('拉取失败：' + err.message); });
+  }
+
+  function clearNewsForm(viewId) {
+    var ed = NEWS_SCOPE[viewId].ed;
+    [ed.title, ed.summary, ed.cover].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
+    var body = document.getElementById(ed.body); if (body) body.innerHTML = '';
+    var cat = document.getElementById(ed.cat); if (cat) cat.value = NEWS_SCOPE[viewId].defCat;
+  }
+
+  function fillNewsForm(viewId, a) {
+    var sc = NEWS_SCOPE[viewId], ed = sc.ed;
+    var t = document.getElementById(ed.title); if (t) t.value = a.title || '';
+    var c = document.getElementById(ed.cat); if (c) c.value = a.category || sc.defCat;
+    var s = document.getElementById(ed.summary); if (s) s.value = a.summary || '';
+    var cv = document.getElementById(ed.cover); if (cv) cv.value = a.cover_image || '';
+    var b = document.getElementById(ed.body); if (b) b.innerHTML = a.content || '';
+    editingNews[viewId] = { id: a.id, slug: a.slug };
+    var box = document.getElementById(sc.editor);
+    if (box && box.scrollIntoView) box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function saveNews(viewId, status) {
+    var sc = NEWS_SCOPE[viewId], ed = sc.ed;
+    var title = (document.getElementById(ed.title) || {}).value || '';
+    var body = (document.getElementById(ed.body) || {}).innerHTML || '';
+    if (!title.trim()) { toast('请填写标题'); return; }
+    if (!body.trim()) { toast('请填写正文'); return; }
+    if (!apiOnline()) { toast('未连接后端，当前为本地演示'); return; }
+    var payload = {
+      title: title.trim(),
+      category: (document.getElementById(ed.cat) || {}).value || sc.defCat,
+      summary: ((document.getElementById(ed.summary) || {}).value || '').trim() || null,
+      cover_image: ((document.getElementById(ed.cover) || {}).value || '').trim() || null,
+      content: body,
+      status: status
+    };
+    var cur = editingNews[viewId];
+    var req;
+    if (cur) {
+      req = apiCall('/api/admin/news/' + cur.id, { method: 'PUT', json: true, body: JSON.stringify(payload) });
+    } else {
+      payload.slug = 'news-' + Date.now().toString(36);
+      req = apiCall('/api/admin/news', { method: 'POST', json: true, body: JSON.stringify(payload) });
+    }
+    return req.then(function () {
+      toast((status === 'online' ? '已发布' : '已存草稿') + '：' + payload.title +
+        (status === 'online' ? '（前台列表立即可见）' : ''));
+      clearNewsForm(viewId);
+      editingNews[viewId] = null;
+      return loadNews(viewId, true);
+    }).catch(function (err) { toast('保存失败：' + err.message); });
+  }
+
+  function deleteNews(viewId, id) {
+    return apiCall('/api/admin/news/' + id, { method: 'DELETE' })
+      .then(function () { toast('已删除，前台同步移除'); return loadNews(viewId, true); })
+      .catch(function (err) { toast('删除失败：' + err.message); });
+  }
+
+  function pickImage(inputId, cb) {
+    var inp = document.createElement('input');
+    inp.type = 'file'; inp.accept = 'image/*';
+    inp.addEventListener('change', function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      if (!apiOnline()) { toast('请先连接后端再上传图片'); return; }
+      uploadImg(f, function (url) {
+        var target = document.getElementById(inputId);
+        if (target) target.value = url;
+        toast('图片已上传');
+        if (cb) cb(url);
+      });
+    });
+    inp.click();
+  }
+
+  function bindCoverPicker(btnId, inputId) {
+    var b = document.getElementById(btnId);
+    if (!b) return;
+    b.addEventListener('click', function () { pickImage(inputId); });
+  }
+
   /* ============ 新闻 / 资讯 ============ */
   function articleRow(viewId, tr) {
     var tds = tr.querySelectorAll('td');
@@ -1910,90 +2056,87 @@
     };
   }
   function bindContent() {
-    var types = [
-      { viewId: 'content', catSelIdx: 1, stSelIdx: 2, btnNew: 'btnNewArticle', editorCat: 'ed-cat' },
-      { viewId: 'tips', catSelIdx: 1, stSelIdx: null, btnNew: 'btnNewTip', editorCat: null }
-    ];
-    types.forEach(function (t) {
-      var sec = $('#view-' + t.viewId);
-      if (!sec) return;
-      var filter = sec.querySelector('.filter');
-      var kw = filter.querySelector('input');
-      var sels = filter.querySelectorAll('select');
-      var btns = filter.querySelectorAll('button');
-      // 查询重置
-      btns[0].addEventListener('click', function () {
-        $$('#' + t.viewId + ' tbody tr').forEach(function (tr) {
-          var d = articleRow(t.viewId, tr);
-          var ok = (!kw.value || d.title.indexOf(kw.value) > -1 || d.cat.indexOf(kw.value) > -1);
-          if (ok && t.catSelIdx && sels[t.catSelIdx - 1] && sels[t.catSelIdx - 1].value !== '全部') ok = d.cat === sels[t.catSelIdx - 1].value;
-          if (ok && t.stSelIdx && sels[t.stSelIdx - 1] && sels[t.stSelIdx - 1].value !== '全部') ok = d.status === sels[t.stSelIdx - 1].value;
-          tr.style.display = ok ? '' : 'none';
-        });
-        updatePagerInfo(sec, countVisibleRows(sec));
-        toast('筛选已应用');
+    var viewId = 'content';
+    var sec = $('#view-' + viewId);
+    if (!sec) return;
+    var filter = sec.querySelector('.filter');
+    var kwInput = filter.querySelector('.f-kw');
+    var catSel = filter.querySelector('.f-cat');
+    var stSel = filter.querySelector('.f-st');
+    // 查询：已连接后端 → 按「关键词 / 分类 / 状态」请求接口；未连接 → 本地行过滤
+    $('#btnQueryArticle').addEventListener('click', function () {
+      if (apiOnline()) { loadNews(viewId); return; }
+      var kw = kwInput ? kwInput.value.trim() : '';
+      var catTxt = catSel ? catSel.options[catSel.selectedIndex].textContent.trim() : '全部';
+      var stTxt = stSel ? stSel.options[stSel.selectedIndex].textContent.trim() : '全部';
+      $$('#newsTbody tr').forEach(function (tr) {
+        var d = articleRow(viewId, tr);
+        var ok = (!kw || d.title.indexOf(kw) > -1 || d.cat.indexOf(kw) > -1);
+        if (ok && catTxt !== '全部') ok = d.cat === catTxt;
+        if (ok && stTxt !== '全部') ok = d.status === stTxt;
+        tr.style.display = ok ? '' : 'none';
       });
-      if (btns.length > 1) btns[1].addEventListener('click', function () {
-        $$(filter.querySelectorAll('input,select')).forEach(function (el) { if (el.tagName === 'INPUT') el.value = ''; else el.value = '全部'; });
-        $$('#' + t.viewId + ' tbody tr').forEach(function (tr) { tr.style.display = ''; });
-        updatePagerInfo(sec, countVisibleRows(sec));
-        toast('已重置');
-      });
-      // 行操作（编辑回填编辑器 / 删除）
-      sec.querySelector('tbody').addEventListener('click', function (e) {
-        var op = e.target.closest('.op');
-        if (!op) return;
-        var tr = e.target.closest('tr');
-        var d = articleRow(t.viewId, tr);
-        if (op.classList.contains('del') || op.textContent.trim() === '删除') {
-          if (confirm('确认删除「' + d.title + '」？')) { tr.remove(); updatePagerInfo(sec, countVisibleRows(sec)); renderBoard(); toast('已删除（演示）'); }
-        } else if (op.textContent.trim() === '编辑') {
-          // 回填编辑器（news/tips 共用编辑区，分类选项不同）
-          $('#ed-title').value = d.title;
-          var cats = $$('#ed-cat option').map(function (o) { return o.value; });
-          if (cats.indexOf(d.cat) > -1) $('#ed-cat').value = d.cat;
-          if (d.status === '已下线') { /* 保留状态提示 */ }
-          $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
-          $('#ed-title').focus();
-          editingArticle = { viewId: t.viewId, tr: tr, d: d };
-          toast('已载入编辑器，可修改后保存（将覆盖原记录）');
-        }
-      });
+      updatePagerInfo(sec, countVisibleRows(sec));
+      toast('筛选已应用');
     });
-    // 发布 / 存草稿（若处于编辑态则覆盖原行）
-    $('#btnPublish').addEventListener('click', function () {
+    // 重置：清空筛选条件并复原列表
+    $('#btnResetArticle').addEventListener('click', function () {
+      if (kwInput) kwInput.value = '';
+      if (catSel) catSel.value = '';
+      if (stSel) stSel.value = '';
+      $$('#newsTbody tr').forEach(function (tr) { tr.style.display = ''; });
+      updatePagerInfo(sec, countVisibleRows(sec));
+      if (apiOnline()) loadNews(viewId, true);
+      toast('已重置');
+    });
+    // 行操作：编辑 / 删除
+    sec.querySelector('tbody').addEventListener('click', function (e) {
+      var op = e.target.closest('.op');
+      if (!op) return;
+      var tr = e.target.closest('tr');
+      var d = articleRow(viewId, tr);
+      var nid = tr.getAttribute('data-nid');
+      if (op.classList.contains('del') || op.textContent.trim() === '删除') {
+        if (!confirm('确认删除「' + d.title + '」？')) return;
+        if (apiOnline() && nid) { deleteNews(viewId, nid); return; }
+        tr.remove(); updatePagerInfo(sec, countVisibleRows(sec)); renderBoard();
+        toast('已删除（本地演示）');
+        return;
+      }
+      if (op.textContent.trim() === '编辑') {
+        if (apiOnline() && nid) {
+          apiCall('/api/admin/news/' + nid).then(function (a) {
+            fillNewsForm(viewId, a);
+            toast('已载入编辑器，修改后点击「发布」或「存草稿」');
+          }).catch(function (err) { toast('载入失败：' + err.message); });
+          return;
+        }
+        $('#ed-title').value = d.title;
+        var cats = $$('#ed-cat option').map(function (o) { return o.textContent.trim(); });
+        if (cats.indexOf(d.cat) > -1) $('#ed-cat').selectedIndex = cats.indexOf(d.cat);
+        $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        editingArticle = { viewId: viewId, tr: tr, d: d };
+        toast('已载入编辑器（本地演示）');
+      }
+    });
+    // 保存：连接后端走 API，否则本地演示
+    function localSave(status) {
+      var label = status === 'online' ? '已发布' : '草稿';
       var title = $('#ed-title').value.trim();
-      var body = ($('#ed-body').innerText !== undefined ? $('#ed-body').innerText : $('#ed-body').textContent).trim();
-      if (!title) { toast('请填写新闻标题'); return; }
-      if (!body) { toast('请填写新闻正文'); return; }
-      if (editingArticle) { updateArticleRow(editingArticle, '已发布'); }
-      else { addArticleRow(title, $('#ed-cat').value, '已发布'); }
-      toast('新闻已发布：' + title);
+      if (!title) { toast('请填写标题'); return; }
+      var cat = $('#ed-cat').options[$('#ed-cat').selectedIndex].textContent.trim();
+      if (editingArticle) updateArticleRow(editingArticle, label);
+      else addArticleRow(title, cat, label);
+      toast('内容' + label + '（本地演示）：' + title);
       $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
+    }
+    $('#btnPublish').addEventListener('click', function () {
+      if (apiOnline()) { saveNews(viewId, 'online'); } else { localSave('online'); }
     });
     $('#btnSaveDraft').addEventListener('click', function () {
-      var title = $('#ed-title').value.trim();
-      if (!title) { toast('请填写新闻标题'); return; }
-      if (editingArticle) { updateArticleRow(editingArticle, '草稿'); }
-      else { addArticleRow(title, $('#ed-cat').value, '草稿'); }
-      toast('已存为草稿：' + title);
-      $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
+      if (apiOnline()) { saveNews(viewId, 'draft'); } else { localSave('draft'); }
     });
-    $('#btnNewArticle').addEventListener('click', function () {
-      $('#view-content').scrollIntoView && null;
-      editingArticle = null;
-      $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
-      $('#ed-title').focus();
-    });
-    $('#btnNewTip').addEventListener('click', function () {
-      editingArticle = null;
-      var title = $('#ed-title').value.trim();
-      if (!title) { toast('请先在下方编辑器填写标题，或使用列表编辑'); return; }
-      addTipRow(title, '公司公告', '已发布');
-      toast('资讯已发布');
-      $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
-    });
-    // 追加提示：新闻 tab 增加 tips 支持——tips 行编辑时 cat 固定公司公告类（演示）
+    bindCoverPicker('btnEdCover', 'ed-cover');
   }
 
   var editingArticle = null;
@@ -2007,22 +2150,13 @@
     updatePagerInfo($('#view-content'), countVisibleRows($('#view-content')));
     renderBoard();
   }
-  function addTipRow(title, col, status) {
-    var t = $('#tipTbody');
-    var id = randId('T');
-    var cls = statusTagCls(status);
-    var tr = document.createElement('tr');
-    tr.innerHTML = '<td class="mono">' + esc(id) + '</td><td>' + esc(title) + '</td><td>' + esc(col) + '</td><td>' + esc($('#dispName').textContent) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + (status === '已发布' ? esc(nowStamp()) : '--') + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
-    t.insertBefore(tr, t.firstChild);
-    updatePagerInfo($('#view-tips'), countVisibleRows($('#view-tips')));
-  }
   function updateArticleRow(ref, status) {
-    var tr = ref.tr, d = ref.d;
+    var tr = ref.tr;
     var tds = tr.querySelectorAll('td');
     tds[1].textContent = $('#ed-title').value.trim();
-    // 资讯行复用新闻编辑器：仅保留其原始栏目，不覆盖为新闻分类
-    var cat = (ref.viewId === 'tips') ? d.cat : $('#ed-cat').value;
-    tds[2].textContent = cat;
+    // 分类列显示所选分类的文本（企业新闻 / 行业资讯），而非底层 code
+    var catEl = $('#ed-cat');
+    tds[2].textContent = catEl ? catEl.options[catEl.selectedIndex].textContent.trim() : tds[2].textContent;
     var cls = statusTagCls(status);
     var tag = tr.querySelector('.tag');
     tag.className = 'tag ' + cls; tag.textContent = status;
@@ -2033,8 +2167,12 @@
     renderBoard();
   }
 
-  /* 富文本 */
-  function fmt(cmd) { document.execCommand(cmd); $('#ed-body').focus(); }
+  /* 富文本：cmd 作用于当前选区，id 指定要回焦的编辑区 */
+  function fmt(cmd, id) {
+    document.execCommand(cmd);
+    var el = document.getElementById(id || 'ed-body');
+    if (el) el.focus();
+  }
 
   /* ============ 留言 ============ */
   function refreshMsgBadge() {
@@ -2043,22 +2181,94 @@
     if (badge) badge.textContent = pending;
     var card4 = $$('.stat .num')[3]; if (card4) card4.textContent = pending;
   }
+
+  /* ============ 留言管理 → contact_messages 表 ============ */
+  var COOP_TEXT = { hq: '总部合作', media: '媒体垂询', channel: '渠道合作', invest: '招商加盟' };
+  function msgStatusMeta(s) {
+    if (s === 'contacted') return { cls: 'tag tag-green', text: '已联系' };
+    if (s === 'closed') return { cls: 'tag tag-gray', text: '已关闭' };
+    return { cls: 'tag tag-red', text: '待处理' };
+  }
+
+  function renderMsgCards(list) {
+    var box = $('#msgList');
+    if (!box) return;
+    box.innerHTML = '';
+    if (!list.length) {
+      box.innerHTML = '<div style="color:#909399;padding:26px;text-align:center">后端暂无留言，可在前台「联系我们」提交一条</div>';
+      refreshMsgBadge();
+      return;
+    }
+    list.forEach(function (m) {
+      var st = msgStatusMeta(m.handle_status);
+      var card = document.createElement('div');
+      card.className = 'msg-card';
+      card.setAttribute('data-mid', m.id);
+      var contact = (m.show_full_contact && m.contact_full)
+        ? (m.contact_full + '（明文）') : (m.contact_masked || '—');
+      card.innerHTML =
+        '<div class="msg-top"><span class="msg-name">' + esc(m.name) + '</span>' +
+        '<span class="' + st.cls + '">' + st.text + '</span>' +
+        '<span class="msg-meta">' + esc(m.company || '未填写公司') + ' · ' + esc(fmtApiTime(m.created_at)) +
+        ' · 编号 M' + esc(m.id) +
+        (m.coop_type ? ' · ' + esc(COOP_TEXT[m.coop_type] || m.coop_type) : '') + '</span></div>' +
+        '<div class="msg-txt">' + esc(m.content) + '</div>' +
+        '<div class="msg-txt" style="color:#909399;font-size:13px">联系方式：' + esc(contact) +
+        '（' + (m.contact_type === 'email' ? '邮箱' : '电话') + '）</div>' +
+        (m.remark ? '<div class="msg-reply"><b>处理记录：</b>' + esc(m.remark) + '</div>' : '') +
+        '<div class="msg-ops"><span class="op reply-btn">处理</span>' +
+        '<span class="op close-btn">标记已关闭</span><span class="op del">删除</span></div>' +
+        '<div class="reply-bar" style="display:none">' +
+        '<input type="text" placeholder="填写处理记录（内部备注，不会发送给用户）">' +
+        '<button class="btn primary">保存</button></div>';
+      box.appendChild(card);
+    });
+    refreshMsgBadge();
+  }
+
+  function loadMessages(silent) {
+    if (!apiOnline()) return Promise.resolve();
+    var sec = $('#view-messages');
+    var kw = sec ? sec.querySelector('.filter input') : null;
+    var st = sec ? sec.querySelector('.filter .f-st') : null;
+    var q = [];
+    if (st && st.value) q.push('handle_status=' + encodeURIComponent(st.value));
+    if (kw && kw.value.trim()) q.push('keyword=' + encodeURIComponent(kw.value.trim()));
+    return apiCall('/api/admin/contacts' + (q.length ? '?' + q.join('&') : ''))
+      .then(function (list) {
+        renderMsgCards(list || []);
+        if (!silent) toast('已拉取留言：' + (list || []).length + ' 条');
+      })
+      .catch(function (err) { if (!silent) toast('拉取失败：' + err.message); });
+  }
+
   function bindMessages() {
     var list = $('#msgList');
     list.addEventListener('click', function (e) {
       var card = e.target.closest('.msg-card'); if (!card) return;
+      var mid = card.getAttribute('data-mid');
       var btn = e.target.closest('.btn');
       if (btn && btn.closest('.reply-bar')) {
         var inp = card.querySelector('.reply-bar input');
         var txt = inp.value.trim();
-        if (!txt) { toast('请输入回复内容'); return; }
+        if (!txt) { toast('请输入处理记录'); return; }
+        if (apiOnline() && mid) {
+          apiCall('/api/admin/contacts/' + mid, {
+            method: 'PATCH', json: true,
+            body: JSON.stringify({ handle_status: 'contacted', remark: txt })
+          }).then(function () {
+            toast('已保存处理记录，状态置为「已联系」');
+            loadMessages(true);
+          }).catch(function (err) { toast('保存失败：' + err.message); });
+          return;
+        }
         var old = card.querySelector('.msg-reply');
         var rep = document.createElement('div'); rep.className = 'msg-reply';
-        rep.innerHTML = '<b>官方回复：</b>' + txt.replace(/</g, '&lt;');
+        rep.innerHTML = '<b>处理记录：</b>' + txt.replace(/</g, '&lt;');
         if (old) old.replaceWith(rep); else card.insertBefore(rep, card.querySelector('.msg-ops'));
-        var tag = card.querySelector('.msg-top .tag'); tag.className = 'tag tag-green'; tag.textContent = '已回复';
+        var tag = card.querySelector('.msg-top .tag'); tag.className = 'tag tag-green'; tag.textContent = '已联系';
         inp.value = ''; card.querySelector('.reply-bar').style.display = 'none';
-        toast('已回复留言'); refreshMsgBadge();
+        toast('已回复留言（本地演示）'); refreshMsgBadge();
         return;
       }
       if (e.target.classList.contains('reply-btn')) {
@@ -2067,24 +2277,53 @@
         if (bar.style.display === 'flex') card.querySelector('.reply-bar input').focus();
         return;
       }
+      if (e.target.classList.contains('close-btn')) {
+        if (apiOnline() && mid) {
+          apiCall('/api/admin/contacts/' + mid, {
+            method: 'PATCH', json: true, body: JSON.stringify({ handle_status: 'closed' })
+          }).then(function () { toast('已标记为「已关闭」'); loadMessages(true); })
+            .catch(function (err) { toast('操作失败：' + err.message); });
+          return;
+        }
+        var tg = card.querySelector('.msg-top .tag');
+        if (tg) { tg.className = 'tag tag-gray'; tg.textContent = '已关闭'; }
+        toast('已关闭（本地演示）'); refreshMsgBadge();
+        return;
+      }
       if (e.target.classList.contains('del')) {
-        if (confirm('确认删除该留言？')) { card.remove(); toast('留言已删除'); refreshMsgBadge(); }
+        if (!confirm('确认删除该留言？删除后列表不再展示（软删除，数据保留可追溯）。')) return;
+        if (apiOnline() && mid) {
+          apiCall('/api/admin/contacts/' + mid, { method: 'DELETE' })
+            .then(function () { toast('留言已删除'); loadMessages(true); })
+            .catch(function (err) { toast('删除失败：' + err.message); });
+          return;
+        }
+        card.remove(); toast('留言已删除（本地演示）'); refreshMsgBadge();
       }
     });
-    // 留言查询/重置
+    // 留言查询 / 重置
     var sec = $('#view-messages');
     var kw = sec.querySelector('.filter input');
     var sel = sec.querySelector('.filter select');
     var btns = sec.querySelectorAll('.filter button');
     btns[0].addEventListener('click', function () {
+      if (apiOnline()) { loadMessages(); return; }
       $$('#msgList .msg-card').forEach(function (c) {
         var txt = c.textContent;
-        var ok = (!kw.value || txt.indexOf(kw.value) > -1) && (sel.value === '全部' || txt.indexOf(sel.value) > -1);
+        var stTxt = sel.options[sel.selectedIndex].textContent.trim();
+        var ok = (!kw.value || txt.indexOf(kw.value) > -1) && (stTxt === '全部' || txt.indexOf(stTxt) > -1);
         c.style.display = ok ? '' : 'none';
       });
+      toast('筛选已应用');
     });
-    btns[1].addEventListener('click', function () { kw.value = ''; sel.value = '全部'; $$('#msgList .msg-card').forEach(function (c) { c.style.display = ''; }); toast('已重置'); });
+    btns[1].addEventListener('click', function () {
+      kw.value = ''; sel.value = '';
+      if (apiOnline()) { loadMessages(true); toast('已重置'); return; }
+      $$('#msgList .msg-card').forEach(function (c) { c.style.display = ''; });
+      toast('已重置');
+    });
   }
+
 
   /* ============ 数据看板 ============ */
   function renderBoard() {
@@ -2216,12 +2455,12 @@
     bindStores();
     bindStoreModal();
     bindTableViews();
-    initBannerApi();
     bindContent();
     bindMessages();
     bindSettings();
     bindLogs();
     bindPagers();
+    initApiBars();
     renderOrderChart();
     seedLogs();
     refreshMsgBadge();

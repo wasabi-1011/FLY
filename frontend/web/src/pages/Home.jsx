@@ -1,10 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import SiteNav from "../components/SiteNav.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 import Hero from "../components/Hero.jsx";
 import StoreEntry from "../components/StoreEntry.jsx";
-import { CATEGORIES, HOME_COLLECTIONS, NEWS, getHotItems } from "../data/siteData.js";
+import { CATEGORIES, HOME_COLLECTIONS, getHotItems } from "../data/siteData.js";
+import { fetchLatestNews, localLatest } from "../data/newsApi.js";
 
 const HOT = getHotItems();
 const HOT_META = (code) => {
@@ -23,6 +24,19 @@ const QUICK = [
 
 export default function Home() {
   const hotRef = useRef(null);
+  // 首页新闻与 /news 同源：都读数据库；接口不可用才回退本地默认
+  const [news, setNews] = useState(null); // null = 加载中
+  const [newsFallback, setNewsFallback] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetchLatestNews(3).then((res) => {
+      if (!alive) return;
+      if (res.ok) setNews(res.items);
+      else { setNews(localLatest(3)); setNewsFallback(true); }
+    });
+    return () => { alive = false; };
+  }, []);
 
   // 热门推荐入场动效（进入视口时逐个加 .in）
   useEffect(() => {
@@ -117,16 +131,25 @@ export default function Home() {
             </div>
             <Link className="more" to="/news/company">全部新闻 →</Link>
           </div>
-          <div className="news-grid">
-            {NEWS.slice(0, 3).map((n, i) => (
-              <Link className="news-card" to={`/news/${n.cat}/${n.slug}`} key={i}>
-                <div className="thumb"><img src={n.cover} alt={n.title} loading="lazy" /></div>
-                <div className="cat">{n.cat === "company" ? "企业新闻" : "行业资讯"}</div>
-                <h3>{n.title}</h3>
-                <div className="meta">{n.date} · {n.place}</div>
-              </Link>
-            ))}
-          </div>
+          {newsFallback && (
+            <p className="news-note" style={{ marginTop: 12 }}>后端暂不可用，当前展示本地默认内容</p>
+          )}
+          {news === null ? (
+            <p className="news-empty">加载中…</p>
+          ) : news.length === 0 ? (
+            <p className="news-empty">暂无新闻内容</p>
+          ) : (
+            <div className="news-grid">
+              {news.map((n, i) => (
+                <Link className="news-card" to={`/news/${n.cat}/${n.slug}`} key={n.slug || i}>
+                  <div className="thumb"><img src={n.cover} alt={n.title} loading="lazy" /></div>
+                  <div className="cat">{n.cat === "company" ? "企业新闻" : "行业资讯"}</div>
+                  <h3>{n.title}</h3>
+                  <div className="meta">{n.date}{n.place ? ` · ${n.place}` : ""}</div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 

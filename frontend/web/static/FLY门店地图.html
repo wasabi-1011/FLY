@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FLY · 全国门店地图</title>
+<style>
+  :root{
+    --ink:#0F172A;        /* slate-900 正文   */
+    --mut:#475569;        /* slate-600 弱化文 */
+    --fade:#94A3B8;       /* slate-400 禁用   */
+    --line:#E2E8F0;       /* slate-200 边框   */
+    --paper:#FFFFFF;
+    --paper-2:#F8FAFC;
+    --acc:#000000;
+    --gold:#9A7B4F;       /* 点缀金 */
+    --gold-2:#c8893f;     /* 门店标记金 */
+    --px:48px;
+    --serif:"Noto Serif SC","Songti SC","SimSun",serif;
+    --sans:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--sans);color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased}
+  button{font-family:inherit;cursor:pointer;border:none;background:none}
+  a{text-decoration:none;color:inherit}
+
+  /* ===== 顶栏 ===== */
+  .topbar{position:sticky;top:0;z-index:30;height:64px;background:rgba(255,255,255,.92);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line);display:flex;align-items:center}
+  .topbar .wrap{width:100%;max-width:1360px;margin:0 auto;padding:0 var(--px);display:flex;
+    align-items:center;justify-content:space-between;gap:16px}
+  .brand{display:flex;align-items:center;font-family:var(--serif);font-weight:700;letter-spacing:.16em;font-size:18px}
+  .brand svg{width:22px;height:22px;margin-right:9px}
+  .brand b{font-weight:800}
+  .topbar .title{font-family:var(--serif);font-size:15px;letter-spacing:.12em;color:var(--mut)}
+  .topbar .count{font-size:12px;color:var(--gold);letter-spacing:.08em;background:rgba(154,123,79,.10);
+    padding:5px 11px;border-radius:20px;font-weight:600;white-space:nowrap}
+
+  /* ===== 主体布局 ===== */
+  .layout{max-width:1360px;margin:0 auto;padding:28px var(--px) 56px;
+    display:grid;grid-template-columns:1fr 360px;gap:28px;align-items:stretch}
+  .map-card{position:relative;border:1px solid #d5cdbd;border-radius:8px;overflow:hidden;
+    background:#e7e0d4;box-shadow:0 20px 50px -30px rgba(15,23,42,.35)}
+  #map{width:100%;height:600px;background:#e7e0d4}
+  .map-hint{position:absolute;left:14px;bottom:14px;z-index:5;background:rgba(255,255,255,.92);
+    font-size:11px;letter-spacing:.04em;color:var(--mut);padding:6px 11px;border-radius:6px;
+    box-shadow:0 4px 14px rgba(0,0,0,.10);pointer-events:none}
+  .map-loading{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;
+    flex-direction:column;gap:14px;background:#e7e0d4;color:var(--mut);font-size:13px}
+  .map-loading .spin{width:30px;height:30px;border:3px solid #d5cdbd;border-top-color:var(--gold-2);
+    border-radius:50%;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .map-error{position:absolute;inset:0;z-index:7;display:none;align-items:center;justify-content:center;
+    flex-direction:column;gap:10px;background:#f6f3ee;text-align:center;padding:24px;color:var(--mut)}
+  .map-error b{color:var(--ink);font-family:var(--serif);font-size:16px}
+  .map-error code{background:#fff;border:1px solid var(--line);border-radius:5px;padding:2px 7px;font-size:12px;color:var(--gold)}
+
+  /* ===== 右侧城市面板 ===== */
+  .panel{display:flex;flex-direction:column;min-height:600px;background:var(--paper-2);
+    border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .panel-head{padding:20px 20px 16px;border-bottom:1px solid var(--line)}
+  .panel-head .eyebrow{font-size:11px;letter-spacing:.3em;color:var(--mut);text-transform:uppercase;font-weight:600}
+  .panel-head h2{font-family:var(--serif);font-size:20px;font-weight:600;margin-top:6px}
+  .search{margin-top:14px;position:relative}
+  .search input{width:100%;height:40px;border:1px solid var(--line);border-radius:6px;background:#fff;
+    padding:0 14px 0 38px;font-size:13px;color:var(--ink);outline:none;transition:.2s;font-family:inherit}
+  .search input:focus{border-color:var(--gold)}
+  .search svg{position:absolute;left:12px;top:50%;translate:0 -50%;width:16px;height:16px;stroke:var(--fade);fill:none;stroke-width:1.8}
+  .city-list{flex:1;overflow:auto;padding:8px}
+  .city-item{display:flex;align-items:center;gap:13px;padding:13px 12px;border-radius:7px;cursor:pointer;
+    transition:.18s;border:1px solid transparent}
+  .city-item:hover{background:#fff;border-color:#d5cdbd}
+  .city-item.active{background:#fff;border-color:var(--gold);box-shadow:0 10px 24px -18px rgba(154,123,79,.6)}
+  .city-item .pin{width:11px;height:11px;border-radius:50%;background:var(--gold-2);flex:0 0 auto;
+    box-shadow:0 0 0 4px rgba(200,137,63,.20)}
+  .city-item .meta{flex:1;min-width:0}
+  .city-item .meta b{font-size:15px;font-weight:600;display:block;font-family:var(--serif)}
+  .city-item .meta span{font-size:12px;color:var(--mut);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .city-item .badge{font-size:12px;font-weight:700;color:#fff;background:var(--gold);border-radius:20px;
+    padding:3px 10px;flex:0 0 auto;letter-spacing:.04em}
+  .panel-foot{padding:14px 20px;border-top:1px solid var(--line);font-size:11px;color:var(--fade);line-height:1.7}
+  .panel-foot a{color:var(--gold)}
+
+  /* InfoWindow 内容样式（注入到腾讯地图气泡） */
+  .iw{font-family:var(--sans);min-width:170px}
+  .iw b{font-family:var(--serif);font-size:15px;display:block;color:var(--ink)}
+  .iw .sub{font-size:12px;color:var(--gold);font-weight:600;margin:2px 0 8px}
+  .iw ul{list-style:none;margin:0;padding:0}
+  .iw li{font-size:12px;color:var(--mut);padding:3px 0;border-top:1px solid #eee}
+  .iw li:first-child{border-top:none}
+  .iw .more{display:inline-block;margin-top:9px;font-size:12px;color:#fff;background:var(--acc);
+    padding:6px 14px;border-radius:4px;letter-spacing:.06em}
+
+  @media (max-width:1023px){
+    :root{--px:28px}
+    .layout{grid-template-columns:1fr;gap:20px}
+    #map{height:62vh;min-height:380px}
+    .panel{min-height:auto}
+    .city-list{max-height:340px}
+  }
+  @media (max-width:479px){:root{--px:20px}}
+</style>
+
+<!--
+  ============================================================
+  中国门店地图 · 合规底图说明（geo-map-compliance-guard）
+  - 本页使用【腾讯地图 GL JS】，符合国内地图数据合规要求。
+  - 默认场景走 WorkBuddy 本地代理（前端不暴露任何 Key），
+    直接在 WorkBuddy 内置预览中即可看到真实中国底图。
+  - 【生产环境】请到 https://lbs.qq.com/ 申请自己的 Key，
+    然后按文件底部「生产环境 Key 替换」注释替换即可。
+  ============================================================
+-->
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="./FLY官网_首页原型.html" aria-label="返回 FLY 首页">
+      <svg viewBox="0 0 26 26" fill="none" stroke="#0F172A" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 L23 24 H18 L13 10 L8 24 H3 Z"/></svg>
+      <b>FLY</b>
+    </a>
+    <div class="title">全国门店地图</div>
+    <div class="count">8 城 · 20 家</div>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- 左：中国底图 -->
+  <section class="map-card" aria-label="中国门店分布地图">
+    <div id="map" role="application" aria-label="中国地图，标注北京、上海、广州、深圳、成都、杭州、武汉、南京的门店位置"></div>
+    <div class="map-hint">点击城市标记查看门店 · 拖拽平移 / 滚轮缩放</div>
+    <div class="map-loading" id="mapLoading">
+      <div class="spin"></div>
+      <div>正在加载中国底图…</div>
+    </div>
+    <div class="map-error" id="mapError">
+      <b>底图加载失败</b>
+      <div>当前为 WorkBuddy 预览代理模式，若在非本环境打开，请按文件底部说明填入你自己的腾讯地图 Key。</div>
+    </div>
+  </section>
+
+  <!-- 右：城市列表（与地图联动） -->
+  <aside class="panel" aria-label="城市门店列表">
+    <div class="panel-head">
+      <div class="eyebrow">STORES</div>
+      <h2>门店城市</h2>
+      <div class="search">
+        <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20 L16.5 16.5"/></svg>
+        <input id="citySearch" type="search" placeholder="搜索城市，如 上海" aria-label="搜索城市">
+      </div>
+    </div>
+    <div class="city-list" id="cityList" role="listbox" aria-label="城市列表"></div>
+    <div class="panel-foot">
+      数据为示例，需替换为真实门店地址与营业时间。<br>
+      市县级定位，不细化到区镇（PRD FR-F05）。
+    </div>
+  </aside>
+</main>
+
+<!-- 1) 配置代理（默认场景，前端无 Key；仅在未填自有 Key 时启用） -->
+<script type="text/javascript">
+  window.__FLY_TMAP_KEY__ = ''; // ← 生产环境：填你的腾讯地图 Key；留空则走 WorkBuddy 代理
+  if (!window.__FLY_TMAP_KEY__) {
+    window._TMapSecurityConfig = {
+      serviceHost: 'http://127.0.0.1:__WB_HTTP_PORT__/_TMapService/_wbt/__WB_TMAP_SECRET__'
+    };
+  }
+</script>
+<!-- 2) 加载腾讯地图 GL JS（默认场景不含 key 参数） -->
+<script src="https://map.qq.com/api/gljs?v=1.exp"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== 门店城市数据（GCJ-02 坐标；示例地址需替换）=====
+  var CITIES = [
+    { id:'bj', name:'北京', lng:116.397428, lat:39.90923, stores:[
+      {n:'三里屯旗舰店', a:'朝阳区三里屯太古里南区 S8-30'},
+      {n:'国贸店', a:'朝阳区建国门外大街 1 号国贸商城'},
+      {n:'西单大悦城店', a:'西城区西单北大街 131 号'},
+      {n:'王府井店', a:'东城区王府井大街 138 号'} ] },
+    { id:'sh', name:'上海', lng:121.489, lat:31.227, stores:[
+      {n:'南京西路旗舰店', a:'静安区南京西路 1601 号'},
+      {n:'环贸 iapm 店', a:'徐汇区淮海中路 999 号'},
+      {n:'正大广场店', a:'浦东新区陆家嘴西路 168 号'},
+      {n:'静安大悦城店', a:'静安区西藏北路 198 号'} ] },
+    { id:'gz', name:'广州', lng:113.272, lat:23.136, stores:[
+      {n:'天河城店', a:'天河区天河路 208 号'},
+      {n:'太古汇店', a:'天河区天河路 383 号'},
+      {n:'北京路店', a:'越秀区北京路 374 号'} ] },
+    { id:'sz', name:'深圳', lng:114.085, lat:22.547, stores:[
+      {n:'万象天地旗舰店', a:'南山区深南大道 9668 号'},
+      {n:'万象城店', a:'罗湖区宝安南路 1881 号'},
+      {n:'海岸城店', a:'南山区文心五路 33 号'} ] },
+    { id:'cd', name:'成都', lng:104.065, lat:30.659, stores:[
+      {n:'IFS 国际金融中心店', a:'锦江区红星路三段 1 号'},
+      {n:'万象城店', a:'成华区双庆路 8 号'} ] },
+    { id:'hz', name:'杭州', lng:120.153, lat:30.287, stores:[
+      {n:'湖滨银泰 in77 店', a:'上城区延安路 538 号'},
+      {n:'万象城店', a:'江干区富春路 701 号'} ] },
+    { id:'wh', name:'武汉', lng:114.305, lat:30.593, stores:[
+      {n:'武商广场店', a:'江汉区解放大道 688 号'} ] },
+    { id:'nj', name:'南京', lng:118.797, lat:32.060, stores:[
+      {n:'德基广场店', a:'玄武区中山路 18 号'} ] }
+  ];
+
+  // ===== 金色门店标记 SVG（内联，避免引用外部图片）=====
+  var PIN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">' +
+    '<path d="M15 1C7.27 1 1 7.27 1 15c0 10.5 14 22 14 22s14-11.5 14-22C29 7.27 22.73 1 15 1z" fill="#c8893f" stroke="#fff" stroke-width="2"/>' +
+    '<circle cx="15" cy="15" r="6" fill="#fff"/></svg>';
+  var PIN_URL = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(PIN_SVG);
+
+  var loadingEl = document.getElementById('mapLoading');
+  var errorEl   = document.getElementById('mapError');
+
+  // SDK 未加载或加载失败 → 显示错误提示
+  function fail() {
+    if (loadingEl) loadingEl.style.display = 'none';
+    if (errorEl) errorEl.style.display = 'flex';
+  }
+
+  if (typeof TMap === 'undefined') {
+    fail();
+    return;
+  }
+
+  // ===== 初始化地图（中国视角）=====
+  var map = new TMap.Map('map', {
+    center: new TMap.LatLng(34.5, 108.5), // 中国几何中心附近
+    zoom: 4.4,
+    minZoom: 3,
+    maxZoom: 12,
+    baseMap: { type: 'vector', features: ['base', 'building3d'] }
+  });
+
+  // ===== 门店标记 =====
+  var markers = new TMap.MultiMarker({
+    map: map,
+    styles: { pin: new TMap.MarkerStyle({ width: 30, height: 38, anchor: { x: 15, y: 38 }, src: PIN_URL }) },
+    geometries: CITIES.map(function (c) {
+      return { id: c.id, styleId: 'pin', position: new TMap.LatLng(c.lat, c.lng), properties: { city: c } };
+    })
+  });
+
+  // ===== 信息气泡 =====
+  var info = new TMap.InfoWindow({
+    map: map, position: new TMap.LatLng(34.5, 108.5),
+    offset: { x: 0, y: -32 }, content: '<div class="iw"></div>'
+  });
+  info.close();
+
+  function infoHTML(c) {
+    var lis = c.stores.map(function (s) { return '<li>' + s.n + ' · ' + s.a + '</li>'; }).join('');
+    return '<div class="iw"><b>' + c.name + '</b><div class="sub">' + c.stores.length + ' 家门店</div>' +
+      '<ul>' + lis + '</ul><a class="more" href="#' + c.id + '">查看详情</a></div>';
+  }
+
+  function openCity(c, fly) {
+    if (fly) {
+      map.easeTo({ center: new TMap.LatLng(c.lat, c.lng), zoom: 8, duration: 600 });
+    }
+    info.setPosition(new TMap.LatLng(c.lat, c.lng));
+    info.setContent(infoHTML(c));
+    info.open();
+    highlight(c.id);
+  }
+
+  // ===== 标记点击 → 气泡 + 高亮列表 =====
+  markers.on('click', function (e) {
+    var c = e.geometry.properties.city;
+    openCity(c, false);
+  });
+  // 点击空白关闭气泡
+  map.on('click', function () { info.close(); });
+
+  // ===== 右侧列表渲染 + 联动 =====
+  var listEl = document.getElementById('cityList');
+  function renderList(filter) {
+    filter = (filter || '').trim();
+    listEl.innerHTML = '';
+    CITIES.filter(function (c) { return !filter || c.name.indexOf(filter) > -1; })
+      .forEach(function (c) {
+        var item = document.createElement('div');
+        item.className = 'city-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('tabindex', '0');
+        item.setAttribute('aria-label', c.name + '，' + c.stores.length + ' 家门店');
+        item.dataset.id = c.id;
+        item.innerHTML =
+          '<span class="pin"></span>' +
+          '<div class="meta"><b>' + c.name + '</b><span>' + c.stores[0].n + ' 等 ' + c.stores.length + ' 家</span></div>' +
+          '<span class="badge">' + c.stores.length + '</span>';
+        item.addEventListener('click', function () { openCity(c, true); });
+        item.addEventListener('keydown', function (ev) {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); openCity(c, true); }
+        });
+        item.addEventListener('mouseenter', function () { highlight(c.id); });
+        listEl.appendChild(item);
+      });
+  }
+  function highlight(id) {
+    Array.prototype.forEach.call(listEl.children, function (el) {
+      el.classList.toggle('active', el.dataset.id === id);
+    });
+  }
+  renderList();
+
+  // ===== 搜索框 =====
+  document.getElementById('citySearch').addEventListener('input', function (e) {
+    renderList(e.target.value);
+  });
+
+  // 隐藏 loading
+  map.on('tilesloaded', function () { if (loadingEl) loadingEl.style.display = 'none'; });
+  // 兜底：2.5s 后无论如何隐藏 loading
+  setTimeout(function () { if (loadingEl) loadingEl.style.display = 'none'; }, 2500);
+})();
+</script>
+</body>
+</html>

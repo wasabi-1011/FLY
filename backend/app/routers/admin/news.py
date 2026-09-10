@@ -1,6 +1,7 @@
 """后台·新闻管理（FR-B12~B20）。R2 权限。正文经 XSS 白名单过滤（NFR-18）。"""
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -50,6 +51,9 @@ async def create_news(
         raise HTTPException(status_code=409, detail="slug 已存在")
     data = payload.model_dump()
     data["content"] = sanitize_html(data.get("content"))
+    # 发布即补发布时间，避免后台漏传导致前台列表按 published_at 排序时落到末尾
+    if data.get("status") == Status.ONLINE and not data.get("published_at"):
+        data["published_at"] = datetime.utcnow()
     article = Article(**data)
     db.add(article)
     await db.commit()
@@ -86,6 +90,12 @@ async def update_news(
         if k == "content":
             v = sanitize_html(v)
         setattr(article, k, v)
+    if (
+        payload.status == Status.ONLINE
+        and not payload.published_at
+        and article.published_at is None
+    ):
+        article.published_at = datetime.utcnow()
     await db.commit()
     await db.refresh(article)
     await log_operation(

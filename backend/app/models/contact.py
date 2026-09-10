@@ -9,6 +9,7 @@ from sqlalchemy import (
     String,
     Text,
     DateTime,
+    Boolean,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -33,6 +34,10 @@ class ContactMessage(Base):
     )
     handled_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
     remark: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 软删除（留言管理·删除操作）：保留审计与个人信息删除权追溯，列表默认不展示
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0", index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         default=datetime.utcnow, index=True
     )

@@ -6,6 +6,14 @@
 from __future__ import annotations
 
 import bleach
+import re
+
+# bleach 的 strip=True 只移除标签、保留标签内文字（<script>alert(1)</script> 会残留 "alert(1)"）。
+# 这里先整体摘除 script/style/iframe 及其内容，避免无意义的脚本文本出现在正文里。
+_STRIP_BLOCK_RE = re.compile(
+    r"<(script|style|iframe|object|embed)\b[^>]*>.*?</\1\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
 
 _ALLOWED_TAGS = [
     "p", "br", "strong", "b", "em", "i", "u", "s", "blockquote", "code",
@@ -28,6 +36,7 @@ _ALLOWED_PROTOCOLS = ["http", "https", "mailto", "tel"]
 def sanitize_html(html: str | None) -> str | None:
     if not html:
         return html
+    html = _STRIP_BLOCK_RE.sub("", html)
     return bleach.clean(
         html,
         tags=_ALLOWED_TAGS,
