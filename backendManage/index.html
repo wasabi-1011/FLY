@@ -4,6 +4,14 @@
 <meta charset="UTF-8" data-page-node-id="aVTesMSiTYPGpNJ66S99S1">
 <meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="d8soc9eQdyRduq7HG7rzE5">
 <title>FLY 管理后台 · 超级管理员</title>
+<script>
+  /* 腾讯地图 Key（前端 Key，用于门店弹窗底图 / 点选 / 前端回退解析）
+     - 留空：自动降级为「演示地图 + 手工录入坐标」，门店 CRUD 不受影响。
+     - 需要它在控制台配置 Referer 白名单（localhost:8000 / 生产域名），否则底图鉴权失败。
+     - 「地址 → 坐标」首选走后端（backend/.env 的 TMAP_SERVER_KEY，不受 Referer 限制），
+       后端未配置时才回退到这里的前端 SDK Geocoder。 */
+  window.__FLY_TMAP_KEY__ = window.__FLY_TMAP_KEY__ || "OLVBZ-INVK3-4ON3K-OQK4I-2QJOJ-M6BE2";
+</script>
 <style>
   :root{
     --side-bg:#001529; --side-bg-2:#000c17; --side-hover:#ffffff14;
@@ -209,6 +217,9 @@
   .coord-row label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:#909399;}
   .coord-row input{width:140px;height:30px;padding:0 8px;border:1px solid #dcdfe6;border-radius:4px;font-size:12px;font-family:monospace;color:#303133;background:#fff;}
   .coord-hint{font-size:12px;color:#909399;}
+  .coord-link{font-size:12px;color:#409eff;text-decoration:none;border-bottom:1px dashed #a0cfff;padding-bottom:1px;white-space:nowrap;}
+  .coord-link:hover{color:#66b1ff;border-bottom-color:#66b1ff;}
+  .coord-tools{display:flex;align-items:center;gap:10px;margin-left:auto;}
   .modal-foot{display:flex;justify-content:flex-end;gap:12px;padding:14px 20px;border-top:1px solid #ebeef5;}
   .toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%);background:rgba(0,21,41,.85);color:#fff;padding:10px 18px;border-radius:6px;font-size:13px;z-index:300;opacity:0;transition:opacity .25s;pointer-events:none;}
   .toast.show{opacity:1;}
@@ -456,12 +467,15 @@
         <div class="page-head" data-page-node-id="MAZ5IQqSDBqRFjf4c1GiUL"><h2 data-page-node-id="9AC9jkIcHc0kAi1ysVCiOt">门店列表</h2><span class="sub" data-page-node-id="hoa17gwYf2BtqbMeQrimO0">门店 CRUD · 腾讯地图点选经纬度 · 上下线即时同步前台</span></div>
         <div class="card" data-page-node-id="uPWLdCKkNRvAao83fRjfu4">
           <div class="filter" data-page-node-id="vhd0TvzKeIXa1AHLVen7nF">
-            <label data-page-node-id="HugigZp6t8agZfxvfkUB7y">门店名称 <input type="text" placeholder="请输入门店名称" data-page-node-id="FNDX1RYnde70sNft0ZHJpZ"></label>
+            <label data-page-node-id="HugigZp6t8agZfxvfkUB7y">门店名称 <input class="f-kw" type="text" placeholder="名称 / 城市 / 地址" data-page-node-id="FNDX1RYnde70sNft0ZHJpZ"></label>
             <label data-page-node-id="UjFuKkd81a5wvVmxLJn5Gl">城市
-              <select data-page-node-id="3j32dFbBMypAIoE9zVvyA8"><option data-page-node-id="Mt5fL3sa4L1V7HS3F1QIQG">全部</option><option data-page-node-id="HZjr4ZFFdmH7Dr6iEC841a">北京</option><option data-page-node-id="UiaMQvTcyREicIDi5ld3Uf">上海</option><option data-page-node-id="NZHJ7wxiPROb7lmYSYgCEu">广州</option><option data-page-node-id="i2sZZ7rt5j4A1ISof2XC4C">深圳</option><option data-page-node-id="Bm7TLg6Giwuy8v8wIJMt4V">成都</option></select>
+              <select class="f-city" data-page-node-id="3j32dFbBMypAIoE9zVvyA8"><option value="">全部</option></select>
             </label>
-            <label data-page-node-id="X2kSwrYIxZLaKmEweV7l7C">状态
-              <select data-page-node-id="1CDolHttCXX0nlUb3gTAml"><option data-page-node-id="Z7vy40TXPZuWgfO1AHAXKW">全部</option><option data-page-node-id="4kFwCzLwZnvh2oWAtoK4OP">营业中</option><option data-page-node-id="7nJWs2lP5BAD9EM0sb7PfG">已下线</option></select>
+            <label data-page-node-id="X2kSwrYIxZLaKmEweV7l7C">类型
+              <select class="f-type" data-page-node-id="1CDolHttCXX0nlUb3gTAml"><option value="">全部</option><option value="FLAGSHIP">旗舰店</option><option value="STANDARD">标准店</option><option value="OUTLET">奥莱店</option></select>
+            </label>
+            <label>状态
+              <select class="f-st"><option value="">全部</option><option value="online">在线</option><option value="draft">待审核</option><option value="offline">下线</option></select>
             </label>
             <button class="btn primary" data-page-node-id="AwOjVP1ZpRcpptSlGeY3Aw">查询</button>
             <button class="btn" data-page-node-id="BSMQLDnB6xHWMESYWL4dbf">重置</button>
@@ -469,15 +483,8 @@
             <button class="btn primary" id="btnAddStore" data-page-node-id="WStIKLDclpJdDqE5bedHMN"><svg class="ico-sm" data-page-node-id="jX63JUqFKEx3s3nKiTGRQb"><line x1="12" y1="5" x2="12" y2="19" data-page-node-id="qHDCBqaIWUB2udhDqcFjN5"/><line x1="5" y1="12" x2="19" y2="12" data-page-node-id="UJpE3q1CvcbAjgv5VuZzwB"/></svg>新增门店</button>
           </div>
           <table data-page-node-id="28bNCsDGYOFz97mt5OOwMC">
-            <thead data-page-node-id="XwhPb2FQ4xXg0XtjhrRKws"><tr data-page-node-id="nuXD08cLywAhU16t8JOvza"><th data-page-node-id="ZR4V1JKAbmStSGEQitqpr8">门店ID</th><th data-page-node-id="k20S3MPnPi5qMP84s5W9TU">门店名称</th><th data-page-node-id="IqHLZCSAFseDexXl2KMmyw">城市</th><th data-page-node-id="d2VAJ3pqHZOXGyCGnxWiqy">地址</th><th data-page-node-id="surGqFN7XTlf2PLGur5wGb">状态</th><th data-page-node-id="G4CBk8Rweg1454NVWMEAky">更新时间</th><th data-page-node-id="9ACi1zeN5iaSCebrKjhkFS">操作</th></tr></thead>
-            <tbody data-page-node-id="MTG6KefpLVQGtHQ3lUUkQ6">
-              <tr data-page-node-id="JxeD4bik4VrvfJ7ksdHbTk"><td class="mono" data-page-node-id="vsuIDpEXOFEAsKF6Ndeaxe">S001</td><td data-page-node-id="f5ZKGvxeXkFDIpqm8EifgA">北京三里屯店</td><td data-page-node-id="2lpjNjesHcMtjmPIwaANmA">北京</td><td data-page-node-id="bm7UrN30FgMkiMghKpwuLq">朝阳区三里屯太古里 N4-20</td><td data-page-node-id="Y6pqZ0d4nWZNhfZNHRFes9"><span class="tag tag-green" data-page-node-id="UDZESqVm4QoKyaUs5sJPve">营业中</span></td><td data-page-node-id="AAQDjPnz91AHEHOesQKoAI">2026-09-08 14:00</td><td data-page-node-id="N4WA20rxdZDss51pSenwdO"><span class="op" data-page-node-id="OljBVeCqFFYcdTuFK3rS2W">编辑</span><span class="op del" data-page-node-id="DQIq7yrStYgope3wHrHb4w">删除</span></td></tr>
-              <tr data-page-node-id="D2l8UBgufi97ONK2TCFoKz"><td class="mono" data-page-node-id="ejjPgw5CIN74GXjgIbOVVI">S002</td><td data-page-node-id="ZWa29fARWggEn8fSBuS9aZ">上海静安店</td><td data-page-node-id="OGFDIQp8eXwnXSWE7KUC6Q">上海</td><td data-page-node-id="8Zb9pEbkeIF12FENFmfhKF">静安区南京西路 1788 号</td><td data-page-node-id="T59PoiNCk8qiZZZkI73IBD"><span class="tag tag-green" data-page-node-id="JEqQkLv402PDOpa3ASYW3w">营业中</span></td><td data-page-node-id="MELn5JMQW24aA3yDFxH6z4">2026-09-08 11:22</td><td data-page-node-id="VeSNI9bl8Gs4e9xY4MC8JF"><span class="op" data-page-node-id="8vFymiUFaFOh2YSsXxxyxL">编辑</span><span class="op del" data-page-node-id="VdqVCBTVVUVmjhPLsLl6HK">删除</span></td></tr>
-              <tr data-page-node-id="KmDuD1wFmAWbO1gZ0uSqb0"><td class="mono" data-page-node-id="OK3azGy66XhWzEiqlgKDkb">S003</td><td data-page-node-id="RBlxyluHte3o1DCejEFcmj">广州天河店</td><td data-page-node-id="TcpFYtAJJsmS2JCfAV00QM">广州</td><td data-page-node-id="BdfxNUVd4Lj4zr0VfS0PUY">天河区天河路 208 号</td><td data-page-node-id="VbI0zCBuLJMdhM5UMpIHa3"><span class="tag tag-green" data-page-node-id="8joFuzUyGxEzv0icQpO9O8">营业中</span></td><td data-page-node-id="yfApkSTuAo9pnLTrtxA7s6">2026-09-07 19:05</td><td data-page-node-id="zVlEZNH9hq1vmvF40e46Ej"><span class="op" data-page-node-id="5HlD4Eb3RADJ98bUpcebg6">编辑</span><span class="op del" data-page-node-id="gZnSJ8RY8boXyBPd79iHdA">删除</span></td></tr>
-              <tr data-page-node-id="q0fa7Fp4YnN8xf5xSlhlMH"><td class="mono" data-page-node-id="wLP2jyEfDn5drvkAtYbSNS">S004</td><td data-page-node-id="W1lToEd6MKGDpENNODGROB">深圳南山店</td><td data-page-node-id="Tk4BcK76zxlPY2SIxLn1K1">深圳</td><td data-page-node-id="Og71axPFhrn8jClPMionpM">南山区文心五路 33 号</td><td data-page-node-id="Hhgt3pLbTnKLBXw8QpjF49"><span class="tag tag-gray" data-page-node-id="h8aaAkEtObuSY1BkCr5s5w">已下线</span></td><td data-page-node-id="fygFCGE4bMFram70x0mzPi">2026-09-06 10:40</td><td data-page-node-id="B0XzredxVRjELJuqJcaK8t"><span class="op" data-page-node-id="bsJWyGHYriOsB6MoOfaAbg">编辑</span><span class="op del" data-page-node-id="HT0Z9go4LansyMIqUPwtXq">删除</span></td></tr>
-              <tr data-page-node-id="agNHcfzzBvSJZ0mBe8bTk6"><td class="mono" data-page-node-id="23CVwKbeAlKzjv4T9wG7Ft">S005</td><td data-page-node-id="xnvAYClSSV7EkCutkaOHb3">成都春熙店</td><td data-page-node-id="4qZYCTg4RoRRBnCKEoxAyx">成都</td><td data-page-node-id="YKx3f6qON69Az3I8dHjx30">锦江区春熙路步行街 8 号</td><td data-page-node-id="AKIijLB8kFpjPQnFcbp271"><span class="tag tag-green" data-page-node-id="AheeU5XCLQuP0FwwDzhlUF">营业中</span></td><td data-page-node-id="xOVv0aY4O1LESY5xDvOREX">2026-09-05 16:18</td><td data-page-node-id="xmiHIGyr6A9ULAzJ1CBoW7"><span class="op" data-page-node-id="zj77zQ2Ls6RLfLW3vzOYAA">编辑</span><span class="op del" data-page-node-id="jmO4WOu2RrvosHFERqYOED">删除</span></td></tr>
-              <tr data-page-node-id="YohAUMPUqLRXl77kLeiZTd"><td class="mono" data-page-node-id="2IyRU04XK1t59EMWc8Hkpf">S006</td><td data-page-node-id="gITfLML403KPCYqnhsguAm">杭州西湖店</td><td data-page-node-id="JK5iZ0jpEyOhsndFH2CJJc">杭州</td><td data-page-node-id="dKYcaGpNxARLTqtXhDUIqY">西湖区湖滨银泰 in77</td><td data-page-node-id="xgw3jSN2sMpKQ3Y9XyDRKn"><span class="tag tag-orange" data-page-node-id="0J003yq2FdVWlL5tHzXGz1">待审核</span></td><td data-page-node-id="KckCHf0gJrvnvrerOJGJk4">2026-09-04 09:12</td><td data-page-node-id="DnDt8UhOxLwpPHlGYPkWFW"><span class="op" data-page-node-id="EzJTcEfeihpTURS1llgyDz">编辑</span><span class="op del" data-page-node-id="7PGzRt7ZAUdCkvFNki7xQZ">删除</span></td></tr>
-            </tbody>
+            <thead data-page-node-id="XwhPb2FQ4xXg0XtjhrRKws"><tr data-page-node-id="nuXD08cLywAhU16t8JOvza"><th>ID</th><th>门店名称</th><th>城市</th><th>地址</th><th>类型</th><th>坐标 (GCJ-02)</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="storeTbody" data-page-node-id="MTG6KefpLVQGtHQ3lUUkQ6"></tbody>
           </table>
           <div class="pager" data-page-node-id="56Vt7UrxSrkiNEM5ctF6lb">
             <span data-page-node-id="oaGVLmtudbQTnjUARsjRip">共 128 条</span>
@@ -808,34 +815,56 @@
     </div>
     <div class="modal-body">
       <div class="form-grid">
-        <label>门店名称<input id="f-name" type="text" placeholder="如：北京国贸店"></label>
-        <label>城市
-          <select id="f-city">
-            <option>北京</option><option>上海</option><option>广州</option>
-            <option>深圳</option><option>成都</option><option>杭州</option>
+        <label>门店名称<input id="f-name" type="text" placeholder="如：广州天环广场店"></label>
+        <label>门店类型
+          <select id="f-store-type">
+            <option value="STANDARD">标准店</option>
+            <option value="FLAGSHIP">旗舰店</option>
+            <option value="OUTLET">奥莱店</option>
           </select>
         </label>
-        <label>详细地址<input id="f-addr" type="text" placeholder="街道 / 门牌号"></label>
+        <label>省份<input id="f-province" type="text" placeholder="如：广东"></label>
+        <label>城市<input id="f-city" type="text" list="storeCityList" placeholder="如：广州" autocomplete="off"><datalist id="storeCityList"></datalist></label>
+        <label>区县<input id="f-district" type="text" placeholder="如：天河区"></label>
+        <label>联系电话<input id="f-phone" type="text" placeholder="如：020-8888 8888"></label>
+        <label class="grid-full">详细地址<input id="f-addr" type="text" placeholder="街道 / 门牌号，如：天河路 208 号"></label>
+        <label>营业时间<input id="f-hours" type="text" placeholder="如：10:00 - 22:00"></label>
         <label>状态
           <select id="f-status">
-            <option value="营业中">营业中</option>
-            <option value="待审核">待审核</option>
-            <option value="已下线">已下线</option>
+            <option value="online">在线</option>
+            <option value="draft">待审核</option>
+            <option value="offline">下线</option>
           </select>
+        </label>
+        <label class="grid-full">门店图片
+          <span class="imgpick">
+            <span class="img-prev" id="f-img-prev"></span>
+            <span class="imgpick-actions">
+              <button type="button" class="btn primary" id="f-img-pick">添加图片</button>
+              <button type="button" class="btn" id="f-img-clr">移除图片</button>
+            </span>
+            <input type="file" id="f-img-file" accept="image/*" hidden>
+          </span>
+          <input type="text" id="f-img" placeholder="粘贴图片 URL（http/https 或 /pic/xxx.jpg）" style="display:block;margin-top:6px;box-sizing:border-box">
         </label>
       </div>
       <div class="map-wrap">
         <div class="map-bar">
-          <span class="map-title">门店位置 · 腾讯地图点选</span>
+          <span class="map-title">门店位置 · 腾讯地图（GCJ-02，与前台底图一致）</span>
           <span class="map-badge" id="mapBadge">演示模式（未配置 Key）</span>
         </div>
         <div class="map-canvas" id="mapCanvas">
           <span class="sim-hint">模拟地图（演示）— 点击或拖拽放置门店位置</span>
         </div>
         <div class="coord-row">
-          <label>经度<input id="f-lng" type="text" readonly placeholder="--"></label>
-          <label>纬度<input id="f-lat" type="text" readonly placeholder="--"></label>
-          <span class="coord-hint" id="coordHint">点击地图放置门店位置</span>
+          <label>经度<input id="f-lng" type="text" inputmode="decimal" autocomplete="off" placeholder="如 116.461200"></label>
+          <label>纬度<input id="f-lat" type="text" inputmode="decimal" autocomplete="off" placeholder="如 39.908700"></label>
+          <div class="coord-tools">
+            <button class="btn" id="btnGeocode" type="button">用地址解析坐标</button>
+            <a class="coord-link" id="coordLookup" href="https://www.mapchaxun.cn/jingweidu"
+               target="_blank" rel="noopener noreferrer" title="打开经纬度查询（新窗口）">经纬度查询 ↗</a>
+          </div>
+          <span class="coord-hint" id="coordHint">经纬度可随时手工录入；也可点「用地址解析坐标」或直接在图上点选</span>
         </div>
       </div>
     </div>
@@ -1053,10 +1082,35 @@
       grid + '<path d="' + area + '" fill="url(#og)"/><path d="' + line + '" fill="none" stroke="#409eff" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' + dots + xlab + '</svg>';
   }
 
-  /* ============ 门店列表 ============ */
+  /* ============ 门店列表（v2.6：接库 + 腾讯地图点选） ============ */
   var storeModal = null, simPin = null, dragging = false, editingStoreRow = null;
   var simBounds = { lng0: 116.30, lng1: 116.50, lat0: 39.85, lat1: 40.05 };
-  var TENCENT_MAP_KEY = '';
+  var storeRowCache = {};   // data-pid -> 门店对象（渲染行时写入，编辑/删除直接取）
+  var storeCache = [];      // 最近一次「无筛选」拉取的全量（城市分组 / 仪表盘复用）
+  var cityOptions = [];     // 城市下拉数据源（来自 GET /api/stores/cities）
+  var tmapMap = null, tmapMarker = null, tmapMode = 'sim';
+  // 地图 Key 只从全局注入（window.__FLY_TMAP_KEY__），不在代码里写死明文：
+  // 前端 Key 有被嗅探风险，必须在腾讯位置服务控制台配置 Referer 白名单（含 localhost:8000）
+  var TMAP_KEY = (window.__FLY_TMAP_KEY__ || '').trim();
+
+  var STORE_STATUS_TEXT = { online: '在线', draft: '待审核', offline: '下线' };
+  var STORE_STATUS_TAG = { online: 'tag-green', draft: 'tag-orange', offline: 'tag-gray' };
+  var STORE_TYPE_TEXT = { FLAGSHIP: '旗舰店', STANDARD: '标准店', OUTLET: '奥莱店' };
+
+  var STORE_PIN_SVG = '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="34" viewBox="0 0 26 34">' +
+    '<path d="M13 1C6.4 1 1 6.4 1 13c0 9.5 12 20 12 20s12-10.5 12-20C25 6.4 19.6 1 13 1z" fill="#409eff" stroke="#fff" stroke-width="2"/>' +
+    '<circle cx="13" cy="13" r="5" fill="#fff"/></svg>';
+  var STORE_PIN_URL = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(STORE_PIN_SVG);
+
+  /* 离线演示数据：字段与后端 stores 表 1:1，坐标为 GCJ-02（与腾讯底图一致） */
+  var DEMO_STORES = [
+    { id: 'D1', name: '北京国贸店', province: '北京', city: '北京', district: '朝阳区', address: '建国门外大街 1 号', lng: 116.4612, lat: 39.9087, phone: '010-8888 0001', business_hours: '10:00 - 22:00', store_type: 'FLAGSHIP', images: [], status: 'online' },
+    { id: 'D2', name: '上海静安店', province: '上海', city: '上海', district: '静安区', address: '南京西路 1788 号', lng: 121.4402, lat: 31.2296, phone: '021-8888 0002', business_hours: '10:00 - 22:00', store_type: 'STANDARD', images: [], status: 'online' },
+    { id: 'D3', name: '广州天河店', province: '广东', city: '广州', district: '天河区', address: '天河路 208 号', lng: 113.3245, lat: 23.1356, phone: '020-8888 0003', business_hours: '10:00 - 22:00', store_type: 'FLAGSHIP', images: [], status: 'online' },
+    { id: 'D4', name: '深圳南山店', province: '广东', city: '深圳', district: '南山区', address: '文心五路 33 号', lng: 113.9352, lat: 22.5406, phone: '0755-8888 0004', business_hours: '10:00 - 22:30', store_type: 'STANDARD', images: [], status: 'draft' },
+    { id: 'D5', name: '成都春熙店', province: '四川', city: '成都', district: '锦江区', address: '春熙路步行街 8 号', lng: 104.0817, lat: 30.6570, phone: '028-8888 0005', business_hours: '10:00 - 22:00', store_type: 'STANDARD', images: [], status: 'online' },
+    { id: 'D6', name: '杭州西湖店', province: '浙江', city: '杭州', district: '西湖区', address: '湖滨银泰 in77', lng: 120.1684, lat: 30.2530, phone: '0571-8888 0006', business_hours: '10:00 - 22:00', store_type: 'OUTLET', images: [], status: 'offline' }
+  ];
 
   function statusTagCls(status) {
     return { '营业中': 'tag-green', '在售': 'tag-green', '启用': 'tag-green', '已发布': 'tag-green',
@@ -1065,85 +1119,413 @@
   }
 
   function storeRowData(tr) {
+    var pid = tr.getAttribute('data-pid');
+    if (pid && storeRowCache[pid]) return storeRowCache[pid];
     var tds = tr.querySelectorAll('td');
     var tag = tr.querySelector('.tag');
     return {
-      id: tds[0].textContent.trim(),
-      name: tds[1].textContent.trim(),
-      city: tds[2].textContent.trim(),
-      address: tds[3].textContent.trim(),
+      id: tds[0] ? tds[0].textContent.trim() : '',
+      name: tds[1] ? tds[1].textContent.trim() : '',
+      city: tds[2] ? tds[2].textContent.trim() : '',
+      address: tds[3] ? tds[3].textContent.trim() : '',
       status: tag ? tag.textContent.trim() : ''
     };
   }
 
-  function bindStores() {
-    // 查询 / 重置
-    var sec = $('#view-stores');
-    var kw = sec.querySelector('.filter input');
-    var citySel = sec.querySelectorAll('.filter select')[0];
-    var stSel = sec.querySelectorAll('.filter select')[1];
-    var btns = sec.querySelectorAll('.filter button');
-    btns[0].addEventListener('click', function () { filterStoreRows(kw.value, citySel.value, stSel.value); toast('门店筛选已应用'); });
-    btns[1].addEventListener('click', function () { kw.value = ''; citySel.value = '全部'; stSel.value = '全部'; filterStoreRows('', '全部', '全部'); toast('已重置筛选'); });
+  function coordText(s) {
+    return (s && s.lng != null && s.lat != null)
+      ? (Number(s.lng).toFixed(6) + ', ' + Number(s.lat).toFixed(6)) : '—';
+  }
 
-    function filterStoreRows(kwv, cityv, stv) {
-      $$('#view-stores tbody tr').forEach(function (tr) {
-        var d = storeRowData(tr);
-        var ok = (!kwv || d.name.indexOf(kwv) > -1) && (cityv === '全部' || d.city === cityv) && (stv === '全部' || d.status === stv);
-        tr.style.display = ok ? '' : 'none';
-      });
-      updatePagerInfo(sec, countVisibleRows(sec));
+  function renderStoreRows(list, fromApi) {
+    var tb = document.getElementById('storeTbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    storeRowCache = {};
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#909399;padding:26px">' +
+        (fromApi ? '后端暂无门店，点击右上角「新增门店」添加' : '暂无门店数据') + '</td></tr>';
+      updatePagerInfo(document.getElementById('view-stores'), 0);
+      return;
     }
-    // 行操作委托：编辑 / 删除
+    list.forEach(function (s) {
+      storeRowCache[String(s.id)] = s;
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-pid', String(s.id));
+      tr.innerHTML =
+        '<td class="mono">' + esc(String(s.id)) + '</td>' +
+        '<td>' + esc(s.name || '') + '</td>' +
+        '<td>' + esc(s.city || '—') + '</td>' +
+        '<td>' + esc(s.address || '—') + '</td>' +
+        '<td>' + esc(STORE_TYPE_TEXT[s.store_type] || s.store_type || '—') + '</td>' +
+        '<td class="mono">' + esc(coordText(s)) + '</td>' +
+        '<td><span class="tag ' + (STORE_STATUS_TAG[s.status] || 'tag-gray') + '">' +
+          esc(STORE_STATUS_TEXT[s.status] || s.status) + '</span></td>' +
+        '<td><span class="op">编辑</span><span class="op del">删除</span></td>';
+      tb.appendChild(tr);
+    });
+    updatePagerInfo(document.getElementById('view-stores'), countVisibleRows(document.getElementById('view-stores')));
+  }
+
+  /* 当前数据源：在线用后端缓存，离线用演示数据（供城市分组 / 仪表盘复用） */
+  function allStores() {
+    if (!apiOnline()) return DEMO_STORES;
+    if (storeCache.length) return storeCache;
+    return Object.keys(storeRowCache).map(function (k) { return storeRowCache[k]; });
+  }
+  /* 列表当前可见行（筛选后）；拿不到行时退回全量 */
+  function visibleStores() {
+    var out = [];
+    $$('#storeTbody tr').forEach(function (tr) {
+      if (tr.style.display === 'none') return;
+      var pid = tr.getAttribute('data-pid');
+      if (pid && storeRowCache[pid]) out.push(storeRowCache[pid]);
+    });
+    return out.length ? out : allStores();
+  }
+
+  function storeQuery() {
+    var sec = document.getElementById('view-stores');
+    if (!sec) return '';
+    var q = [];
+    var kw = sec.querySelector('.f-kw'), city = sec.querySelector('.f-city');
+    var ty = sec.querySelector('.f-type'), st = sec.querySelector('.f-st');
+    if (kw && kw.value.trim()) q.push('keyword=' + encodeURIComponent(kw.value.trim()));
+    if (city && city.value) q.push('city=' + encodeURIComponent(city.value));
+    if (ty && ty.value) q.push('store_type=' + encodeURIComponent(ty.value));
+    if (st && st.value) q.push('status=' + encodeURIComponent(st.value));
+    return q.length ? ('?' + q.join('&')) : '';
+  }
+
+  function fillCitySelects() {
+    var sel = document.querySelector('#view-stores .f-city');
+    if (sel) {
+      var cur = sel.value;
+      sel.innerHTML = '<option value="">全部</option>' +
+        cityOptions.map(function (c) { return '<option value="' + esc(c) + '">' + esc(c) + '</option>'; }).join('');
+      sel.value = cur;
+    }
+    var dl = document.getElementById('storeCityList');
+    if (dl) {
+      dl.innerHTML = cityOptions.map(function (c) { return '<option value="' + esc(c) + '"></option>'; }).join('');
+    }
+  }
+
+  function loadStoreCities() {
+    if (!apiOnline()) return Promise.resolve();
+    return apiCall('/api/stores/cities').then(function (rows) {
+      cityOptions = (rows || []).map(function (r) { return r.city; }).filter(Boolean);
+      fillCitySelects();
+    }).catch(function () { /* 下拉退回空，不影响主流程 */ });
+  }
+
+  function loadStores(silent) {
+    if (!apiOnline()) {
+      renderStoreRows(DEMO_STORES, false);
+      renderCityGroups(); renderBoard();
+      return Promise.resolve();
+    }
+    var qs = storeQuery();
+    return apiCall('/api/admin/stores' + qs).then(function (list) {
+      var rows = list || [];
+      // 无筛选时本次结果即全量，回写缓存供城市分组 / 仪表盘使用
+      if (!qs) storeCache = rows;
+      renderStoreRows(rows, true);
+      renderCityGroups(); renderBoard();
+      if (!silent) toast('已拉取后端门店：' + rows.length + ' 家');
+    }).then(loadStoreCities)
+      .catch(function (err) { if (!silent) toast('拉取门店失败：' + err.message); });
+  }
+
+  function filterStoreRowsLocal() {
+    var sec = document.getElementById('view-stores');
+    if (!sec) return;
+    var kw = (sec.querySelector('.f-kw') || {}).value || '';
+    var city = (sec.querySelector('.f-city') || {}).value || '';
+    var ty = (sec.querySelector('.f-type') || {}).value || '';
+    var st = (sec.querySelector('.f-st') || {}).value || '';
+    $$('#storeTbody tr').forEach(function (tr) {
+      var d = storeRowData(tr);
+      var ok = (!kw || (d.name || '').indexOf(kw) > -1 || (d.city || '') === kw || (d.address || '').indexOf(kw) > -1)
+        && (!city || d.city === city) && (!ty || d.store_type === ty) && (!st || d.status === st);
+      tr.style.display = ok ? '' : 'none';
+    });
+    updatePagerInfo(sec, countVisibleRows(sec));
+  }
+
+  function bindStores() {
+    var sec = document.getElementById('view-stores');
+    if (!sec) return;
+    var btns = sec.querySelectorAll('.filter button');
+    if (btns[0]) btns[0].addEventListener('click', function () {
+      if (apiOnline()) loadStores(false); else { filterStoreRowsLocal(); toast('门店筛选已应用'); }
+    });
+    if (btns[1]) btns[1].addEventListener('click', function () {
+      var kw = sec.querySelector('.f-kw'), c = sec.querySelector('.f-city');
+      var t = sec.querySelector('.f-type'), s = sec.querySelector('.f-st');
+      if (kw) kw.value = ''; if (c) c.value = ''; if (t) t.value = ''; if (s) s.value = '';
+      if (apiOnline()) loadStores(false); else { filterStoreRowsLocal(); toast('已重置筛选'); }
+    });
+
     sec.querySelector('tbody').addEventListener('click', function (e) {
       var op = e.target.closest('.op');
       if (!op) return;
       var tr = e.target.closest('tr');
       if (!tr) return;
       var d = storeRowData(tr);
-      if (op.classList.contains('del') || op.textContent.trim() === '删除') {
-        if (confirm('确认删除门店「' + d.name + '」？')) { tr.remove(); updatePagerInfo(sec, countVisibleRows(sec)); renderCityGroups(); renderBoard(); toast('门店已删除（演示）'); }
-      } else if (op.textContent.trim() === '编辑') {
+      if (op.classList.contains('del')) {
+        var extra = d.stock_count ? ('\n\n该门店有 ' + d.stock_count + ' 条库存记录，删除会一并清除。') : '';
+        if (!confirm('确认删除门店「' + d.name + '」？' + extra)) return;
+        if (apiOnline()) {
+          apiCall('/api/admin/stores/' + encodeURIComponent(d.id), { method: 'DELETE' })
+            .then(function () { toast('门店已删除：' + d.name); return loadStores(true); })
+            .catch(function (err) { toast('删除失败：' + err.message); });
+        } else {
+          tr.remove();
+          updatePagerInfo(sec, countVisibleRows(sec));
+          renderCityGroups(); renderBoard();
+          toast('门店已删除（演示）');
+        }
+      } else {
         openStoreModal(d, tr);
       }
     });
-    $('#btnAddStore').addEventListener('click', function () { openStoreModal(); });
+
+    var add = document.getElementById('btnAddStore');
+    if (add) add.addEventListener('click', function () { openStoreModal(); });
+
+    renderStoreRows(apiOnline() ? [] : DEMO_STORES, false);
   }
 
   function countVisibleRows(sec) {
     return $$('#' + sec.id + ' tbody tr').filter(function (r) { return r.style.display !== 'none'; }).length;
   }
   function updatePagerInfo(sec, n) {
+    if (!sec) return;
     var sp = sec.querySelector('.pager span');
     if (sp && sp.textContent.indexOf('条') > -1 && sp.textContent.indexOf('每页') === -1) sp.textContent = '共 ' + n + ' 条（当前视图）';
   }
 
-  /* ---- 门店弹窗 + 地图 ---- */
+  /* ---- 门店弹窗：字段读写 ---- */
+  function setImgPrev(u) {
+    var el = document.getElementById('f-img-prev');
+    if (!el) return;
+    // 用 JS 设 style，避免 HTML 属性里 url() 引号嵌套把属性截断（v2.3 踩过）
+    if (u) {
+      el.style.backgroundImage = "url('" + String(u).replace(/['")]+/g, '') + "')";
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+    } else {
+      el.style.backgroundImage = '';
+    }
+  }
+
+  function fillStoreForm(d) {
+    $('#f-name').value = d ? (d.name || '') : '';
+    $('#f-store-type').value = (d && d.store_type) ? d.store_type : 'STANDARD';
+    $('#f-province').value = d ? (d.province || '') : '';
+    $('#f-city').value = d ? (d.city || '') : '';
+    $('#f-district').value = d ? (d.district || '') : '';
+    $('#f-addr').value = d ? (d.address || '') : '';
+    $('#f-phone').value = d ? (d.phone || '') : '';
+    $('#f-hours').value = d ? (d.business_hours || '') : '';
+    $('#f-status').value = (d && d.status) ? d.status : 'online';
+    var img = (d && d.images && d.images.length) ? d.images[0] : '';
+    $('#f-img').value = img || '';
+    setImgPrev(img);
+  }
+
+  function collectStoreForm() {
+    var imgv = ($('#f-img').value || '').trim();
+    return {
+      name: ($('#f-name').value || '').trim(),
+      province: ($('#f-province').value || '').trim(),
+      city: ($('#f-city').value || '').trim(),
+      district: ($('#f-district').value || '').trim() || null,
+      address: ($('#f-addr').value || '').trim(),
+      lng: parseFloat($('#f-lng').value),
+      lat: parseFloat($('#f-lat').value),
+      phone: ($('#f-phone').value || '').trim() || null,
+      business_hours: ($('#f-hours').value || '').trim() || null,
+      store_type: $('#f-store-type').value,
+      images: imgv ? [imgv] : [],
+      status: $('#f-status').value
+    };
+  }
+
   function openStoreModal(data, row) {
     editingStoreRow = row || null;
     storeModal.hidden = false;
     document.body.style.overflow = 'hidden';
     $('#storeModal h3').textContent = data ? '编辑门店' : '新增门店';
-    $('#f-name').value = data ? data.name : '';
-    $('#f-city').value = data ? data.city : '北京';
-    $('#f-addr').value = data ? data.address : '';
-    $('#f-status').value = data ? data.status : '营业中';
-    if (TENCENT_MAP_KEY) { loadRealMap(); } else { renderSimMap(); }
+    fillStoreForm(data || null);
+    initMapArea(data || null);
   }
   function closeStoreModal() {
     storeModal.hidden = true;
     document.body.style.overflow = '';
     editingStoreRow = null;
   }
+
+  /* ---- 地图区：真地图 / 演示地图 / 手工坐标 三级降级 ---- */
+  function setMapBadge(text, tone) {
+    var b = document.getElementById('mapBadge');
+    if (!b) return;
+    b.textContent = text;
+    b.style.color = tone === 'green' ? '#67c23a' : (tone === 'blue' ? '#409eff' : '#e6a23c');
+    b.style.borderColor = tone === 'green' ? '#b3e19d' : (tone === 'blue' ? '#b3d8ff' : '#faecd8');
+    b.style.background = tone === 'green' ? '#f0f9eb' : (tone === 'blue' ? '#ecf5ff' : '#fdf6ec');
+  }
+  /* 坐标永远可手工录入：地址解析有配额（可能被限流），运营也常拿外部查到的经纬度直接填；
+     因此不再随地图模式切成只读 —— 地图点选只是「填坐标」的一种方式，不是唯一方式。 */
+  function enableCoordInputs() {
+    ['#f-lng', '#f-lat'].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.readOnly = false;
+      el.style.background = '#fff';
+    });
+  }
   function setCoord(lat, lng) {
-    if (lng === '' || lng == null) {
+    if (lng === '' || lng == null || isNaN(parseFloat(lng)) || isNaN(parseFloat(lat))) {
       $('#f-lat').value = ''; $('#f-lng').value = '';
-      $('#coordHint').textContent = '点击地图放置门店位置';
+      $('#coordHint').textContent = '经纬度可随时手工录入；也可点「用地址解析坐标」或直接在图上点选';
       return;
     }
     $('#f-lat').value = Number(lat).toFixed(6);
     $('#f-lng').value = Number(lng).toFixed(6);
     $('#coordHint').textContent = '已选坐标（GCJ-02 火星坐标）';
+  }
+  function coordHintIdle() {
+    return tmapMode === 'real'
+      ? '经纬度可随时手工录入；也可点「用地址解析坐标」或直接在图上点选'
+      : '经纬度可随时手工录入（如从「经纬度查询」复制粘贴）';
+  }
+
+  /* ---- 手工录入坐标：即时校验 + 与地图双向联动 ---- */
+  function readManualCoord() {
+    var lng = parseFloat($('#f-lng').value), lat = parseFloat($('#f-lat').value);
+    if (isNaN(lng) || isNaN(lat)) return null;
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) return null;
+    if (!lng && !lat) return null;   // 0,0 视为未填
+    return { lat: lat, lng: lng };
+  }
+  function moveSimPinToCoord(lat, lng) {
+    if (!simPin) return;
+    var W = 560, H = 300;
+    var cx = (lng - simBounds.lng0) / (simBounds.lng1 - simBounds.lng0) * W;
+    var cy = (simBounds.lat1 - lat) / (simBounds.lat1 - simBounds.lat0) * H;
+    if (cx < 0 || cx > W || cy < 0 || cy > H) return;   // 超出示意范围就不动图钉
+    simPin.setAttribute('transform', 'translate(' + cx + ',' + cy + ')');
+  }
+  function syncMarkerToCoord(lat, lng) {
+    if (tmapMode === 'real' && tmapMap && window.TMap) {
+      var ll = new window.TMap.LatLng(lat, lng);
+      if (tmapMarker) tmapMarker.setGeometries([{ id: 'store', styleId: 'pin', position: ll }]);
+      tmapMap.setCenter(ll);
+      try { if (tmapMap.getZoom && tmapMap.getZoom() < 13) tmapMap.setZoom(15); } catch (e) { }
+    } else if (tmapMode === 'sim') {
+      moveSimPinToCoord(lat, lng);
+    }
+  }
+  function bindCoordInputs() {
+    ['#f-lng', '#f-lat'].forEach(function (sel) {
+      var el = $(sel);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        var c = readManualCoord();
+        if (!c) { $('#coordHint').textContent = '坐标格式：经度 / 纬度，如 116.461200 / 39.908700'; return; }
+        $('#coordHint').textContent = '已手工录入坐标（GCJ-02）· 保存以输入值为准';
+        syncMarkerToCoord(c.lat, c.lng);
+      });
+    });
+  }
+
+  function initMapArea(d) {
+    var canvas = document.getElementById('mapCanvas');
+    if (!canvas) return;
+    canvas.innerHTML = '<span class="sim-hint">模拟地图（演示）— 点击或拖拽放置门店位置</span>';
+    enableCoordInputs();   // 真地图 / 演示地图都允许手工录入经纬度
+    if (TMAP_KEY) {
+      setMapBadge('腾讯地图加载中…', 'blue');
+      loadRealMap(d);
+    } else {
+      setMapBadge('演示模式（未配置 Key，可手工录入坐标）', 'amber');
+      tmapMode = 'sim';
+      renderSimMap();
+    }
+    // 编辑态：回填已有坐标（随后仍可手工改，不会被地图覆盖）
+    if (d && d.lat != null) { setCoord(d.lat, d.lng); syncMarkerToCoord(Number(d.lat), Number(d.lng)); }
+    else $('#coordHint').textContent = coordHintIdle();
+  }
+
+  function loadRealMap(d) {
+    var boot = function () {
+      try { createTMap(d); } catch (e) { fallbackSim('地图初始化失败'); }
+    };
+    if (window.TMap) { boot(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://map.qq.com/api/gljs?v=1.exp&libraries=service&key=' + encodeURIComponent(TMAP_KEY);
+    s.onload = boot;
+    s.onerror = function () { fallbackSim('地图脚本加载失败'); };
+    document.head.appendChild(s);
+  }
+
+  function createTMap(d) {
+    var T = window.TMap;
+    var manual = readManualCoord();
+    var has = !!(d && d.lat != null && d.lng != null) || !!manual;
+    var lat = has ? (manual ? manual.lat : Number(d.lat)) : 39.9087;
+    var lng = has ? (manual ? manual.lng : Number(d.lng)) : 116.3975;
+    tmapMap = new T.Map(document.getElementById('mapCanvas'), {
+      center: new T.LatLng(lat, lng), zoom: has ? 15 : 11, minZoom: 3, maxZoom: 18
+    });
+    tmapMarker = new T.MultiMarker({
+      map: tmapMap,
+      styles: { pin: new T.MarkerStyle({ width: 26, height: 34, anchor: { x: 13, y: 34 }, src: STORE_PIN_URL }) },
+      geometries: has ? [{ id: 'store', styleId: 'pin', position: new T.LatLng(lat, lng) }] : []
+    });
+    tmapMap.on('click', function (e) {
+      var ll = e.latLng;
+      setCoord(ll.getLat(), ll.getLng());
+      tmapMarker.setGeometries([{ id: 'store', styleId: 'pin', position: ll }]);
+      tryReverseFill(ll.getLat(), ll.getLng());
+    });
+    tmapMode = 'real';
+    setMapBadge('腾讯地图已接入 · 点击地图选点', 'green');
+    enableCoordInputs();   // 真地图下也允许手工改坐标（点选与手工录入并存）
+    if (!$('#f-lng').value) $('#coordHint').textContent = coordHintIdle();
+    var hint = document.querySelector('#mapCanvas .sim-hint');
+    if (hint) hint.remove();
+    // 兜底：腾讯底图鉴权失败（Referer 白名单未含本机域名）时自动降级为演示地图，
+    // 避免留下一个空白容器。地址解析不受影响 —— 首选走后端 geocode（不依赖 Referer）。
+    var waited = 0;
+    var authTimer = setInterval(function () {
+      waited += 1200;
+      var cvA = document.getElementById('mapCanvas');
+      var tA = cvA ? (cvA.textContent || '') : '';
+      if (tA.indexOf('鉴权失败') > -1) {
+        clearInterval(authTimer);
+        try { if (tmapMap && tmapMap.destroy) tmapMap.destroy(); } catch (e2) { }
+        tmapMap = null;
+        fallbackSim('底图鉴权失败（Referer 白名单未含本机域名）');
+      } else if (waited >= 9600) {
+        clearInterval(authTimer);
+      }
+    }, 1200);
+  }
+
+  function fallbackSim(reason) {
+    tmapMode = 'sim';
+    setMapBadge(reason + ' · 已切演示模式（可手工录入坐标）', 'amber');
+    var cv = $('#mapCanvas');
+    if (cv) cv.innerHTML = '<span class="sim-hint">模拟地图（演示）— 点击或拖拽放置门店位置</span>';
+    renderSimMap();
+    enableCoordInputs();
+    var c = readManualCoord();
+    if (c) syncMarkerToCoord(c.lat, c.lng);
+    else $('#coordHint').textContent = coordHintIdle();
   }
 
   function renderSimMap() {
@@ -1168,9 +1550,13 @@
       return { lng: simBounds.lng0 + (cx / W) * (simBounds.lng1 - simBounds.lng0),
                lat: simBounds.lat1 - (cy / H) * (simBounds.lat1 - simBounds.lat0) };
     };
-    var moveTo = function (cx, cy) {
+    var movePin = function (cx, cy) {
       cx = Math.max(0, Math.min(W, cx)); cy = Math.max(0, Math.min(H, cy));
       simPin.setAttribute('transform', 'translate(' + cx + ',' + cy + ')');
+    };
+    // 只有用户主动点击 / 拖拽才写入坐标：打开弹窗时不预填，避免「没选点也能保存」
+    var moveTo = function (cx, cy) {
+      movePin(cx, cy);
       var c = toCoord(cx, cy); setCoord(c.lat, c.lng);
     };
     var ptInSvg = function (e) { var r = svgEl.getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * W, y: (e.clientY - r.top) / r.height * H }; };
@@ -1178,23 +1564,115 @@
     simPin.addEventListener('pointerdown', function (e) { e.stopPropagation(); dragging = true; simPin.classList.add('drag'); simPin.setPointerCapture(e.pointerId); });
     simPin.addEventListener('pointermove', function (e) { if (!dragging) return; var p = ptInSvg(e); moveTo(p.x, p.y); });
     simPin.addEventListener('pointerup', function () { dragging = false; simPin.classList.remove('drag'); });
-    moveTo(W / 2, H / 2);
+    movePin(W / 2, H / 2);
   }
-  function loadRealMap() {
-    var cv = $('#mapCanvas');
-    var s = document.createElement('script');
-    s.src = 'https://map.qq.com/api/gljs?v=1.exp&key=' + encodeURIComponent(TENCENT_MAP_KEY);
-    s.onload = function () {
-      try {
-        var map = new TMap.Map('mapCanvas', { center: new TMap.LatLng(39.9, 116.4), zoom: 11 });
-        var marker = new TMap.MultiMarker({ map: map, geometries: [{ id: 'store', position: new TMap.LatLng(39.9, 116.4) }] });
-        map.on('click', function (e) { var ll = e.latLng; setCoord(ll.getLat(), ll.getLng()); marker.setGeometries([{ id: 'store', position: ll }]); });
-        var hint = cv.querySelector('.sim-hint'); if (hint) hint.remove();
-        $('#mapBadge').textContent = '腾讯地图已接入';
-      } catch (err) { renderSimMap(); }
-    };
-    s.onerror = function () { renderSimMap(); };
-    document.head.appendChild(s);
+
+  /* 地址 → 坐标：优先后端（服务端 Key，不外泄）；后端 501（未配置）时退回前端 SDK */
+  function geocodeBySdk(addr) {
+    try {
+      if (!window.TMap || !TMap.service || !TMap.service.Geocoder) return false;
+      var g = new TMap.service.Geocoder();
+      g.getLocation({ address: addr }).then(function (res) {
+        var loc = res && res.result && res.result.location;
+        if (loc) applyGeocode({ lng: loc.lng, lat: loc.lat, reliability: res.result.reliability });
+        else toast('未能解析出坐标，请在地图上点选或手工录入');
+      }).catch(function () { toast('地址解析失败，请点选或手工录入坐标'); });
+      return true;
+    } catch (e) { return false; }
+  }
+
+  /* 地图选点后，若地址栏为空则静默反查回填（失败不打扰） */
+  function tryReverseFill(lat, lng) {
+    if (!$('#f-addr') || $('#f-addr').value.trim()) return;
+    try {
+      if (!window.TMap || !TMap.service || !TMap.service.Geocoder) return;
+      var g = new TMap.service.Geocoder();
+      g.getAddress({ location: new window.TMap.LatLng(lat, lng) }).then(function (res) {
+        var r = res && res.result;
+        if (!r) return;
+        var c = r.address_components || {};
+        if (!$('#f-province').value.trim() && c.province) $('#f-province').value = c.province;
+        if (!$('#f-city').value.trim() && c.city) $('#f-city').value = c.city;
+        if (!$('#f-district').value.trim() && c.district) $('#f-district').value = c.district;
+        if (r.address) $('#f-addr').value = r.address;
+      }).catch(function () { });
+    } catch (e) { }
+  }
+
+  function applyGeocode(r) {
+    if (!r || r.lng == null || r.lat == null) { toast('未能解析出坐标'); return; }
+    setCoord(r.lat, r.lng);
+    if (tmapMode === 'real' && tmapMap && window.TMap) {
+      var ll = new window.TMap.LatLng(r.lat, r.lng);
+      tmapMap.setCenter(ll);
+      tmapMap.setZoom(16);
+      if (tmapMarker) tmapMarker.setGeometries([{ id: 'store', styleId: 'pin', position: ll }]);
+    }
+    if (r.province && !$('#f-province').value.trim()) $('#f-province').value = r.province;
+    if (r.city && !$('#f-city').value.trim()) $('#f-city').value = r.city;
+    if (r.district && !$('#f-district').value.trim()) $('#f-district').value = r.district;
+    if (r.reliability != null && Number(r.reliability) <= 7) toast('坐标可信度较低，建议在地图上点选微调');
+    else toast('已解析坐标：' + Number(r.lng).toFixed(6) + ', ' + Number(r.lat).toFixed(6));
+  }
+
+  function geocodeFromAddress() {
+    var prov = $('#f-province').value.trim(), city = $('#f-city').value.trim();
+    var dist = $('#f-district').value.trim(), addr = $('#f-addr').value.trim();
+    var full = [prov, city, dist, addr].join('');
+    if (!full) { toast('请先填写地址（省份 / 城市 / 详细地址）'); return; }
+    var btn = document.getElementById('btnGeocode');
+    var restore = function () { if (btn) { btn.disabled = false; btn.textContent = '用地址解析坐标'; } };
+    if (btn) { btn.disabled = true; btn.textContent = '解析中…'; }
+    if (apiOnline()) {
+      apiCall('/api/admin/stores/geocode', {
+        method: 'POST', json: true,
+        body: JSON.stringify({ province: prov, city: city, district: dist, address: addr })
+      }).then(function (r) { restore(); applyGeocode(r); })
+        .catch(function (err) {
+          restore();
+          if (err.message.indexOf('501') > -1 || err.message.indexOf('未配置服务端地图 Key') > -1) {
+            if (!geocodeBySdk(full)) toast('未配置服务端地图 Key（TMAP_SERVER_KEY），请点选或手工录入坐标');
+          } else toast('解析失败：' + err.message);
+        });
+    } else {
+      restore();
+      if (!geocodeBySdk(full)) toast('离线演示模式无法解析坐标，请点选或手工录入');
+    }
+  }
+
+  /* ---- 保存 ---- */
+  function saveStore() {
+    var v = collectStoreForm();
+    if (!v.name) { toast('请填写门店名称'); return; }
+    if (!v.province || !v.city) { toast('请填写省份与城市'); return; }
+    if (!v.address) { toast('请填写详细地址'); return; }
+    if (isNaN(v.lng) || isNaN(v.lat)) { toast('请先确定门店坐标（解析 / 点选 / 手工录入）'); return; }
+    if (apiOnline()) {
+      var pid = editingStoreRow ? editingStoreRow.getAttribute('data-pid') : '';
+      var isEdit = !!pid;
+      var req = isEdit
+        ? apiCall('/api/admin/stores/' + encodeURIComponent(pid), { method: 'PUT', json: true, body: JSON.stringify(v) })
+        : apiCall('/api/admin/stores', { method: 'POST', json: true, body: JSON.stringify(v) });
+      req.then(function () {
+        toast((isEdit ? '已更新门店：' : '已新增门店：') + v.name);
+        closeStoreModal();
+        return loadStores(true);
+      }).catch(function (err) { toast('保存失败：' + err.message); });
+      return;
+    }
+    // 离线演示：改内存数组后重渲染
+    if (editingStoreRow) {
+      var pid2 = editingStoreRow.getAttribute('data-pid');
+      for (var i = 0; i < DEMO_STORES.length; i++) {
+        if (String(DEMO_STORES[i].id) === String(pid2)) { DEMO_STORES[i] = Object.assign({}, DEMO_STORES[i], v); break; }
+      }
+    } else {
+      DEMO_STORES.unshift(Object.assign({ id: 'D' + (DEMO_STORES.length + 1) }, v));
+    }
+    renderStoreRows(DEMO_STORES, false);
+    renderCityGroups(); renderBoard();
+    closeStoreModal();
+    toast('已保存门店（本地演示）：' + v.name);
   }
 
   function bindStoreModal() {
@@ -1203,39 +1681,30 @@
     $('#storeCancel').addEventListener('click', closeStoreModal);
     storeModal.addEventListener('click', function (e) { if (e.target === storeModal) closeStoreModal(); });
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !storeModal.hidden) closeStoreModal(); });
-    $('#storeSave').addEventListener('click', function () {
-      var name = $('#f-name').value.trim();
-      var lat = $('#f-lat').value, lng = $('#f-lng').value;
-      if (!name) { toast('请填写门店名称'); return; }
-      if (!lat || !lng) { toast('请在地图上点选门店位置'); return; }
-      var city = $('#f-city').value, addr = $('#f-addr').value.trim() || '—', status = $('#f-status').value;
-      var cls = statusTagCls(status);
-      if (editingStoreRow) {
-        var tds = editingStoreRow.querySelectorAll('td');
-        tds[1].textContent = name; tds[2].textContent = city; tds[3].textContent = addr;
-        var tag = editingStoreRow.querySelector('.tag');
-        tag.className = 'tag ' + cls; tag.textContent = status;
-        tds[5].textContent = nowStamp();
-        toast('门店已更新：' + name);
-      } else {
-        var tr = document.createElement('tr');
-        tr.innerHTML = '<td class="mono">' + esc(randId('S')) + '</td><td>' + esc(name) + '</td><td>' + esc(city) + '</td><td>' + esc(addr) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + esc(nowStamp()) + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
-        $('#view-stores tbody').insertBefore(tr, $('#view-stores tbody').firstChild);
-        toast('已保存门店：' + name);
-      }
-      $('#f-name').value = ''; $('#f-addr').value = '';
-      setCoord('', '');
-      closeStoreModal();
-      var sec = $('#view-stores');
-      updatePagerInfo(sec, countVisibleRows(sec));
-      renderCityGroups(); renderBoard();
-    });
+    $('#storeSave').addEventListener('click', saveStore);
+
+    var geoBtn = document.getElementById('btnGeocode');
+    if (geoBtn) geoBtn.addEventListener('click', geocodeFromAddress);
+
+    bindCoordInputs();   // 手工录入经纬度：即时校验 + 地图联动
+
+    var imgIn = document.getElementById('f-img');
+    if (imgIn) imgIn.addEventListener('input', function () { setImgPrev(imgIn.value.trim()); });
+    var pick = document.getElementById('f-img-pick'), fileIn = document.getElementById('f-img-file');
+    if (pick && fileIn) {
+      pick.addEventListener('click', function () { fileIn.click(); });
+      fileIn.addEventListener('change', function () {
+        var f = fileIn.files && fileIn.files[0];
+        if (!f) return;
+        uploadImg(f, function (url) { imgIn.value = url; setImgPrev(url); });
+        fileIn.value = '';
+      });
+    }
+    var clr = document.getElementById('f-img-clr');
+    if (clr) clr.addEventListener('click', function () { imgIn.value = ''; setImgPrev(''); });
   }
 
-  /* ============ 城市分组 ============ */
-  function storeRows() {
-    return $$('#view-stores tbody tr').filter(function (r) { return r.style.display !== 'none'; }).map(storeRowData);
-  }
+  /* ============ 城市分组（按门店 city 聚合，数据源为门店列表） ============ */
   function renderCityGroups() {
     var wrap = $('#cityGroupsWrap');
     if (!wrap) return;
@@ -1245,27 +1714,29 @@
       backBtn.addEventListener('click', function () { switchView('stores', '门店列表'); });
     }
     var groups = {};
-    storeRows().forEach(function (d) {
-      (groups[d.city] = groups[d.city] || []).push(d);
+    visibleStores().forEach(function (d) {
+      var k = d.city || '未分配';
+      (groups[k] = groups[k] || []).push(d);
     });
     var cities = Object.keys(groups).sort();
     if (!cities.length) { wrap.innerHTML = '<div style="padding:24px;color:#909399;text-align:center">暂无门店数据，请先在「门店列表」新增门店。</div>'; return; }
     var html = '<div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px">';
-    cities.forEach(function (c) { html += '<span class="tag tag-blue" style="font-size:12px;padding:3px 10px">' + c + ' · ' + groups[c].length + ' 家</span>'; });
+    cities.forEach(function (c) { html += '<span class="tag tag-blue" style="font-size:12px;padding:3px 10px">' + esc(c) + ' · ' + groups[c].length + ' 家</span>'; });
     html += '</div>';
     var openFirst = true;
     cities.forEach(function (c) {
       var st = openFirst ? 'open' : ''; openFirst = false;
       html += '<div class="city-group card" style="border:1px solid #ebeef5;margin-bottom:10px;border-radius:6px;overflow:hidden">' +
-        '<div class="city-group-head" data-city="' + c + '" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;background:#fafafa;font-weight:600;font-size:14px">' +
-        '<span class="arrow" style="display:inline-block;transition:transform .2s;color:#909399">' + (st ? '▾' : '▸') + '</span>' + c +
+        '<div class="city-group-head" data-city="' + esc(c) + '" style="display:flex;align-items:center;gap:8px;padding:11px 14px;cursor:pointer;background:#fafafa;font-weight:600;font-size:14px">' +
+        '<span class="arrow" style="display:inline-block;transition:transform .2s;color:#909399">' + (st ? '▾' : '▸') + '</span>' + esc(c) +
         '<span class="tag tag-blue" style="font-size:11px">' + groups[c].length + '</span></div>' +
         '<div class="city-group-body" style="' + (st ? '' : 'display:none') + ';padding:4px 14px 10px">';
       groups[c].forEach(function (d) {
-        html += '<div class="city-store" style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed #ebeef5;font-size:13px;cursor:pointer">' +
+        html += '<div class="city-store" data-pid="' + esc(String(d.id)) + '" style="display:flex;align-items:center;gap:12px;padding:9px 2px;border-bottom:1px dashed #ebeef5;font-size:13px;cursor:pointer">' +
           '<b style="min-width:140px;color:#303133">' + esc(d.name) + '</b>' +
-          '<span style="flex:1;color:#606266">' + esc(d.address) + '</span>' +
-          '<span class="tag ' + statusTagCls(d.status) + '">' + esc(d.status) + '</span>' +
+          '<span style="flex:1;color:#606266">' + esc(d.address || '—') + '</span>' +
+          '<span class="mono" style="color:#909399;font-size:12px">' + esc(coordText(d)) + '</span>' +
+          '<span class="tag ' + (STORE_STATUS_TAG[d.status] || 'tag-gray') + '">' + esc(STORE_STATUS_TEXT[d.status] || d.status) + '</span>' +
           '<span class="op" data-act="edit">编辑</span></div>';
       });
       html += '</div></div>';
@@ -1281,12 +1752,10 @@
     });
     $$('#cityGroupsWrap .city-store').forEach(function (row) {
       row.addEventListener('click', function () {
-        var name = row.querySelector('b').textContent;
-        // 定位门店列表对应行并编辑
-        $$('#view-stores tbody tr').forEach(function (tr) {
-          var d = storeRowData(tr);
-          if (d.name === name) { openStoreModal(d, tr); }
-        });
+        var pid = row.getAttribute('data-pid');
+        var tr = pid ? document.querySelector('#storeTbody tr[data-pid="' + pid + '"]') : null;
+        if (tr) openStoreModal(storeRowCache[pid] || storeRowData(tr), tr);
+        else openStoreModal(storeRowCache[pid] || null, null);
       });
     });
   }
@@ -1852,7 +2321,9 @@
     content: function (s) { return loadNews('content', s); },
     messages: function (s) { return loadMessages(s); },
     styles: function (s) { return loadStyles(s); },
-    series: function (s) { return loadSeries(s); }
+    series: function (s) { return loadSeries(s); },
+    stores: function (s) { return loadStores(s); },
+    citygroups: function (s) { return loadStores(s); }
   };
 
   /* 全局唯一的连接状态条：所有模块共用同一个 DOM 与同一套逻辑 */
@@ -1894,6 +2365,7 @@
     loadMessages(silent !== false);
     loadStyles(true);   // 先拉款式：系列挂在款式下，「所属款式」下拉与系列列都依赖款式缓存
     loadSeries(true);
+    loadStores(true);   // 门店：城市分组与仪表盘「在营门店 / 城市分布」都依赖它
   }
 
   function initApiBars() {
@@ -2927,7 +3399,8 @@
   function renderBoard() {
     var el = $('#view-board');
     if (!el) return;
-    var stores = $('#view-stores tbody tr') ? $('#view-stores tbody tr').length : 0;
+    // 门店数取自数据源（在线=后端缓存，离线=演示数据），不再数 DOM 行（空状态占位行会被误计）
+    var stores = allStores().length;
     var items = $('#view-styles tbody tr') ? $('#view-styles tbody tr').length : 0;
     var news = $('#newsTbody tr') ? $('#newsTbody tr').length : 0;
     var msgs = $$('#msgList .msg-card .tag.tag-red').length;
@@ -2937,7 +3410,7 @@
     $('#bdMsgs').textContent = msgs;
     // 城市条
     var cityCount = {};
-    storeRows().forEach(function (d) { cityCount[d.city] = (cityCount[d.city] || 0) + 1; });
+    allStores().forEach(function (d) { var c = d.city || '未分配'; cityCount[c] = (cityCount[c] || 0) + 1; });
     var keys = Object.keys(cityCount).sort();
     var max = Math.max.apply(null, keys.map(function (k) { return cityCount[k]; }).concat([1]));
     var bars = keys.map(function (c) {

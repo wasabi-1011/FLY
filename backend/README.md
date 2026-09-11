@@ -104,6 +104,10 @@ uvicorn app.main:app --reload --port 8000
   - `POST /api/admin/items` 的 `item_code` **可留空**：留空由后端自动生成 `CO-<品类前缀><三位序号>`（女 `SW` / 男 `MN` / 童 `KD`，序号 = 同品类最大序号 +1）；显式传入且重复返回 **409**
   - `DELETE /api/admin/items/{id}`：款式下还有系列时返回 **409**（v2.2 起删除保护反转）
 - `stores` + `stores/stock/import`、`stores/stock/list`（R3，库存内部工具）
+  - `GET /api/admin/stores` 支持 `keyword`（匹配 名称 / 城市 / 地址）、`city`、`store_type`、`status`、`limit` / `offset`；出参带 `stock_count`（该门店库存条数，供删除前提示）
+  - **`PUT /api/admin/stores/{id}` 为部分更新**（`StoreUpdate` + `exclude_unset`，v2.6 修复）：只改提交的字段；必填字段显式置空返回 **422**。此前用 `StoreCreate` 全量覆盖，会把未提交字段清空并把 `status` 顶回 `ONLINE`
+  - **`POST /api/admin/stores/geocode`**：地址 → GCJ-02 坐标。服务端 Key 取自环境变量 `TMAP_SERVER_KEY`；**未配置返回 501**（前端自动降级为地图点选 / 手工录入坐标），空地址返回 **422**
+  - **路由顺序**：`/geocode` 与 `/stock/*` 必须定义在 `/{store_id}` 之前，否则会被 `store_id: int` 抢先匹配成 422（v2.6 已修正）
 - `news`（R2 内容运营，正文 XSS 过滤）
 - `pages`（CMS：版本/发布/回滚/并发锁，R2）
 - `contacts`（R2，明文仅超管可见）
@@ -217,6 +221,20 @@ python 轻量迁移.py
 ```
 
 已登记：`contact_messages.is_deleted`（BOOLEAN DEFAULT 0，留言软删除）。以后加列在脚本顶部 `MIGRATIONS` 追加一行 `(表名, 列名, DDL)` 即可。
+
+## 地图配置（腾讯位置服务）
+
+坐标体系全链路 **GCJ-02**：`stores.lng/lat`、腾讯底图、前端点位三者一致，**不需要任何坐标转换**。
+
+| 用途 | Key 位置 | 未配置的后果 |
+|---|---|---|
+| 后台「地址 → 坐标」地理编码 | 环境变量 **`TMAP_SERVER_KEY`**（`.env`，不入库、不返回前端；见 `.env.example`） | `POST /api/admin/stores/geocode` 返回 **501**，后台降级为地图点选 / 手工录入坐标 |
+| 前台 / 后台底图 | `window.__FLY_TMAP_KEY__`（`frontend/web/index.html`、`backendManage/index.html` 顶部各一处，留空即降级） | 地图区显示"底图加载失败"，门店列表与 CRUD 不受影响 |
+
+注意事项：
+- 前端 Key 明文可被嗅探，必须在腾讯云控制台配置 **Referer 白名单**（`localhost:3000`、`localhost:8000`、生产域名）；正式商用建议改为后端代理鉴权。
+- 前端地理编码（501 时的兜底）走 SDK `TMap.service.Geocoder`，需要 `libraries=service`，用的是前端 Key。
+- 代码与文档**不写入任何 Key 明文**。
 
 ## 数据库重置（初始数据）
 

@@ -40,6 +40,13 @@ class Settings(BaseSettings):
 
     UPLOAD_MAX_MB: int = 10
 
+    # 地图（腾讯位置服务）
+    # 服务端 Key：仅用于后台「地址 → 坐标」地理编码，绝不返回给前端、不落库。
+    # 未配置时地理编码接口返回 501，后台自动降级为人工点选/手工录入坐标。
+    TMAP_SERVER_KEY: str | None = None
+    # 地理编码超时（秒）
+    TMAP_TIMEOUT: float = 5.0
+
 
 @lru_cache
 def get_settings() -> Settings:

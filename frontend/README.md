@@ -21,8 +21,12 @@ frontend/
 │       ├── main.jsx
 │       ├── App.jsx       # 路由骨架（/、/products、/stores…）
 │       ├── pages/        # Home / Products / Stores …
+│       ├── components/   # 导航 / 页脚 / 轮播 / 门店入口 …
+│       ├── data/         # 取数层（含 tmapLoader.js：腾讯地图 SDK 单例加载）
 │       └── styles/
-├── admin/                # 后台
+├── web/public/pic/       # 前台运行时图片 36 张 jpg（banner/hot/item/series/storefront…）
+│                         # + 静态数据 geo-china.json、echarts.min.js；母版 PNG 在 D:\FLY网站\picTest\
+├── admin/                # 后台（另有原型页 backendManage/index.html，未走本目录）
 │   ├── index.html
 │   ├── vite.config.js    # /api → localhost:8000 代理
 │   ├── package.json
@@ -30,10 +34,9 @@ frontend/
 │       ├── main.jsx
 │       ├── App.jsx       # 鉴权路由 + Ant Design 布局
 │       └── pages/        # Login / Dashboard …
-└── web/static/           # 静态参考
-    ├── FLY官网_首页原型.html   # F1 首页视觉原型（引用 pic/ 相对路径，未改动即有效）
-    ├── FLY门店地图.html        # 门店地图原型
-    └── pic/                    # 22 张图片素材（banner/hot/news/series/brand…）
+└── web/static/           # 静态参考（原型，仅 html）
+    ├── FLY官网_首页原型.html   # F1 首页视觉原型
+    └── FLY门店地图.html        # 门店地图原型
 ```
 
 ## 与后端的联调

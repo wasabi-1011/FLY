@@ -37,6 +37,7 @@ export default function HotPage() {
           title="热门推荐"
           en="HOT PICKS"
           sub="运营人工标记的当季主推 · 非销量排行"
+          bg="/pic/hot-hero.jpg"
         />
       </div>
 

@@ -310,7 +310,7 @@ export const getNewsByCat = (cat) => NEWS.filter((n) => n.cat === cat);
 export const getNewsDetail = (cat, slug) => NEWS.find((n) => n.cat === cat && n.slug === slug);
 export const formatDate = (d) => d.replace(/-/g, ".");
 
-// ---- 门店城市（GCJ-02；与首页 StoreEntry 一致） --------------------
+// ---- 门店城市（GCJ-02；**仅作前端「接口失败」时的本地兜底**，真实数据以 /api/stores 为准） ----
 export const STORE_CITIES = [
   { id: "bj", name: "北京", lng: 116.397428, lat: 39.90923, stores: [
     { n: "三里屯旗舰店", a: "朝阳区三里屯太古里南区 S8-30" }, { n: "国贸店", a: "朝阳区建国门外大街 1 号国贸商城" },

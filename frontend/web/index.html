@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FLY 品牌官网</title>
     <meta name="description" content="穿出自我，随心而飞。FLY 品牌官网。" />
+    <script>
+      /* 腾讯地图 Key（前台底图统一入口：首页门店入口 + 门店地图页共用一处）
+         - 此处是前台 Key 的唯一来源，组件里不再各自硬编码。
+         - 前端 Key 必然对浏览器可见，安全性靠腾讯位置服务的 Referer 白名单：
+           控制台 → 应用管理 → Key 设置 → 勾选「WebServiceAPI」并配置 localhost:3000 / 生产域名。
+         - 需要替换时只改这一行（或部署时用外链脚本先行注入，此处保持「外部优先」）。 */
+      window.__FLY_TMAP_KEY__ = window.__FLY_TMAP_KEY__ || "OLVBZ-INVK3-4ON3K-OQK4I-2QJOJ-M6BE2";
+    </script>
   </head>
   <body>
     <div id="root"></div>
