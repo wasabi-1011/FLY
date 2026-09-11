@@ -1,4 +1,7 @@
-"""后台·系列管理（FR-B21 / FR-B25 / FR-B26 / FR-B28）。R3 权限。"""
+"""后台·系列管理（FR-B21 / FR-B25 / FR-B26）。R3 权限。
+
+层级 v2.2 起：系列挂在款式下（选填），用 item_id 关联；品类由所属款式继承，不再单独存储。
+"""
 from __future__ import annotations
 
 from typing import Annotated
@@ -9,33 +12,40 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import CurrentMerchStoreOps
-from app.enums import Category, Status
-from app.models.admin import AdminUser
-from app.models.product import Collection
+from app.enums import Status
+from app.models.product import Collection, Item
 from app.schemas.product import CollectionCreate, CollectionOut, CollectionUpdate
 from app.services.audit import log_operation
 
 router = APIRouter(prefix="/api/admin/collections", tags=["admin-collections"])
 
 
+def _out(col: Collection, item: Item | None = None) -> dict:
+    d = CollectionOut.model_validate(col).model_dump()
+    if item is not None:
+        d["item_code"] = item.item_code
+        d["item_name"] = item.name
+    return d
+
+
 @router.get("", response_model=list[CollectionOut])
 async def list_collections(
-    category: Category | None = Query(default=None),
+    item_id: int | None = Query(default=None, description="按所属款式过滤"),
     status: Status | None = Query(default=None),
     keyword: str | None = Query(default=None),
     db: Annotated[AsyncSession, Depends(get_db)] = None,
     _: CurrentMerchStoreOps = None,
 ):
-    stmt = select(Collection)
-    if category is not None:
-        stmt = stmt.where(Collection.category == category)
+    stmt = select(Collection, Item).join(Item, Collection.item_id == Item.id)
+    if item_id is not None:
+        stmt = stmt.where(Collection.item_id == item_id)
     if status is not None:
         stmt = stmt.where(Collection.status == status)
     if keyword:
         stmt = stmt.where(Collection.name.like(f"%{keyword}%"))
-    stmt = stmt.order_by(Collection.sort_weight.desc())
-    rows = list((await db.execute(stmt)).scalars().all())
-    return [CollectionOut.model_validate(c).model_dump() for c in rows]
+    stmt = stmt.order_by(Collection.item_id.asc(), Collection.id.asc())
+    rows = (await db.execute(stmt)).all()
+    return [_out(col, item) for col, item in rows]
 
 
 @router.post("", response_model=CollectionOut, status_code=201)
@@ -44,19 +54,16 @@ async def create_collection(
     current: CurrentMerchStoreOps,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
-    if (
-        await db.execute(
-            select(Collection).where(Collection.slug == payload.slug)
-        )
-    ).scalar_one_or_none():
-        raise HTTPException(status_code=409, detail="slug 已存在")
+    item = await db.get(Item, payload.item_id)
+    if not item:
+        raise HTTPException(status_code=400, detail="所属款式不存在")
     col = Collection(**payload.model_dump())
     db.add(col)
     await db.commit()
     await db.refresh(col)
     await log_operation(db, current, "create", "collection", col.id, after=payload.model_dump())
     await db.commit()
-    return CollectionOut.model_validate(col).model_dump()
+    return _out(col, item)
 
 
 @router.get("/{col_id}", response_model=CollectionOut)
@@ -68,7 +75,7 @@ async def get_collection(
     col = await db.get(Collection, col_id)
     if not col:
         raise HTTPException(status_code=404, detail="系列不存在")
-    return CollectionOut.model_validate(col).model_dump()
+    return _out(col, await db.get(Item, col.item_id))
 
 
 @router.put("/{col_id}", response_model=CollectionOut)
@@ -91,7 +98,7 @@ async def update_collection(
         before=before, after=CollectionOut.model_validate(col).model_dump(),
     )
     await db.commit()
-    return CollectionOut.model_validate(col).model_dump()
+    return _out(col, await db.get(Item, col.item_id))
 
 
 @router.delete("/{col_id}", status_code=204)

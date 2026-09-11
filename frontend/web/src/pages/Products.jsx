@@ -3,7 +3,8 @@ import { Link } from "react-router-dom";
 import SiteNav from "../components/SiteNav.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 import PageHero from "../components/PageHero.jsx";
-import { CATEGORIES, getAllItems, getHotItems, getItemsByCat } from "../data/siteData.js";
+import { CATEGORIES } from "../data/siteData.js";
+import { fetchAllItems, localAllItems } from "../data/productsApi.js";
 
 const FILTERS = [
   { key: "all", label: "全部" },
@@ -13,11 +14,34 @@ const FILTERS = [
   { key: "hot", label: "热门" },
 ];
 
+const EMPTY_STYLE = { textAlign: "center", color: "#8a8a8a", padding: "46px 0", letterSpacing: "0.02em" };
+
 export default function Products() {
   const [filter, setFilter] = useState("all");
+  const [all, setAll] = useState(null); // null=加载中；[]=后端暂无在线款式
+  const [fallback, setFallback] = useState(false);
+
   useEffect(() => { document.title = "产品中心 · FLY"; }, []);
 
-  const items = filter === "all" ? getAllItems() : filter === "hot" ? getHotItems() : getItemsByCat(filter);
+  useEffect(() => {
+    let alive = true;
+    fetchAllItems().then((res) => {
+      if (!alive) return;
+      if (res.ok) {
+        setAll(res.items); // 成功但为空 → 空状态，不回退默认
+      } else {
+        setAll(localAllItems()); // 仅接口失败才回退本地示例
+        setFallback(true);
+      }
+    });
+    return () => { alive = false; };
+  }, []);
+
+  const items = all === null
+    ? null
+    : filter === "all" ? all
+      : filter === "hot" ? all.filter((i) => i.hot)
+        : all.filter((i) => i.cat === filter);
 
   return (
     <>
@@ -61,8 +85,21 @@ export default function Products() {
               ))}
             </div>
           </div>
+
+          {fallback && (
+            <p style={{ ...EMPTY_STYLE, padding: "18px 0", color: "#b07a2b" }}>
+              后端服务暂不可用，以下为本地示例数据
+            </p>
+          )}
+          {items === null && <p style={EMPTY_STYLE}>加载中…</p>}
+          {items !== null && items.length === 0 && (
+            <p style={EMPTY_STYLE}>
+              {filter === "hot" ? "暂无主推款式。" : "暂无上架款式，敬请期待。"}
+            </p>
+          )}
+
           <div className="grid list-grid">
-            {items.map(it => (
+            {(items || []).map(it => (
               <Link className="p-card" to={`/products/${it.cat}/${it.code}`} key={it.code}>
                 <div className="visual">
                   {it.hot && <span className="rec">主推</span>}

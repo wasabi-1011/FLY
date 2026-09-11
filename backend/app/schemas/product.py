@@ -1,7 +1,6 @@
-"""商品域 schema（系列 / 款式）。"""
+"""商品域 schema（款式 Item 主体 / 系列 Collection 挂在款式下）。"""
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -9,50 +8,9 @@ from pydantic import BaseModel, ConfigDict
 from app.enums import Category, Season, Status
 
 
-class CollectionBase(BaseModel):
-    name: str
-    subtitle: str | None = None
-    category: Category
-    year: int | None = None
-    season: Season | None = None
-    cover_image: str | None = None
-    hero_image: str | None = None
-    hero_video: str | None = None
-    story: str | None = None
-    sort_weight: int = 0
-    status: Status = Status.DRAFT
-
-
-class CollectionCreate(CollectionBase):
-    slug: str
-
-
-class CollectionUpdate(BaseModel):
-    name: str | None = None
-    subtitle: str | None = None
-    category: Category | None = None
-    year: int | None = None
-    season: Season | None = None
-    cover_image: str | None = None
-    hero_image: str | None = None
-    hero_video: str | None = None
-    story: str | None = None
-    sort_weight: int | None = None
-    status: Status | None = None
-
-
-class CollectionOut(CollectionBase):
-    model_config = ConfigDict(from_attributes=True)
-    id: int
-    slug: str
-    published_at: datetime | None = None
-    item_count: int = 0
-
-
 class ItemBase(BaseModel):
     name: str
-    collection_id: int
-    item_code: str
+    category: Category
     is_hot: bool = False
     hot_sort: int = 0
     images: Any = None
@@ -67,12 +25,13 @@ class ItemBase(BaseModel):
 
 
 class ItemCreate(ItemBase):
-    pass
+    # v2.3：款号可留空，留空由后端按「品类前缀 + 序号」自动生成（CO-SW001 / CO-MN002 / CO-KD005）。
+    item_code: str | None = None
 
 
 class ItemUpdate(BaseModel):
     name: str | None = None
-    collection_id: int | None = None
+    category: Category | None = None
     is_hot: bool | None = None
     hot_sort: int | None = None
     images: Any = None
@@ -86,7 +45,37 @@ class ItemUpdate(BaseModel):
     ext_json: dict | None = None
 
 
+class CollectionBase(BaseModel):
+    name: str
+    year: int | None = None
+    season: Season | None = None
+    cover_image: str | None = None
+    status: Status = Status.ONLINE
+
+
+class CollectionCreate(CollectionBase):
+    item_id: int
+
+
+class CollectionUpdate(BaseModel):
+    name: str | None = None
+    year: int | None = None
+    season: Season | None = None
+    cover_image: str | None = None
+    status: Status | None = None
+
+
+class CollectionOut(CollectionBase):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    item_id: int
+    # 便于后台列表展示所属款式（非必填，按需填充）
+    item_code: str | None = None
+    item_name: str | None = None
+
+
 class ItemOut(ItemBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    category: Category  # 由系列继承，返回时带出
+    item_code: str
+    series: list[CollectionOut] = []

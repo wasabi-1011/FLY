@@ -14,7 +14,14 @@ const FOOT_LINKS = {
     { label: "行业资讯", to: "/news/industry" },
   ],
   join: ["社会招聘", "校园招聘"],
-  about: ["关于 FLY", "品牌介绍", "发展历程", "联系我们"],
+  // 注意：这里必须是 {label,to} 对象数组——渲染处用的是 l.label / l.to。
+  // 原先写成字符串数组，导致页脚 4 个「关于我们」链接的 key 与 href 全为 undefined。
+  about: [
+    { label: "关于 FLY", to: "/about" },
+    { label: "品牌介绍", to: "/about/brand" },
+    { label: "发展历程", to: "/about/history" },
+    { label: "联系我们", to: "/contact" },
+  ],
 };
 
 export default function SiteFooter() {

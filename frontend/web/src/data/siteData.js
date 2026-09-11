@@ -33,106 +33,127 @@ export const CATEGORIES = [
   },
 ];
 
-// ---- 系列（每系列内含款式 items） --------------------------------
-export const SERIES = [
+// ---- 款式（商品主体，自带品类）与系列（挂在款式下，选填 0..n） --------
+// 与后端种子保持一致：`backend/种子数据_商品.py`（5 款式 / 8 系列）。
+// 系列是款式下的可选分组：牛仔裤 2 个、工装夹克 3 个，其余各 1 个。
+export const ITEMS = [
   {
-    cat: "women",
-    name: "城野机能",
-    en: "CITY WILD",
-    season: "2026 秋冬",
-    cover: "/pic/series-women.jpg",
-    desc: "以城市为起点、山野为终点的一组日常机能单品：防泼水、四面弹与人体工学剪裁，藏进克制的都市轮廓里。",
-    items: [
-      { code: "CO-SW001", name: "廓形短风衣", hot: true, img: "/pic/hot-01.jpg", desc: "防泼水面料 + 利落廓形，通勤与城野两相宜。" },
-      {
-        code: "CO-SW003", name: "高领针织", hot: true, img: "/pic/hot-03.jpg",
-        desc: "柔软羊毛混纺，高领贴合，冷天里的温柔护盾。",
-        story: "一件好的高领针织，是冬天的第二层皮肤。羊毛混纺带来恰到好处的暖意与弹性，高领结构贴合颈部线条，单穿或作内搭都成立。",
-        points: ["羊毛混纺纱线，软糯亲肤不过敏", "高领贴合不勒，冷风灌不进来", "微弹罗纹收边，久穿不易变形", "米金/墨黑低饱和色系，易搭外套"],
-        fabric: "羊毛 + 再生纤维混纺纱线（示例文案）",
-        care: "建议干洗或手洗平铺晾干，避免悬挂变形（示例文案）",
-      },
-      { code: "CO-SW007", name: "泡泡袖衬衫", hot: true, img: "/pic/hot-07.jpg", desc: "复古泡泡袖的轻盈轮廓，通勤与周末皆可穿。" },
+    code: "CO-SW001", name: "牛仔裤", cat: "women", hot: true,
+    img: "/pic/item-jeans.jpg",
+    fit: "高腰直筒，微弹",
+    desc: "高腰直筒版型，原色丹宁挺括有型，久穿不易变形。",
+    story: "牛仔裤是衣柜里的地基。我们选了 12oz 原色丹宁：刚上身略挺，穿久了会顺着身形慢慢软化，形成只属于你的褶皱与色落。",
+    fabric: "12oz 原色纯棉丹宁（示例文案）",
+    points: ["12oz 原色丹宁，挺括耐穿、越穿越服帖", "高腰直筒剪裁，显腿长且不挑身形", "五袋结构 + 加固铆钉", "可机洗，反面洗护减少掉色"],
+    care: "建议反面冷水机洗，阴干避免暴晒（示例文案）",
+    series: [
+      { id: null, name: "牛仔裤系列1", season: "2026 秋冬", cover: "/pic/series-jeans-1.jpg" },
+      { id: null, name: "牛仔裤系列2", season: "2026 秋冬", cover: "/pic/series-jeans-2.jpg" },
     ],
   },
   {
-    cat: "men",
-    name: "无界通勤",
-    en: "BOUNDLESS COMMUTE",
-    season: "2026 秋冬",
-    cover: "/pic/series-men.jpg",
-    desc: "打破通勤与户外的边界：耐磨外壳、可收纳结构与克制的配色，让一套行头覆盖一天的所有场景。",
-    items: [
-      { code: "CO-MN002", name: "机能羽绒马甲", hot: true, img: "/pic/hot-02.jpg", desc: "轻暖羽绒 + 机能外袋，叠穿点睛也足够保暖。" },
-      { code: "CO-MN004", name: "工装背带裤", hot: true, img: "/pic/hot-04.jpg", desc: "多袋工装结构，耐磨棉感，自在又有型。" },
-      { code: "CO-MN006", name: "机能冲锋衣", hot: true, img: "/pic/hot-06.jpg", desc: "防风防水三合一，一件应对城市风雨与山野气候。" },
+    code: "CO-MN001", name: "工装夹克", cat: "men", hot: true,
+    img: "/pic/item-jacket.jpg",
+    fit: "宽松直筒，立领",
+    desc: "多袋工装结构 + 耐磨棉感面料，通勤与户外一件搞定。",
+    story: "把工装的收纳力带进日常：立体贴袋装下通勤所有零碎，立领挡风不臃肿，宽松版型方便叠穿。",
+    fabric: "厚磅磨毛棉质斜纹（示例文案）",
+    points: ["厚磅磨毛斜纹，耐磨不易起球", "多袋立体结构，收纳力强", "立领挡风 + 隐藏按扣门襟", "宽松直筒，可内搭卫衣"],
+    care: "可机洗，深浅色分开洗（示例文案）",
+    series: [
+      { id: null, name: "工装夹克系列1", season: "2026 秋冬", cover: "/pic/series-jacket-1.jpg" },
+      { id: null, name: "工装夹克系列2", season: "2026 秋冬", cover: "/pic/series-jacket-2.jpg" },
+      { id: null, name: "工装夹克系列3", season: "2026 秋冬", cover: "/pic/series-jacket-3.jpg" },
     ],
   },
   {
-    cat: "kids",
-    name: "小小探险家",
-    en: "LITTLE EXPLORER",
-    season: "2026 秋冬",
-    cover: "/pic/series-kids.jpg",
-    desc: "为 4–12 岁的小小探险家设计：A 类亲肤面料、耐磨结构与免束缚版型，守护每一次好奇的奔跑。",
-    items: [
-      { code: "CO-KD005", name: "亲子卫衣", hot: true, img: "/pic/hot-05.jpg", desc: "软糯亲肤棉，亲子同款，把陪伴穿在身上。" },
-      {
-        code: "CO-KD008", name: "灯芯绒外套", hot: true, img: "/pic/hot-08.jpg",
-        desc: "复古灯芯绒，耐磨易洗，秋冬探索的暖心外衣。",
-        story: "给小小探险家的秋冬外衣，选择了耐磨又温暖的灯芯绒。复古肌理耐看耐穿，宽松剪裁留足奔跑空间，脏了直接丢洗衣机，妈妈省心。",
-        points: ["A 类亲肤面料，安心接触皮肤", "复古灯芯绒肌理，耐磨易打理", "宽松剪裁，内搭卫衣也活动自如", "撞色贴袋 + 按扣设计，孩子易穿"],
-        fabric: "A 类标准棉质灯芯绒（示例文案）",
-        care: "可机洗，反面洗涤可减少起毛（示例文案）",
-      },
+    code: "CO-SW002", name: "针织连衣裙", cat: "women", hot: true,
+    img: "/pic/item-dress.jpg",
+    fit: "收腰中长款",
+    desc: "米白中长款针织裙，收腰垂坠，单穿即是一整身造型。",
+    fabric: "羊毛混纺细针织（示例文案）",
+    points: ["羊毛混纺细针织，柔软亲肤", "收腰中长版，垂坠显瘦", "裙摆微扩，行走有韵律", "可搭配长靴或短靴"],
+    care: "建议干洗或手洗平铺晾干（示例文案）",
+    series: [
+      { id: null, name: "针织连衣裙系列1", season: "2026 秋冬", cover: "/pic/series-dress-1.jpg" },
+    ],
+  },
+  {
+    code: "CO-MN002", name: "短袖T恤", cat: "men", hot: true,
+    img: "/pic/item-tee.jpg",
+    fit: "合体直筒",
+    desc: "挺括纯棉基础款，领口不易外翻，叠穿单穿都成立。",
+    fabric: "32 支精梳纯棉（示例文案）",
+    points: ["32 支精梳棉，手感挺括", "双层罗纹领，久穿不塌", "合体直筒版型，不贴身", "黑白双色，打底单穿皆可"],
+    care: "可机洗，避免高温熨烫（示例文案）",
+    series: [
+      { id: null, name: "短袖T恤系列1", season: "2026 秋冬", cover: "/pic/series-tee-1.jpg" },
+    ],
+  },
+  {
+    code: "CO-KD001", name: "卫衣", cat: "kids", hot: true,
+    img: "/pic/item-hoodie.jpg",
+    fit: "宽松落肩，连帽",
+    desc: "软糯亲肤棉，连帽宽松版型，奔跑攀爬都不受束缚。",
+    story: "给小朋友的衣服，第一要务是穿得住、跑得开。连帽宽松版型留足活动量，袖口罗纹收紧不进风，脏了直接机洗。",
+    fabric: "A 类亲肤棉抓绒（示例文案）",
+    points: ["A 类亲肤面料，安心贴身穿", "宽松落肩版，活动不受限", "袖口罗纹收紧，不进风", "可机洗，耐磨易打理"],
+    care: "可机洗，反面洗涤减少起毛（示例文案）",
+    series: [
+      { id: null, name: "卫衣系列1", season: "2026 秋冬", cover: "/pic/series-hoodie-1.jpg" },
     ],
   },
 ];
 
 // ---- 查询 helper（对齐后端返回结构的使用方式） --------------------
 export const getCategory = (key) => CATEGORIES.find((c) => c.key === key);
-export const getSeriesByCat = (cat) => SERIES.filter((s) => s.cat === cat);
-export const getItemsByCat = (cat) =>
-  SERIES.flatMap((s) => (s.cat === cat ? s.items.map((i) => ({ ...i, cat: s.cat, series: s.name })) : []));
-export const getAllItems = () =>
-  SERIES.flatMap((s) => s.items.map((i) => ({ ...i, cat: s.cat, series: s.name })));
+export const getItemsByCat = (cat) => ITEMS.filter((i) => i.cat === cat);
+export const getAllItems = () => ITEMS.slice();
+// 全部系列（拍平并附所属款式信息），供首页「当季系列」等聚合展示
+export const getAllSeries = () =>
+  ITEMS.flatMap((i) => (i.series || []).map((s) => ({ ...s, cat: i.cat, itemCode: i.code, itemName: i.name })));
+export const getSeriesByCat = (cat) => getAllSeries().filter((s) => s.cat === cat);
 // 单品详情：按 品类 + 款号 查找，返回 { category, series, item }
 export const findItem = (catKey, code) => {
-  const s = SERIES.find((x) => x.cat === catKey && x.items.some((i) => i.code === code));
-  if (!s) return null;
-  const c = getCategory(catKey);
-  return { category: c, series: s, item: s.items.find((i) => i.code === code) };
+  const item = ITEMS.find((i) => i.cat === catKey && i.code === code);
+  if (!item) return null;
+  return { category: getCategory(catKey), series: (item.series || [])[0] || null, item };
 };
-// 相关推荐：同品类除当前款外的其它款式（同系列优先排列，按款号去重）
+// 相关推荐：同品类除当前款外的其它款式（同系列优先排列）
 export const getRelatedItems = (catKey, code) => {
-  const sameSeries = SERIES.find((x) => x.cat === catKey && x.items.some((i) => i.code === code));
-  const codes = [code, ...(sameSeries ? sameSeries.items.map((i) => i.code) : [])];
-  const all = getItemsByCat(catKey).filter((i) => !codes.includes(i.code));
-  const sameSeriesOthers = (sameSeries ? sameSeries.items.filter((i) => i.code !== code) : []);
-  return [...sameSeriesOthers, ...all].slice(0, 3);
+  const all = getItemsByCat(catKey);
+  const cur = all.find((i) => i.code === code);
+  const names = new Set(((cur && cur.series) || []).map((s) => s.name));
+  const others = all.filter((i) => i.code !== code);
+  const same = others.filter((i) => (i.series || []).some((s) => names.has(s.name)));
+  const rest = others.filter((i) => !same.includes(i));
+  return [...same, ...rest].slice(0, 3);
 };
 export const itemDetailPath = (cat, code) => `/products/${cat}/${code}`;
 
-// 首页「热门推荐」顺序（沿用 hot-01..08 图序，运营人工打标）
-export const HOT_ORDER = [
-  "CO-SW001", "CO-MN002", "CO-SW003", "CO-MN004", "CO-KD005", "CO-MN006", "CO-SW007", "CO-KD008",
-];
+// 首页「热门推荐」顺序（运营人工打标，与后端 hot_sort 同序）
+export const HOT_ORDER = ["CO-SW001", "CO-MN001", "CO-SW002", "CO-MN002", "CO-KD001"];
 export const getHotItems = () => {
   const all = getAllItems();
   return HOT_ORDER.map((code) => all.find((i) => i.code === code)).filter(Boolean);
 };
 
-// 首页三大系列封面卡片（当季系列推荐）
-export const HOME_COLLECTIONS = CATEGORIES.map((c) => {
-  const s = getSeriesByCat(c.key)[0];
-  return {
-    cat: c.key,
-    tag: `${c.label} ${c.en}`,
-    title: s.name,
-    desc: s.desc,
-    img: c.hero,
-  };
-});
+// 首页三大「当季系列」封面卡片：由款式列表推导（接口数据 / 本地兜底数据通用）
+export const collectionsFromItems = (items) =>
+  CATEGORIES.map((c) => {
+    const mine = items.filter((i) => i.cat === c.key);
+    const ss = mine.flatMap((i) => i.series || []);
+    return {
+      cat: c.key,
+      tag: `${c.label} ${c.en}`,
+      title: ss.length ? ss[0].name : `${c.label}当季系列`,
+      desc: ss.length > 1
+        ? `另有 ${ss.length - 1} 个同季系列 · ${c.slogan}`
+        : (ss.length ? c.slogan : c.intro),
+      img: c.hero,
+    };
+  });
+export const HOME_COLLECTIONS = collectionsFromItems(ITEMS);
 
 // ---- 新闻（company 企业新闻 / industry 行业资讯） -------------------
 // body 节点类型：lead 引语 | p 段落 | h 小节标题 | quote 引用 | img 插图(src/cap)

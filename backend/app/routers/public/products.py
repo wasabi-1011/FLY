@@ -1,5 +1,8 @@
 """公开·产品中心读接口（FR-F21~F30 / 10.3）。
 
+层级 v2.2 起：品类 → 款式 → 系列。
+本接口按「品类」返回款式；每个款式自带其系列列表（选填）。
+
 路由顺序注意：静态段 /products/hot 必须声明在 /products/{category} 之前，
 否则 hot 会被当成品类名解析（PRD 5.3 路由优先级）。
 """
@@ -8,8 +11,9 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.database import get_db
 from app.enums import Category, Status
@@ -26,23 +30,17 @@ def _parse_category(value: str) -> Category:
         raise HTTPException(status_code=404, detail="品类不存在")
 
 
-async def _attach_category(db: AsyncSession, items: list[Item]) -> list[Item]:
-    for it in items:
-        col = await db.get(Collection, it.collection_id)
-        it.category = col.category if col else None  # type: ignore[attr-defined]
-    return items
+def _item_dict(it: Item) -> dict:
+    """款式 + 其下系列（选填）一起返回，前台一次取全。
 
-
-async def _collection_with_count(db: AsyncSession, c: Collection) -> dict:
-    cnt = (
-        await db.execute(
-            select(func.count(Item.id)).where(
-                Item.collection_id == c.id, Item.status == Status.ONLINE
-            )
-        )
-    ).scalar() or 0
-    d = CollectionOut.model_validate(c).model_dump()
-    d["item_count"] = cnt
+    只在关系已加载（selectinload）时从 ``__dict__`` 读取，绝不触发异步懒加载 ——
+    否则将来有人新增调用点却忘了 selectinload，会直接 500。
+    """
+    d = ItemOut.model_validate(it).model_dump()
+    d["series"] = [
+        CollectionOut.model_validate(c).model_dump()
+        for c in (it.__dict__.get("collections") or [])
+    ]
     return d
 
 
@@ -52,13 +50,16 @@ async def list_hot(
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
     """热门推荐页（FR-F23）。is_hot 纯人工标记，绝不按销量。"""
-    stmt = select(Item).where(Item.is_hot == True, Item.status == Status.ONLINE)
+    stmt = (
+        select(Item)
+        .options(selectinload(Item.collections))
+        .where(Item.is_hot == True, Item.status == Status.ONLINE)
+    )
     if category is not None:
-        stmt = stmt.join(Collection).where(Collection.category == category)
+        stmt = stmt.where(Item.category == category)
     stmt = stmt.order_by(Item.hot_sort.asc(), Item.sort_weight.desc())
     items = list((await db.execute(stmt)).scalars().all())
-    await _attach_category(db, items)
-    return [ItemOut.model_validate(i).model_dump() for i in items]
+    return [_item_dict(i) for i in items]
 
 
 @router.get("/{category}")
@@ -66,102 +67,42 @@ async def category_page(
     category: str,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
-    """品类页：系列墙 + 该品类热门款式（FR-F21/F22）。"""
+    """品类页：该品类下的全部在线款式（每个款式带出它的系列）。"""
     cat = _parse_category(category)
-    cols = list(
-        (
-            await db.execute(
-                select(Collection)
-                .where(Collection.category == cat, Collection.status == Status.ONLINE)
-                .order_by(Collection.sort_weight.desc(), Collection.published_at.desc())
-            )
-        ).scalars().all()
+    stmt = (
+        select(Item)
+        .options(selectinload(Item.collections))
+        .where(Item.category == cat, Item.status == Status.ONLINE)
+        .order_by(Item.sort_weight.desc(), Item.id.asc())
     )
-    hot = list(
-        (
-            await db.execute(
-                select(Item)
-                .join(Collection)
-                .where(
-                    Collection.category == cat,
-                    Item.is_hot == True,
-                    Item.status == Status.ONLINE,
-                )
-                .order_by(Item.hot_sort.asc())
-            )
-        ).scalars().all()
-    )
-    await _attach_category(db, hot)
+    items = list((await db.execute(stmt)).scalars().all())
+    hot = [i for i in items if i.is_hot]
     return {
         "category": cat.value,
-        "collections": [await _collection_with_count(db, c) for c in cols],
-        "hot_items": [ItemOut.model_validate(i).model_dump() for i in hot],
+        "items": [_item_dict(i) for i in items],
+        "hot_items": [_item_dict(i) for i in hot],
     }
 
 
-@router.get("/{category}/{collection_slug}")
-async def collection_detail(
-    category: str,
-    collection_slug: str,
-    db: Annotated[AsyncSession, Depends(get_db)] = None,
-):
-    """系列详情（FR-F25）。"""
-    cat = _parse_category(category)
-    col = (
-        await db.execute(
-            select(Collection).where(
-                Collection.slug == collection_slug,
-                Collection.category == cat,
-                Collection.status == Status.ONLINE,
-            )
-        )
-    ).scalar_one_or_none()
-    if col is None:
-        raise HTTPException(status_code=404, detail="系列不存在或已下线")
-    items = list(
-        (
-            await db.execute(
-                select(Item)
-                .where(Item.collection_id == col.id, Item.status == Status.ONLINE)
-                .order_by(Item.sort_weight.desc())
-            )
-        ).scalars().all()
-    )
-    await _attach_category(db, items)
-    return {
-        "collection": CollectionOut.model_validate(col).model_dump(),
-        "items": [ItemOut.model_validate(i).model_dump() for i in items],
-    }
-
-
-@router.get("/{category}/{collection_slug}/{item_code}")
+@router.get("/{category}/{item_code}")
 async def item_detail(
     category: str,
-    collection_slug: str,
     item_code: str,
     db: Annotated[AsyncSession, Depends(get_db)] = None,
 ):
     """款式详情（FR-F27）。前台绝不返回价格/库存/尺码。"""
     cat = _parse_category(category)
-    col = (
-        await db.execute(
-            select(Collection).where(
-                Collection.slug == collection_slug, Collection.category == cat
-            )
-        )
-    ).scalar_one_or_none()
-    if col is None:
-        raise HTTPException(status_code=404, detail="系列不存在")
     item = (
         await db.execute(
-            select(Item).where(
+            select(Item)
+            .options(selectinload(Item.collections))
+            .where(
                 Item.item_code == item_code,
-                Item.collection_id == col.id,
+                Item.category == cat,
                 Item.status == Status.ONLINE,
             )
         )
     ).scalar_one_or_none()
     if item is None:
         raise HTTPException(status_code=404, detail="款式不存在或已下线")
-    item.category = col.category  # type: ignore[attr-defined]
-    return ItemOut.model_validate(item).model_dump()
+    return _item_dict(item)

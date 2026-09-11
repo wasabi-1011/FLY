@@ -65,6 +65,7 @@ uvicorn app.main:app --reload --port 8000
 - 健康检查：http://localhost:8000/health
 - 后台管理界面：http://localhost:8000/admin/index.html （静态挂载 `../backendManage`）
 - 上传的图片：http://localhost:8000/uploads/<文件名>（目录 `backend/uploads`，首次启动自动创建）
+- 前台演示图库：http://localhost:8000/pic/hot-01.jpg 等（静态挂载 `../frontend/web/public/pic`）——款式主图 / 系列封面在库里存相对路径 `/pic/xxx.jpg`，后台与前台共用这一份图，避免「前台看得到、后台看不到」
 
 > 根路径 `http://localhost:8000/` 返回导航 JSON（本服务是纯 API，没有根页面）。
 
@@ -83,10 +84,9 @@ uvicorn app.main:app --reload --port 8000
 | 方法 | 路径 | 说明 |
 |---|---|---|
 | GET | `/api/content/home` | 首页已发布区块配置 |
-| GET | `/api/products/{category}` | 品类页（系列墙 + 热门） |
+| GET | `/api/products/{category}` | 品类页（该品类全部在线款式 `items`，每个款式自带其 `series[]` + 热门 `hot_items`） |
 | GET | `/api/products/hot` | 热门推荐（`?category=` 二次筛选） |
-| GET | `/api/products/{category}/{collection_slug}` | 系列详情 |
-| GET | `/api/products/{category}/{collection_slug}/{item_code}` | 款式详情 |
+| GET | `/api/products/{category}/{item_code}` | 款式详情（含其 `series[]`；v2.2 起系列不再有独立详情，系列为层级最底层，仅作款式下的展示项） |
 | GET | `/api/stores/cities` | 有门店的城市与数量 |
 | GET | `/api/stores` | 门店列表 + 地图点位（`?city`/`?type`） |
 | GET | `/api/stores/{id}` | 门店详情 |
@@ -101,13 +101,15 @@ uvicorn app.main:app --reload --port 8000
 
 - `auth/login`、`auth/me`
 - `collections`、`items`（R3 商品门店运营）
+  - `POST /api/admin/items` 的 `item_code` **可留空**：留空由后端自动生成 `CO-<品类前缀><三位序号>`（女 `SW` / 男 `MN` / 童 `KD`，序号 = 同品类最大序号 +1）；显式传入且重复返回 **409**
+  - `DELETE /api/admin/items/{id}`：款式下还有系列时返回 **409**（v2.2 起删除保护反转）
 - `stores` + `stores/stock/import`、`stores/stock/list`（R3，库存内部工具）
 - `news`（R2 内容运营，正文 XSS 过滤）
 - `pages`（CMS：版本/发布/回滚/并发锁，R2）
 - `contacts`（R2，明文仅超管可见）
 - `users`（超管，账号/角色/状态）
 - `dashboard/stats`、`operation-logs`
-- `upload`（图片上传，R2+；返回 `{"url": "/uploads/xxx.jpg"}`）
+- `upload`（图片上传，**任意已登录后台账号**；返回 `{"url": "/uploads/xxx.jpg"}`）
 - `home/carousel`（首页轮播专用读写，R2+，见下）
 
 鉴权：登录拿 `access_token`，后续请求头 `Authorization: Bearer <token>`。
@@ -185,6 +187,27 @@ python 种子数据.py --dry-run  # 只预览将写入的内容，不落库
 - 直接经 ORM 写库，绕过后台接口的富文本净化；生成内容自身安全（全部转义）。
 - 默认先清空 `articles` 再写入，重复执行结果一致。
 
+## 种子数据（商品：款式 / 系列）
+
+`backend/种子数据_商品.py` 把品牌默认商品灌入 `items` / `collections` 表（**v2.4 起为 5 款式 / 8 系列**）：
+
+| 品类 | 款号 | 款式 | 系列 |
+|---|---|---|---|
+| 女装 | CO-SW001 | 牛仔裤 | 牛仔裤系列1 / 牛仔裤系列2 |
+| 男装 | CO-MN001 | 工装夹克 | 工装夹克系列1 / 2 / 3 |
+| 女装 | CO-SW002 | 针织连衣裙 | 针织连衣裙系列1 |
+| 男装 | CO-MN002 | 短袖T恤 | 短袖T恤系列1 |
+| 童装 | CO-KD001 | 卫衣 | 卫衣系列1 |
+
+```bash
+python 种子数据_商品.py            # 清空 items/collections 后写入 5 款式 + 8 系列（幂等，推荐）
+python 种子数据_商品.py --append   # 不清空，仅补库中尚不存在的款号
+python 种子数据_商品.py --dry-run  # 只预览，不落库
+```
+
+- 图片：款式主图 `/pic/item-*.jpg`、系列封面 `/pic/series-*.jpg`（原始 PNG 在 `D:\FLY网站\picTest\`，JPG 落 `frontend/web/public/pic/`）。
+- **只动商品两张表**，不影响新闻 / 轮播 / 留言——`启动.bat` 菜单项 **7** 即调用本脚本。
+
 ## 数据库字段变更（轻量迁移）
 
 项目未引入 Alembic，新增列时用 `backend/轻量迁移.py` 幂等补齐：
@@ -206,10 +229,10 @@ python 重置数据库.py --seed      # 只重灌 9 条新闻种子（保留其�
 python 重置数据库.py --snapshot  # 把当前库另存为新的初始快照（更新基准，慎用）
 ```
 
-- 初始基准：`backend/初始数据/初始数据库.db`（含 3 账号 / 7 页面 / 首页 4 帧轮播 / 9 条新闻 / 20 门店 / 16 款式 / 4 系列）。**这是权威基准，请勿删除。**
+- 初始基准：`backend/初始数据/初始数据库.db`（含 3 账号 / 7 页面 / 首页 4 帧轮播 / 9 条新闻 / 20 门店 / **5 款式 / 8 系列（v2.4）**）。**这是权威基准，请勿删除。**
 - 覆盖走 **SQLite backup API**（一致性快照），不是简单文件拷贝；基准缺失时会现场兜底重建（建表 + 账号 + 固定页 + 首页区块 + 9 条新闻），但**不含门店/款式/系列演示数据**，所以基准文件仍需保留。
 - **执行前请先停止后端服务**（`启动.bat` 选 4），否则数据库文件被占用会失败。脚本会检测 8000 端口占用并提示。
-- 启动脚本 `启动.bat` / `start.bat` 的菜单项 **5** 已内置「先停服务再重置」，**6** 为「查看数据库状态」。
+- 启动脚本 `启动.bat` / `start.bat` 的菜单项 **5** 已内置「先停服务再重置」，**6** 为「查看数据库状态」，**7** 为「恢复款式/系列种子数据」（只重灌商品，不动其它）。
 
 ## 与 PRD 的对应关系（要点）
 

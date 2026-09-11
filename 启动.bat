@@ -21,16 +21,18 @@ echo   3  Frontend only   仅启动前台官网（3000）
 echo   4  Stop all        停止全部服务
 echo   5  Reset database  恢复初始数据（重置为种子状态）
 echo   6  DB status       查看数据库状态
+echo   7  Restore items   恢复款式/系列种子数据（只重灌商品）
 echo   0  Quit            退出
 echo.
 set "choice="
-set /p choice=Select [0-6]: 
+set /p choice=Select [0-7]: 
 if "%choice%"=="1" goto ALL
 if "%choice%"=="2" goto BACKEND
 if "%choice%"=="3" goto FRONT
 if "%choice%"=="4" goto STOP
 if "%choice%"=="5" goto RESET
 if "%choice%"=="6" goto DBSTATUS
+if "%choice%"=="7" goto RESEED
 if "%choice%"=="0" goto END
 goto menu
 
@@ -99,6 +101,18 @@ echo.
 "%PY%" "%~dp0backend\重置数据库.py"
 echo.
 echo 数据已恢复为初始状态，可以回菜单选择 1 启动。
+goto HOLD
+
+:RESEED
+echo.
+echo 将清空并重灌 items / collections（款式与系列），不影响新闻/轮播/留言。
+set "confirm="
+set /p confirm=Confirm? [y/N]: 
+if /i not "%confirm%"=="y" goto menu
+echo.
+"%PY%" "%~dp0backend\种子数据_商品.py"
+echo.
+echo 款式/系列数据已恢复为初始种子（5 款式 / 8 系列）。
 goto HOLD
 
 :DBSTATUS

@@ -192,8 +192,10 @@
   .modal-x:hover{color:#f56c6c;}
   .modal-body{padding:20px;display:flex;flex-direction:column;gap:18px;}
   .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
-  .form-grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#606266;}
-  .form-grid input,.form-grid select{height:34px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;background:#fff;}
+  .form-grid label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:#606266;min-width:0;}
+  .form-grid label.grid-full{grid-column:1/-1;}                       /* 需要整行宽度的字段（如长名称下拉） */
+  .form-grid input,.form-grid select{height:34px;padding:0 10px;border:1px solid #dcdfe6;border-radius:4px;font-size:13px;color:#303133;background:#fff;min-width:0;max-width:100%;box-sizing:border-box;}
+  .form-grid select{text-overflow:ellipsis;}                          /* 选项过长时以省略号收尾，配合 title 悬停查看全名 */
   .form-grid input:focus,.form-grid select:focus{outline:none;border-color:#409eff;}
   .map-wrap{border:1px solid #ebeef5;border-radius:6px;overflow:hidden;}
   .map-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#f5f7fa;border-bottom:1px solid #ebeef5;}
@@ -487,57 +489,51 @@
 
       <!-- ===== 款式列表 ===== -->
       <section class="view" id="view-styles" hidden>
-        <div class="page-head"><h2>款式列表</h2><span class="sub">款式 CRUD · 分类/系列 · 上架下架即时同步前台</span></div>
+        <div class="page-head"><h2>款式列表</h2><span class="sub">款式 CRUD · 品类必填 · 系列可选（在「系列管理」里挂到款式下）· 上下架即时同步前台</span></div>
         <div class="card">
           <div class="filter">
-            <label>款式名称 <input type="text" placeholder="请输入款式名称"></label>
-            <label>分类
-              <select><option>全部</option><option>男装</option><option>女装</option><option>童装</option></select>
+            <label>款式名称/款号 <input type="text" class="f-kw" placeholder="请输入款式名称或款号"></label>
+            <label>品类
+              <select class="f-cat"><option value="">全部</option><option value="men">男装</option><option value="women">女装</option><option value="kids">童装</option></select>
             </label>
             <label>状态
-              <select><option>全部</option><option>在售</option><option>草稿</option><option>已下架</option></select>
+              <select class="f-st"><option value="">全部</option><option value="online">在售</option><option value="draft">草稿</option><option value="offline">已下架</option></select>
             </label>
-            <button class="btn primary">查询</button>
-            <button class="btn">重置</button>
+            <button class="btn primary" id="btnQueryStyle">查询</button>
+            <button class="btn" id="btnResetStyle">重置</button>
             <span class="spacer"></span>
-            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增款式</button>
+            <button class="btn primary" id="btnNewStyle"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增款式</button>
           </div>
           <table>
-            <thead><tr><th>款式ID</th><th>主图</th><th>款式名称</th><th>分类</th><th>系列</th><th>价格</th><th>库存</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead>
-            <tbody>
-              <tr><td class="mono">ST001</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyshirt01/800/480" title="点击查看大图">查看图片</a></td><td>经典男士衬衫</td><td>男装</td><td>经典衬衫系列</td><td>¥399</td><td>156</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 14:20</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">ST002</td><td><a class="vimg" data-img="https://picsum.photos/seed/flydress02/800/480" title="点击查看大图">查看图片</a></td><td>法式方领连衣裙</td><td>女装</td><td>法式裙装系列</td><td>¥699</td><td>89</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 13:05</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">ST003</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyhoodie03/800/480" title="点击查看大图">查看图片</a></td><td>童趣印花卫衣</td><td>童装</td><td>童趣系列</td><td>¥259</td><td>210</td><td><span class="tag tag-green">在售</span></td><td>2026-09-08 12:40</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">ST004</td><td><a class="vimg" data-img="https://picsum.photos/seed/flypants04/800/480" title="点击查看大图">查看图片</a></td><td>羊毛休闲西裤</td><td>男装</td><td>商务通勤系列</td><td>¥529</td><td>0</td><td><span class="tag tag-orange">草稿</span></td><td>2026-09-07 18:30</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">ST005</td><td><a class="vimg" data-img="https://picsum.photos/seed/flyjeans05/800/480" title="点击查看大图">查看图片</a></td><td>复古牛仔外套</td><td>女装</td><td>复古牛仔系列</td><td>¥799</td><td>64</td><td><span class="tag tag-green">在售</span></td><td>2026-09-07 15:22</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">ST006</td><td><a class="vimg" data-img="https://picsum.photos/seed/flybaby06/800/480" title="点击查看大图">查看图片</a></td><td>婴儿连体衣</td><td>童装</td><td>新生儿系列</td><td>¥199</td><td>330</td><td><span class="tag tag-gray">已下架</span></td><td>2026-09-06 10:12</td><td><span class="op">编辑</span><span class="op">上下架</span><span class="op del">删除</span></td></tr>
-            </tbody>
+            <thead><tr><th>款号</th><th>主图</th><th>款式名称</th><th>品类</th><th>系列</th><th>热门</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="styleTbody"></tbody>
           </table>
-          <div class="pager"><span>共 1,024 条</span><span class="pg">上一页</span><span class="pg active">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">下一页</span><span style="margin-left:8px">每页 10 条</span></div>
+          <div class="pager"><span>共 0 条</span><span style="margin-left:8px">每页 10 条</span></div>
         </div>
       </section>
 
       <!-- ===== 系列管理 ===== -->
       <section class="view" id="view-series" hidden>
-        <div class="page-head"><h2>系列管理</h2><span class="sub">系列 CRUD · 影响前台系列详情页</span></div>
+        <div class="page-head"><h2>系列管理</h2><span class="sub">系列挂在款式下（选填，一个款式可有 0..n 个系列）· 影响前台款式详情页</span></div>
         <div class="card">
           <div class="filter">
-            <label>系列名称 <input type="text" placeholder="请输入系列名称"></label>
-            <label>状态 <select><option>全部</option><option>启用</option><option>停用</option></select></label>
-            <button class="btn primary">查询</button>
-            <button class="btn">重置</button>
+            <label>系列名称 <input type="text" class="f-kw" placeholder="请输入系列名称"></label>
+            <label>所属款式
+              <select class="f-item"><option value="">全部</option></select>
+            </label>
+            <label>状态
+              <select class="f-st"><option value="">全部</option><option value="online">已上线</option><option value="draft">草稿</option><option value="offline">已下线</option></select>
+            </label>
+            <button class="btn primary" id="btnQuerySeries">查询</button>
+            <button class="btn" id="btnResetSeries">重置</button>
             <span class="spacer"></span>
-            <button class="btn primary"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增系列</button>
+            <button class="btn primary" id="btnNewSeries"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>新增系列</button>
           </div>
           <table>
-            <thead><tr><th>系列ID</th><th>系列名称</th><th>所属分类</th><th>款式数</th><th>头图</th><th>状态</th><th>操作</th></tr></thead>
-            <tbody>
-              <tr><td class="mono">SE01</td><td>经典衬衫系列</td><td>男装</td><td>24</td><td><span class="tag tag-blue">已设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">SE02</td><td>法式裙装系列</td><td>女装</td><td>31</td><td><span class="tag tag-blue">已设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-              <tr><td class="mono">SE03</td><td>童趣系列</td><td>童装</td><td>17</td><td><span class="tag tag-gray">未设</span></td><td><span class="tag tag-green">启用</span></td><td><span class="op">编辑</span><span class="op del">删除</span></td></tr>
-            </tbody>
+            <thead><tr><th>系列ID</th><th>系列名称</th><th>所属款式</th><th>年份 / 季节</th><th>封面图</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody id="seriesTbody"></tbody>
           </table>
-          <div class="pager"><span>共 12 系列</span></div>
+          <div class="pager"><span>共 0 条</span><span style="margin-left:8px">每页 10 条</span></div>
         </div>
       </section>
 
@@ -624,6 +620,13 @@
               <label class="ed-field">标题<input id="ed-title" type="text" placeholder="请输入标题"></label>
               <label class="ed-field">分类
                 <select id="ed-cat"><option value="company">企业新闻</option><option value="industry">行业资讯</option></select>
+              </label>
+              <label class="ed-field">作者（选择身份即可）
+                <select id="ed-author">
+                  <option value="超级管理员">超级管理员</option>
+                  <option value="内容运营">内容运营</option>
+                  <option value="门店商品运营">门店商品运营</option>
+                </select>
               </label>
               <label class="ed-field">摘要<input id="ed-summary" type="text" placeholder="列表页展示的一句话摘要（选填）"></label>
               <label class="ed-field">封面图片
@@ -1292,25 +1295,32 @@
   function tableConfig(viewId) {
     var cfg = {
       styles: {
-        label: '款式', btnText: '新增款式', imgLabel: '主图',
-        cols: ['id', 'img', 'name', 'cat', 'series', 'price', 'stock', 'status', 'time'],
+        label: '款式', btnText: '新增款式',
+        cols: ['item_code', 'img', 'name', 'cat', 'series', 'hot', 'status'],
         fields: [
+          { key: 'item_code', label: '款号（自动生成）', auto: true, optional: true },
           { key: 'name', label: '款式名称' },
-          { key: 'cat', label: '分类', type: 'select', options: ['男装', '女装', '童装'] },
-          { key: 'series', label: '所属系列' },
-          { key: 'price', label: '价格（元）' },
-          { key: 'stock', label: '库存' },
-          { key: 'status', label: '状态', type: 'select', options: ['在售', '草稿', '已下架'] },
-          { key: 'img', label: '主图图片', type: 'img', optional: true }
+          { key: 'category', label: '品类（必有）', type: 'select', options: [{ value: 'men', text: '男装' }, { value: 'women', text: '女装' }, { value: 'kids', text: '童装' }] },
+          { key: 'fabric', label: '面料成分（选填）', optional: true },
+          { key: 'fit_description', label: '版型描述（选填）', optional: true },
+          { key: 'sort_weight', label: '排序权重（数字越大越靠前，选填）', type: 'number', optional: true },
+          { key: 'is_hot', label: '热门标记（前台热门推荐页展示）', type: 'bool', optional: true },
+          { key: 'hot_sort', label: '热门排序（数字越小越靠前，选填）', type: 'number', optional: true },
+          { key: 'status', label: '状态', type: 'select', options: [{ value: 'online', text: '在售' }, { value: 'draft', text: '草稿' }, { value: 'offline', text: '已下架' }] },
+          { key: 'description', label: '设计说明（选填）', type: 'textarea', optional: true },
+          { key: 'img', label: '主图（选填）', type: 'img', optional: true }
         ]
       },
       series: {
         label: '系列', btnText: '新增系列',
-        cols: ['id', 'name', 'cat', 'cnt', 'cover', 'status'],
+        cols: ['id', 'name', 'item', 'season', 'cover', 'status'],
         fields: [
           { key: 'name', label: '系列名称' },
-          { key: 'cat', label: '所属分类', type: 'select', options: ['男装', '女装', '童装'] },
-          { key: 'status', label: '状态', type: 'select', options: ['启用', '停用'] }
+          { key: 'item_id', label: '所属款式（系列挂在款式下）', type: 'select', optionsFrom: 'items', wide: true },
+          { key: 'year', label: '年份（选填）', type: 'number', optional: true },
+          { key: 'season', label: '季节', type: 'select', optional: true, options: [{ value: '', text: '（不设置）' }, { value: 'SPRING_SUMMER', text: '春夏' }, { value: 'AUTUMN_WINTER', text: '秋冬' }, { value: 'CAPSULE', text: '胶囊' }] },
+          { key: 'status', label: '状态', type: 'select', options: [{ value: 'online', text: '已上线' }, { value: 'draft', text: '草稿' }, { value: 'offline', text: '已下线' }] },
+          { key: 'img', label: '封面图（选填）', type: 'img', optional: true }
         ]
       },
       accounts: {
@@ -1418,25 +1428,44 @@
     else { td.innerHTML = '<span class="tag ' + statusTagCls(status) + '">' + status + '</span>'; }
   }
 
-  function openTableModal(viewId, data, tr) {
+  function openTableModal(viewId, data, tr, defaults) {
     var cfg = tableConfig(viewId);
     // 构造简易 modal DOM
     var mask = document.createElement('div');
     mask.className = 'modal-mask'; mask.id = 'genericModal';
     var rowsHtml = cfg.fields.map(function (f) {
-      var val = data ? (data[f.key] || '') : (f.def || '');
+      var raw = data ? data[f.key] : ((defaults && defaults[f.key] !== undefined) ? defaults[f.key] : f.def);
+      var val = (raw === undefined || raw === null) ? '' : String(raw);
       var inner;
       if (f.type === 'select') {
-        inner = '<select>' + f.options.map(function (o) { return '<option' + (o === val ? ' selected' : '') + '>' + o + '</option>'; }).join('') + '</select>';
-        return '<label>' + f.label + inner + '</label>';
+        var selOpts = f.optionsFrom ? selectOptionsFrom(f.optionsFrom) : (f.options || []);
+        inner = '<select>' + selOpts.map(function (o) {
+          var ov = (o && typeof o === 'object') ? o.value : o;
+          var ot = (o && typeof o === 'object') ? o.text : o;
+          return '<option value="' + esc(ov) + '"' + (String(ov) === val ? ' selected' : '') + '>' + esc(ot) + '</option>';
+        }).join('') + '</select>';
+        return '<label' + (f.wide ? ' class="grid-full"' : '') + '>' + f.label + inner + '</label>';
+      }
+      if (f.type === 'bool') {
+        return '<label style="grid-column:1/-1;flex-direction:row;align-items:center;gap:8px">' +
+          '<input type="checkbox" class="f-bool"' + (raw ? ' checked' : '') + ' style="width:auto;margin:0">' + esc(f.label) + '</label>';
+      }
+      if (f.type === 'number') {
+        return '<label>' + f.label + '<input type="number" value="' + esc(val) + '" placeholder="请输入数字"></label>';
+      }
+      if (f.type === 'textarea') {
+        return '<label style="grid-column:1/-1">' + f.label +
+          '<textarea rows="3" style="width:100%;box-sizing:border-box;resize:vertical;font-family:inherit" placeholder="请输入' + esc(f.label) + '">' + esc(val) + '</textarea></label>';
       }
       if (f.type === 'img') {
         var u = (val || '').replace(/"/g, '&quot;').replace(/'/g, '');
-        var has = /^(https?:|data:)/i.test(val);
-        var bg = has ? 'url("' + u + '") center/cover no-repeat' : '';
+        // 相对路径（/pic/xxx.jpg、/uploads/xxx.jpg）也要能预览：只要非空就当作图片地址。
+        // 用完整长写法而不是 background 简写：简写里 center/cover 在部分环境的 CSS 解析器下会被丢弃。
+        // 另注意 url() 内层用单引号——外层是双引号包住的 HTML 属性，内层用双引号会把属性提前截断（预览空白）。
+        var bg = u ? "background-image:url('" + u + "');background-size:cover;background-position:center;background-repeat:no-repeat" : '';
         return '<label style="grid-column:1/-1">' + f.label +
           '<span class="imgpick">' +
-            '<span class="img-prev"' + (bg ? ' style="background-image:' + bg + '"' : '') + '></span>' +
+            '<span class="img-prev"' + (bg ? ' style="' + bg + '"' : '') + '></span>' +
             '<span class="imgpick-actions">' +
               '<button type="button" class="btn primary" data-act="pick"><svg class="ico-sm"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>添加图片</button>' +
               '<button type="button" class="btn" data-act="clr">移除图片</button>' +
@@ -1447,15 +1476,46 @@
           '<input type="text" class="imgUrlIn" placeholder="粘贴图片 URL（http/https）" style="display:none;margin-top:6px;box-sizing:border-box">' +
           '<span class="hint" style="display:block;color:#909399;font-size:12px;font-weight:400;margin-top:4px">点击「添加图片」会打开文件管理器选择本地图片，自动等比压缩后用于演示展示；正式环境改由「素材库 / 上传」接口返回图片 URL（见技术文档 · 图片存储）</span></label>';
       }
-      inner = '<input type="text" value="' + val.replace(/"/g, '&quot;') + '" placeholder="请输入' + f.label + '">';
-      return '<label>' + f.label + inner + '</label>';
+      // f.auto：系统自动生成的字段（款号）——始终只读，新增时按品类实时预览
+      var autoDis = f.auto ? ' disabled title="系统自动生成，无需填写"' : '';
+      var ph = f.auto ? '自动生成' : ('请输入' + f.label);
+      inner = '<input type="text" value="' + esc(val) + '" placeholder="' + esc(ph) + '"' +
+        ((f.readonlyOnEdit && data) ? ' disabled title="创建后不可修改"' : '') + autoDis + '>';
+      var hint = f.auto
+        ? '<span class="hint" style="display:block;color:#909399;font-size:12px;font-weight:400;margin-top:4px">' +
+          (data ? '款号创建后不可修改' : '无需填写：保存时按「品类前缀 + 序号」自动生成（如 CO-SW008）') + '</span>'
+        : '';
+      return '<label>' + f.label + inner + hint + '</label>';
     }).join('');
-    mask.innerHTML = '<div class="modal" style="width:min(560px,100%)">' +
+    mask.innerHTML = '<div class="modal" style="width:min(680px,100%)">' +
       '<div class="modal-head"><h3>' + (data ? '编辑' : '新增') + cfg.label + '</h3><button class="modal-x" type="button">&times;</button></div>' +
       '<div class="modal-body"><div class="form-grid" style="grid-template-columns:1fr 1fr">' + rowsHtml + '</div></div>' +
       '<div class="modal-foot"><button class="btn" data-act="cancel">取消</button><button class="btn primary" data-act="save">保存</button></div></div>';
     document.body.appendChild(mask);
     var close = function () { mask.remove(); };
+    // —— 下拉文本过长时：给 select 挂 title，悬停即可看到完整选项（配合 CSS 省略号） ——
+    Array.prototype.forEach.call(mask.querySelectorAll('.form-grid select'), function (sel) {
+      var syncTitle = function () {
+        var o = sel.options[sel.selectedIndex];
+        sel.title = o ? o.textContent : '';
+      };
+      sel.addEventListener('change', syncTitle);
+      syncTitle();
+    });
+    // —— 自动字段（款号）：新增时按品类实时预览，编辑时只展示原值 ——
+    var autoField = null;
+    cfg.fields.forEach(function (f) { if (f.auto) autoField = f; });
+    if (autoField && !data) {
+      var labelsAuto = mask.querySelectorAll('.form-grid label');
+      var autoEl = labelsAuto[cfg.fields.indexOf(autoField)]
+        ? labelsAuto[cfg.fields.indexOf(autoField)].querySelector('input') : null;
+      var catIdx = -1;
+      cfg.fields.forEach(function (f, i) { if (f.key === 'category') catIdx = i; });
+      var catEl = (catIdx > -1 && labelsAuto[catIdx]) ? labelsAuto[catIdx].querySelector('select') : null;
+      var syncAuto = function () { if (autoEl) autoEl.value = nextItemCode(catEl ? catEl.value : 'women'); };
+      if (catEl) catEl.addEventListener('change', syncAuto);
+      syncAuto();
+    }
     // —— 图片字段：文件选择 / 移除 / 粘贴链接，统一维护 curImg ——
     var imgFieldKey = null;
     cfg.fields.forEach(function (f) { if (f.type === 'img') imgFieldKey = f.key; });
@@ -1510,14 +1570,20 @@
     mask.querySelector('[data-act="cancel"]').addEventListener('click', close);
     mask.querySelector('[data-act="save"]').addEventListener('click', function () {
       var vals = {};
-      var inputs = mask.querySelectorAll('.form-grid label');
+      var labels = mask.querySelectorAll('.form-grid label');
       cfg.fields.forEach(function (f, i) {
         if (f.type === 'img') { vals[f.key] = curImg; return; }
-        var el = inputs[i].querySelector('input,select');
-        vals[f.key] = el ? el.value.trim() : '';
+        var el = labels[i] ? labels[i].querySelector('input,select,textarea') : null;
+        if (!el) { vals[f.key] = ''; return; }
+        if (f.type === 'bool') { vals[f.key] = !!el.checked; return; }
+        vals[f.key] = (el.value || '').trim();
       });
-      var emptyField = cfg.fields.find(function (f) { return f.key !== 'id' && !f.optional && vals[f.key] === ''; });
+      var emptyField = cfg.fields.find(function (f) {
+        return f.key !== 'id' && !f.optional && f.type !== 'bool' && f.type !== 'img' && vals[f.key] === '';
+      });
       if (emptyField) { toast('请填写：' + emptyField.label); return; }
+      // 商品域（款式 / 系列）走专用保存：写入 collections / items 表并即时回拉
+      if (viewId === 'styles' || viewId === 'series') { saveProductModal(viewId, data, tr, vals, close); return; }
       saveTableRow(viewId, data, tr, vals);
       close();
     });
@@ -1784,7 +1850,9 @@
   var API_LOADERS = {
     banners: function (s) { return loadBanners(s); },
     content: function (s) { return loadNews('content', s); },
-    messages: function (s) { return loadMessages(s); }
+    messages: function (s) { return loadMessages(s); },
+    styles: function (s) { return loadStyles(s); },
+    series: function (s) { return loadSeries(s); }
   };
 
   /* 全局唯一的连接状态条：所有模块共用同一个 DOM 与同一套逻辑 */
@@ -1824,6 +1892,8 @@
     loadBanners(silent !== false);
     loadNews('content', silent !== false);
     loadMessages(silent !== false);
+    loadStyles(true);   // 先拉款式：系列挂在款式下，「所属款式」下拉与系列列都依赖款式缓存
+    loadSeries(true);
   }
 
   function initApiBars() {
@@ -1845,7 +1915,8 @@
   }
 
   function bindTableViews() {
-    ['styles', 'series', 'accounts', 'roles', 'banners'].forEach(function (viewId) {
+    // 款式 / 系列 已接库，改由 bindProductsViews() 专用绑定；此处只保留仍为纯演示的视图
+    ['accounts', 'roles', 'banners'].forEach(function (viewId) {
       var sec = $('#view-' + viewId);
       if (!sec) return;
       var filter = sec.querySelector('.filter');
@@ -1906,11 +1977,531 @@
     function cfgAddText(viewId) { return tableConfig(viewId).btnText; }
   }
 
+  /* ============ 商品域：款式 / 系列 → items / collections 表 ============ */
+  /* 层级（v2.3）：品类（固定枚举 men/women/kids）→ 款式（自带品类，必有）→ 系列（挂在款式下，选填）。
+     删除保护：款式下面还有系列时不许删（前端拦截 + 后端 409）。
+     v2.3 变更：① 款号改为自动生成（表单只读预览，保存时后端兜底唯一）；
+                ② 修复编辑款式的保存（弹窗漏传 id 会 PUT /undefined）；
+                ③ 图片（列表「查看图片」/ 大图层 / 弹窗预览）统一支持 /pic 与 /uploads 相对路径。 */
+  var CAT_P_TEXT = { men: '男装', women: '女装', kids: '童装' };
+  var ST_P_TEXT = { online: '在售', draft: '草稿', offline: '已下架' };
+  var ST_P_CLS = { online: 'tag tag-green', draft: 'tag tag-orange', offline: 'tag tag-gray' };
+  var SEASON_P_TEXT = { SPRING_SUMMER: '春夏', AUTUMN_WINTER: '秋冬', CAPSULE: '胶囊' };
+
+  /* 款号自动生成：前缀与后端 CODE_PREFIX 保持一致（女 SW / 男 MN / 童 KD）。
+     序号 = 同品类已有款号的最大序号 + 1，三位补零；后台只是「预览」，后端保存时会再兜底校验唯一。 */
+  var CODE_PFX = { women: 'SW', men: 'MN', kids: 'KD' };
+  function nextItemCode(cat) {
+    var pfx = CODE_PFX[cat] || 'XX';
+    var re = new RegExp('^CO-' + pfx + '(\\d+)$');
+    var mx = 0;
+    currentItems().forEach(function (it) {
+      var m = re.exec(String(it.item_code || ''));
+      if (m) mx = Math.max(mx, parseInt(m[1], 10));
+    });
+    return 'CO-' + pfx + ('000' + (mx + 1)).slice(-3);
+  }
+
+  /* 离线演示数据：款式是主体；系列挂在款式下（与后端种子数据对齐，图片走 /pic） */
+  var DEMO_ITEMS = [
+    { id: 9101, item_code: 'CO-SW001', name: '牛仔裤', category: 'women', is_hot: true, hot_sort: 1, sort_weight: 99, status: 'online', fabric: '12oz 原色纯棉丹宁（示例文案）', fit_description: '高腰直筒，微弹', description: '高腰直筒版型，原色丹宁挺括有型，久穿不易变形。', images: ['/pic/item-jeans.jpg'] },
+    { id: 9102, item_code: 'CO-MN001', name: '工装夹克', category: 'men', is_hot: true, hot_sort: 2, sort_weight: 98, status: 'online', fabric: '厚磅磨毛棉质斜纹（示例文案）', fit_description: '宽松直筒，立领', description: '多袋工装结构 + 耐磨棉感面料，通勤与户外一件搞定。', images: ['/pic/item-jacket.jpg'] },
+    { id: 9103, item_code: 'CO-SW002', name: '针织连衣裙', category: 'women', is_hot: true, hot_sort: 3, sort_weight: 97, status: 'online', fabric: '羊毛混纺细针织（示例文案）', fit_description: '收腰中长款', description: '米白中长款针织裙，收腰垂坠，单穿即是一整身造型。', images: ['/pic/item-dress.jpg'] },
+    { id: 9104, item_code: 'CO-MN002', name: '短袖T恤', category: 'men', is_hot: true, hot_sort: 4, sort_weight: 96, status: 'online', fabric: '32 支精梳纯棉（示例文案）', fit_description: '合体直筒', description: '挺括纯棉基础款，领口不易外翻，叠穿单穿都成立。', images: ['/pic/item-tee.jpg'] },
+    { id: 9105, item_code: 'CO-KD001', name: '卫衣', category: 'kids', is_hot: true, hot_sort: 5, sort_weight: 95, status: 'online', fabric: 'A 类亲肤棉抓绒（示例文案）', fit_description: '宽松落肩，连帽', description: '软糯亲肤棉，连帽宽松版型，奔跑攀爬都不受束缚。', images: ['/pic/item-hoodie.jpg'] }
+  ];
+  var DEMO_SERIES = [
+    { id: 9001, item_id: 9101, name: '牛仔裤系列1', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-jeans-1.jpg', status: 'online' },
+    { id: 9002, item_id: 9101, name: '牛仔裤系列2', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-jeans-2.jpg', status: 'online' },
+    { id: 9003, item_id: 9102, name: '工装夹克系列1', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-jacket-1.jpg', status: 'online' },
+    { id: 9004, item_id: 9102, name: '工装夹克系列2', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-jacket-2.jpg', status: 'online' },
+    { id: 9005, item_id: 9102, name: '工装夹克系列3', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-jacket-3.jpg', status: 'online' },
+    { id: 9006, item_id: 9103, name: '针织连衣裙系列1', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-dress-1.jpg', status: 'online' },
+    { id: 9007, item_id: 9104, name: '短袖T恤系列1', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-tee-1.jpg', status: 'online' },
+    { id: 9008, item_id: 9105, name: '卫衣系列1', year: 2026, season: 'AUTUMN_WINTER', cover_image: '/pic/series-hoodie-1.jpg', status: 'online' }
+  ];
+  var itemCache = [];            // 在线：后端款式全量（供系列「所属款式」下拉）
+  var styleRowCache = {};        // 款式行 data-pid → 数据对象
+  var seriesRowCache = {};       // 系列行 data-pid → 数据对象
+
+  /* 当前可用的款式列表：已连接时以服务端为准（即便为空也不用演示数据，避免提交出假的 item id） */
+  function currentItems() {
+    if (apiOnline()) return itemCache;
+    return DEMO_ITEMS;
+  }
+  function itemById(id) {
+    var list = currentItems();
+    for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(id)) return list[i];
+    return null;
+  }
+  /* 某个款式下的系列：在线用后端带出的 it.series；离线从 DEMO_SERIES 过滤 */
+  function seriesOfItem(it) {
+    if (it && Array.isArray(it.series)) return it.series;
+    if (!it) return [];
+    return DEMO_SERIES.filter(function (s) { return String(s.item_id) === String(it.id); });
+  }
+  /* 通用弹窗的动态下拉数据源（tableConfig.fields[].optionsFrom） */
+  function selectOptionsFrom(src) {
+    if (src === 'items') {
+      return currentItems().map(function (it) {
+        return { value: String(it.id), text: it.name + '（' + (CAT_P_TEXT[it.category] || it.category) + ' · ' + it.item_code + '）' };
+      });
+    }
+    return [];
+  }
+  /* 系列列表的「所属款式」筛选下拉 */
+  function fillItemSelects() {
+    var sel = document.querySelector('#view-series .f-item');
+    if (!sel) return;
+    var cur = sel.value, list = currentItems();
+    sel.innerHTML = '<option value="">全部</option>' + list.map(function (it) {
+      return '<option value="' + esc(it.id) + '">' + esc(it.name + '（' + (CAT_P_TEXT[it.category] || it.category) + '）') + '</option>';
+    }).join('');
+    sel.value = cur;
+  }
+
+  /* ---------- 渲染 ---------- */
+  function renderStyleRows(list, online) {
+    var tb = document.getElementById('styleTbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    styleRowCache = {};
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#909399;padding:26px">' +
+        (online ? '后端暂无款式，点击右上角「新增款式」添加' : '暂无款式') + '</td></tr>';
+      updatePagerInfo(document.getElementById('view-styles'), 0);
+      return;
+    }
+    list.forEach(function (it) {
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-pid', it.id);
+      var img = (it.images && it.images.length) ? it.images[0] : '';
+      var hot = !!it.is_hot;
+      var sers = seriesOfItem(it);
+      var serTxt = sers.length ? sers.map(function (s) { return s.name; }).join('、') : '—';
+      tr.innerHTML =
+        '<td class="mono">' + esc(it.item_code || '—') + '</td>' +
+        '<td>' + imgLinkCell(img) + '</td>' +
+        '<td>' + esc(it.name || '—') + '</td>' +
+        '<td>' + esc(CAT_P_TEXT[it.category] || it.category || '—') + '</td>' +
+        '<td>' + esc(serTxt) + '</td>' +
+        '<td><span class="op hot-toggle" data-hot="' + (hot ? '1' : '0') + '" title="点击切换热门标记">' +
+          (hot ? '★ 热门' : '☆ 普通') + '</span></td>' +
+        '<td><span class="' + (ST_P_CLS[it.status] || 'tag tag-gray') + '">' + esc(ST_P_TEXT[it.status] || it.status || '—') + '</span></td>' +
+        '<td><span class="op">编辑</span><span class="op op-add-series">+ 系列</span><span class="op op-toggle">' + (it.status === 'offline' ? '上架' : '下架') + '</span><span class="op del">删除</span></td>';
+      tb.appendChild(tr);
+      styleRowCache[String(it.id)] = it;
+    });
+    updatePagerInfo(document.getElementById('view-styles'), countVisibleRows(document.getElementById('view-styles')));
+  }
+
+  function renderSeriesRows(list, online) {
+    var tb = document.getElementById('seriesTbody');
+    if (!tb) return;
+    tb.innerHTML = '';
+    seriesRowCache = {};
+    if (!list.length) {
+      tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#909399;padding:26px">' +
+        (online ? '后端暂无系列，点击右上角「新增系列」添加' : '暂无系列') + '</td></tr>';
+      updatePagerInfo(document.getElementById('view-series'), 0);
+      return;
+    }
+    list.forEach(function (c) {
+      var tr = document.createElement('tr');
+      tr.setAttribute('data-pid', c.id);
+      var item = itemById(c.item_id) || (c.item_name ? { name: c.item_name, item_code: c.item_code } : null);
+      var itemTxt = item ? (item.name + (item.item_code ? '（' + item.item_code + '）' : '')) : '—';
+      var seasonTxt = [c.year || '', SEASON_P_TEXT[c.season] || ''].filter(Boolean).join(' ') || '—';
+      tr.innerHTML =
+        '<td class="mono">SE' + esc(c.id) + '</td>' +
+        '<td>' + esc(c.name || '—') + '</td>' +
+        '<td>' + esc(itemTxt) + '</td>' +
+        '<td>' + esc(seasonTxt) + '</td>' +
+        '<td>' + imgLinkCell(c.cover_image || '') + '</td>' +
+        '<td><span class="' + (ST_P_CLS[c.status] || 'tag tag-gray') + '">' + esc(ST_P_TEXT[c.status] || c.status || '—') + '</span></td>' +
+        '<td><span class="op">编辑</span><span class="op del">删除</span></td>';
+      tb.appendChild(tr);
+      seriesRowCache[String(c.id)] = c;
+    });
+    updatePagerInfo(document.getElementById('view-series'), countVisibleRows(document.getElementById('view-series')));
+  }
+
+  /* ---------- 离线本地筛选 ---------- */
+  function filterStyleRowsLocal() {
+    var sec = document.getElementById('view-styles');
+    if (!sec) return;
+    var kw = (sec.querySelector('.f-kw').value || '').trim().toLowerCase();
+    var cat = sec.querySelector('.f-cat').value;
+    var st = sec.querySelector('.f-st').value;
+    Array.prototype.forEach.call(sec.querySelectorAll('#styleTbody tr'), function (tr) {
+      var it = styleRowCache[tr.getAttribute('data-pid')];
+      if (!it) { tr.style.display = 'none'; return; }
+      var ok = true;
+      if (kw && String(it.name || '').toLowerCase().indexOf(kw) < 0 &&
+          String(it.item_code || '').toLowerCase().indexOf(kw) < 0) ok = false;
+      if (ok && cat && it.category !== cat) ok = false;
+      if (ok && st && it.status !== st) ok = false;
+      tr.style.display = ok ? '' : 'none';
+    });
+    updatePagerInfo(sec, countVisibleRows(sec));
+  }
+  function filterSeriesRowsLocal() {
+    var sec = document.getElementById('view-series');
+    if (!sec) return;
+    var kw = (sec.querySelector('.f-kw').value || '').trim().toLowerCase();
+    var itemSel = sec.querySelector('.f-item');
+    var itemId = itemSel ? itemSel.value : '';
+    var st = sec.querySelector('.f-st').value;
+    Array.prototype.forEach.call(sec.querySelectorAll('#seriesTbody tr'), function (tr) {
+      var c = seriesRowCache[tr.getAttribute('data-pid')];
+      if (!c) { tr.style.display = 'none'; return; }
+      var ok = true;
+      if (kw && String(c.name || '').toLowerCase().indexOf(kw) < 0) ok = false;
+      if (ok && itemId && String(c.item_id) !== String(itemId)) ok = false;
+      if (ok && st && c.status !== st) ok = false;
+      tr.style.display = ok ? '' : 'none';
+    });
+    updatePagerInfo(sec, countVisibleRows(sec));
+  }
+
+  /* ---------- 拉取 ---------- */
+  function ensureItems(force) {
+    if (!apiOnline()) return Promise.resolve();
+    // 默认命中缓存即返回；force=true 时强制重拉（新增/删除款式后「所属款式」下拉必须同步）
+    if (itemCache.length && !force) return Promise.resolve();
+    return apiCall('/api/admin/items').then(function (list) {
+      itemCache = list || [];
+      fillItemSelects();
+    }).catch(function () { /* 失败时静默，下拉退回演示数据 */ });
+  }
+
+  function styleQuery() {
+    var sec = document.getElementById('view-styles');
+    if (!sec) return '';
+    var q = [];
+    var kw = sec.querySelector('.f-kw'), cat = sec.querySelector('.f-cat'), st = sec.querySelector('.f-st');
+    if (kw && kw.value.trim()) q.push('keyword=' + encodeURIComponent(kw.value.trim()));
+    if (cat && cat.value) q.push('category=' + encodeURIComponent(cat.value));
+    if (st && st.value) q.push('status=' + encodeURIComponent(st.value));
+    return q.length ? ('?' + q.join('&')) : '';
+  }
+
+  function loadStyles(silent) {
+    if (!apiOnline()) return Promise.resolve();
+    var qs = styleQuery();
+    return apiCall('/api/admin/items' + qs).then(function (list) {
+      // 无筛选时，本次结果即「款式全量」——顺手刷新系列「所属款式」下拉的数据源，
+      // 避免在款式列表新增款式后，切到系列管理仍看不到新款式（v2.5 修复）
+      if (!qs) { itemCache = list || []; fillItemSelects(); }
+      renderStyleRows(list || [], true);
+      renderBoard();
+      if (!silent) toast('已拉取后端款式：' + (list || []).length + ' 条');
+    }).catch(function (err) { if (!silent) toast('拉取款式失败：' + err.message); });
+  }
+
+  function loadSeries(silent) {
+    if (!apiOnline()) return Promise.resolve();
+    // 系列数量很少，始终拉全量：筛选在本地做，避免筛选结果污染「所属款式」下拉
+    // force 重拉款式：进入/刷新系列页时保证「所属款式」下拉包含最新款式（v2.5 修复）
+    return ensureItems(true).then(function () {
+      return apiCall('/api/admin/collections');
+    }).then(function (list) {
+      seriesCache = list || [];
+      fillItemSelects();
+      renderSeriesRows(seriesCache, true);
+      filterSeriesRowsLocal();
+      renderBoard();
+      if (!silent) toast('已拉取后端系列：' + seriesCache.length + ' 个');
+    }).catch(function (err) { if (!silent) toast('拉取系列失败：' + err.message); });
+  }
+  var seriesCache = [];
+
+  /* ---------- 保存（弹窗统一入口） ---------- */
+  function stylePayload(vals) {
+    return {
+      name: vals.name,
+      category: vals.category,
+      status: vals.status || 'draft',
+      is_hot: !!vals.is_hot,
+      hot_sort: parseInt(vals.hot_sort, 10) || 0,
+      sort_weight: parseInt(vals.sort_weight, 10) || 0,
+      images: vals.img ? [vals.img] : [],
+      fabric: vals.fabric || null,
+      fit_description: vals.fit_description || null,
+      description: vals.description || null
+    };
+  }
+  function seriesPayload(vals) {
+    return {
+      name: vals.name,
+      item_id: parseInt(vals.item_id, 10),
+      status: vals.status || 'online',
+      year: vals.year ? parseInt(vals.year, 10) : null,
+      season: vals.season || null,
+      cover_image: vals.img || null
+    };
+  }
+
+  function saveProductModal(viewId, data, tr, vals, close) {
+    var isEdit = !!data;
+    if (!apiOnline()) {
+      /* 离线演示：改内存数据后重渲染 */
+      if (viewId === 'styles') {
+        if (!vals.category) { toast('请选择品类'); return; }
+        if (isEdit) {
+          var cur = styleRowCache[tr.getAttribute('data-pid')];
+          if (cur) {
+            cur.name = vals.name; cur.category = vals.category; cur.status = vals.status;
+            cur.is_hot = !!vals.is_hot;
+            cur.hot_sort = parseInt(vals.hot_sort, 10) || 0; cur.sort_weight = parseInt(vals.sort_weight, 10) || 0;
+            cur.images = vals.img ? [vals.img] : [];
+            cur.fabric = vals.fabric; cur.fit_description = vals.fit_description; cur.description = vals.description;
+          }
+        } else {
+          DEMO_ITEMS.unshift({
+            id: DEMO_ITEMS.reduce(function (m, x) { return Math.max(m, x.id); }, 9100) + 1,
+            item_code: vals.item_code || nextItemCode(vals.category), name: vals.name,
+            category: vals.category, status: vals.status, is_hot: !!vals.is_hot,
+            hot_sort: parseInt(vals.hot_sort, 10) || 0, sort_weight: parseInt(vals.sort_weight, 10) || 0,
+            images: vals.img ? [vals.img] : [], fabric: vals.fabric,
+            fit_description: vals.fit_description, description: vals.description
+          });
+        }
+        renderStyleRows(DEMO_ITEMS, false);
+        filterStyleRowsLocal();
+        fillItemSelects();
+        close();
+        toast((isEdit ? '已更新款式' : '已新增款式') + '（本地演示）：' + vals.name);
+        return;
+      }
+      /* series */
+      if (!vals.item_id) { toast('请选择所属款式'); return; }
+      if (isEdit) {
+        var c0 = seriesRowCache[tr.getAttribute('data-pid')];
+        if (c0) {
+          c0.name = vals.name; c0.item_id = parseInt(vals.item_id, 10); c0.status = vals.status;
+          c0.year = vals.year ? parseInt(vals.year, 10) : null; c0.season = vals.season || null;
+          c0.cover_image = vals.img || '';
+        }
+      } else {
+        DEMO_SERIES.push({
+          id: DEMO_SERIES.reduce(function (m, x) { return Math.max(m, x.id); }, 9000) + 1,
+          item_id: parseInt(vals.item_id, 10), name: vals.name,
+          status: vals.status, year: vals.year ? parseInt(vals.year, 10) : null,
+          season: vals.season || null, cover_image: vals.img || ''
+        });
+      }
+      renderSeriesRows(DEMO_SERIES, false);
+      filterSeriesRowsLocal();
+      renderStyleRows(DEMO_ITEMS, false);
+      close();
+      toast((isEdit ? '已更新系列' : '已新增系列') + '（本地演示）：' + vals.name);
+      return;
+    }
+
+    /* 在线：写入数据库 */
+    var req = null;
+    // 编辑行的主键：优先取弹窗 data.id，兜底取表格行的 data-pid（防止再出现 PUT /undefined）
+    var rid = (data && data.id != null) ? data.id : (tr ? tr.getAttribute('data-pid') : null);
+    if (viewId === 'styles') {
+      if (!vals.category) { toast('请选择品类'); return; }
+      if (!isEdit) {
+        var p1 = stylePayload(vals);
+        if (vals.item_code) p1.item_code = vals.item_code;
+        req = apiCall('/api/admin/items', { method: 'POST', json: true, body: JSON.stringify(p1) })
+          .catch(function (err) {
+            // 款号撞号（并发新增的极小概率）：改由后端自动生成后再试一次
+            if (String((err && err.message) || '').indexOf('款号已存在') > -1) {
+              delete p1.item_code;
+              return apiCall('/api/admin/items', { method: 'POST', json: true, body: JSON.stringify(p1) });
+            }
+            throw err;
+          })
+          .then(function (created) {
+            toast('已新增款式：' + vals.name + ' · 款号 ' + ((created && created.item_code) || vals.item_code || '（自动）') + '（前台即时同步）');
+            return loadStyles(true);
+          });
+      } else {
+        if (rid == null) { toast('缺少款式 ID，无法保存'); return; }
+        var p2 = stylePayload(vals);
+        req = apiCall('/api/admin/items/' + rid, { method: 'PUT', json: true, body: JSON.stringify(p2) })
+          .then(function () { toast('已更新款式：' + vals.name); return loadStyles(true); });
+      }
+    } else {
+      if (!vals.item_id) { toast('请选择所属款式'); return; }
+      if (!isEdit) {
+        var ps = seriesPayload(vals);
+        req = apiCall('/api/admin/collections', { method: 'POST', json: true, body: JSON.stringify(ps) })
+          .then(function () { toast('已新增系列：' + vals.name); return loadSeries(true); });
+      } else {
+        if (rid == null) { toast('缺少系列 ID，无法保存'); return; }
+        var pu = seriesPayload(vals);
+        delete pu.item_id;  // 编辑时不迁移归属（要换款式请删了重建）
+        req = apiCall('/api/admin/collections/' + rid, { method: 'PUT', json: true, body: JSON.stringify(pu) })
+          .then(function () { toast('已更新系列：' + vals.name); return loadSeries(true); });
+      }
+    }
+    req.then(function () {
+      close();
+      // 系列变动会影响款式的「系列」列显示，顺手刷新款式缓存
+      return viewId === 'series' ? loadStyles(true) : null;
+    }).catch(function (err) { toast('保存失败：' + err.message); });
+  }
+
+  /* ---------- 事件绑定 ---------- */
+  function bindProductsViews() {
+    var secS = document.getElementById('view-styles');
+    if (secS) {
+      var fS = secS.querySelector('.filter');
+      document.getElementById('btnQueryStyle').addEventListener('click', function () {
+        if (apiOnline()) { loadStyles(false); return; }
+        filterStyleRowsLocal(); toast('筛选已应用（本地演示）');
+      });
+      document.getElementById('btnResetStyle').addEventListener('click', function () {
+        Array.prototype.forEach.call(fS.querySelectorAll('input,select'), function (el) { el.value = ''; });
+        if (apiOnline()) { loadStyles(true); } else {
+          Array.prototype.forEach.call(secS.querySelectorAll('#styleTbody tr'), function (tr) { tr.style.display = ''; });
+          updatePagerInfo(secS, countVisibleRows(secS));
+        }
+        toast('已重置筛选');
+      });
+      document.getElementById('btnNewStyle').addEventListener('click', function () {
+        openTableModal('styles');   // 品类是必填下拉，不再依赖其它缓存
+      });
+      secS.querySelector('tbody').addEventListener('click', function (e) {
+        var vimg = e.target.closest('[data-img]');
+        if (vimg) { openImgViewer(vimg.getAttribute('data-img')); return; }
+        var op = e.target.closest('.op');
+        if (!op) return;
+        var tr = op.closest('tr');
+        var it = tr ? styleRowCache[tr.getAttribute('data-pid')] : null;
+        if (!it) return;
+        var act = op.textContent.trim();
+        if (op.classList.contains('del') || act === '删除') {
+          var n = seriesOfItem(it).length;
+          if (n > 0) { toast('该款式下还有 ' + n + ' 个系列，请先清空或转移到其他款式后再删除'); return; }
+          if (!confirm('确认删除款式「' + it.name + '」？前台将同步移除')) return;
+          if (apiOnline()) {
+            apiCall('/api/admin/items/' + it.id, { method: 'DELETE' })
+              .then(function () { toast('已删除，前台同步移除'); return loadStyles(true); })
+              .catch(function (err) { toast('删除失败：' + err.message); });
+          } else {
+            DEMO_ITEMS = DEMO_ITEMS.filter(function (x) { return String(x.id) !== String(it.id); });
+            tr.remove();
+            updatePagerInfo(secS, countVisibleRows(secS));
+            fillItemSelects();
+            renderBoard();
+            toast('已删除（本地演示）');
+          }
+          return;
+        }
+        if (op.classList.contains('hot-toggle')) {
+          var nextHot = !it.is_hot;
+          if (apiOnline()) {
+            apiCall('/api/admin/items/' + it.id, { method: 'PUT', json: true, body: JSON.stringify({ is_hot: nextHot }) })
+              .then(function () { toast(nextHot ? '已标记为热门（前台热门页同步）' : '已取消热门标记'); return loadStyles(true); })
+              .catch(function (err) { toast('操作失败：' + err.message); });
+          } else {
+            it.is_hot = nextHot;
+            renderStyleRows(DEMO_ITEMS, false);
+            filterStyleRowsLocal();
+            toast(nextHot ? '已标记为热门（本地演示）' : '已取消热门标记（本地演示）');
+          }
+          return;
+        }
+        if (op.classList.contains('op-toggle')) {
+          var next = it.status === 'offline' ? 'online' : 'offline';
+          if (apiOnline()) {
+            apiCall('/api/admin/items/' + it.id, { method: 'PUT', json: true, body: JSON.stringify({ status: next }) })
+              .then(function () { toast(next === 'online' ? '已上架，前台立即可见' : '已下架，前台对应页 404'); return loadStyles(true); })
+              .catch(function (err) { toast('操作失败：' + err.message); });
+          } else {
+            it.status = next;
+            renderStyleRows(DEMO_ITEMS, false);
+            filterStyleRowsLocal();
+            toast(next === 'online' ? '已上架（本地演示）' : '已下架（本地演示）');
+          }
+          return;
+        }
+        if (op.classList.contains('op-add-series')) {
+          // 快速给该款式新增系列：打开系列弹窗并预选「所属款式」
+          var list = currentItems();
+          if (!list.length) { toast('还没有款式，请先新增款式'); return; }
+          if (apiOnline()) { ensureItems(true).then(function () { openTableModal('series', null, null, { item_id: String(it.id) }); }); }
+          else { openTableModal('series', null, null, { item_id: String(it.id) }); }
+          return;
+        }
+        if (act === '编辑') {
+          openTableModal('styles', {
+            id: it.id,   // 必须带上：保存时用 data.id 拼 PUT 地址（缺了会 PUT /undefined → 保存失败）
+            item_code: it.item_code, name: it.name, category: it.category || 'men',
+            fabric: it.fabric || '', fit_description: it.fit_description || '',
+            sort_weight: it.sort_weight || 0, is_hot: !!it.is_hot, hot_sort: it.hot_sort || 0,
+            status: it.status || 'draft', description: it.description || '',
+            img: (it.images && it.images[0]) || ''
+          }, tr);
+        }
+      });
+    }
+
+    var secR = document.getElementById('view-series');
+    if (secR) {
+      var fR = secR.querySelector('.filter');
+      document.getElementById('btnQuerySeries').addEventListener('click', function () {
+        filterSeriesRowsLocal(); toast('筛选已应用');
+      });
+      document.getElementById('btnResetSeries').addEventListener('click', function () {
+        Array.prototype.forEach.call(fR.querySelectorAll('input,select'), function (el) { el.value = ''; });
+        Array.prototype.forEach.call(secR.querySelectorAll('#seriesTbody tr'), function (tr) { tr.style.display = ''; });
+        updatePagerInfo(secR, countVisibleRows(secR));
+        toast('已重置筛选');
+      });
+      document.getElementById('btnNewSeries').addEventListener('click', function () {
+        var list = currentItems();
+        if (!list.length) { toast('还没有款式：系列必须挂在某个款式下，请先新增款式'); return; }
+        if (apiOnline()) { ensureItems(true).then(function () { openTableModal('series'); }); }
+        else { openTableModal('series'); }
+      });
+      secR.querySelector('tbody').addEventListener('click', function (e) {
+        var vimg = e.target.closest('[data-img]');
+        if (vimg) { openImgViewer(vimg.getAttribute('data-img')); return; }
+        var op = e.target.closest('.op');
+        if (!op) return;
+        var tr = op.closest('tr');
+        var c = tr ? seriesRowCache[tr.getAttribute('data-pid')] : null;
+        if (!c) return;
+        var act = op.textContent.trim();
+        if (op.classList.contains('del') || act === '删除') {
+          if (!confirm('确认删除系列「' + c.name + '」？')) return;
+          if (apiOnline()) {
+            apiCall('/api/admin/collections/' + c.id, { method: 'DELETE' })
+              .then(function () { toast('已删除系列'); return loadSeries(true); })
+              .catch(function (err) { toast('删除失败：' + err.message); });
+          } else {
+            DEMO_SERIES = DEMO_SERIES.filter(function (x) { return String(x.id) !== String(c.id); });
+            renderSeriesRows(DEMO_SERIES, false);
+            renderStyleRows(DEMO_ITEMS, false);
+            toast('已删除（本地演示）');
+          }
+          return;
+        }
+        if (act === '编辑') {
+          openTableModal('series', {
+            id: c.id,   // 同上：保存时用 data.id 拼 PUT 地址
+            name: c.name, item_id: String(c.item_id), status: c.status,
+            year: c.year || '', season: c.season || '', img: c.cover_image || ''
+          }, tr);
+        }
+      });
+    }
+  }
+
+
   /* ============ 内容运营：新闻与资讯（合并，同源 articles 表） → articles 表 ============ */
   var NEWS_SCOPE = {
     content: {
-      tbody: 'newsTbody', defCat: 'company', label: '新闻与资讯', editor: 'articleEditor',
-      ed: { title: 'ed-title', cat: 'ed-cat', body: 'ed-body', summary: 'ed-summary', cover: 'ed-cover' }
+      tbody: 'newsTbody', defCat: 'company', defAuthor: '超级管理员', label: '新闻与资讯', editor: 'articleEditor',
+      ed: { title: 'ed-title', cat: 'ed-cat', author: 'ed-author', body: 'ed-body', summary: 'ed-summary', cover: 'ed-cover' }
     }
   };
   var CAT_TEXT = { company: '企业新闻', industry: '行业资讯' };
@@ -1971,12 +2562,14 @@
     [ed.title, ed.summary, ed.cover].forEach(function (id) { var el = document.getElementById(id); if (el) el.value = ''; });
     var body = document.getElementById(ed.body); if (body) body.innerHTML = '';
     var cat = document.getElementById(ed.cat); if (cat) cat.value = NEWS_SCOPE[viewId].defCat;
+    var au = document.getElementById(ed.author); if (au) au.value = NEWS_SCOPE[viewId].defAuthor;
   }
 
   function fillNewsForm(viewId, a) {
     var sc = NEWS_SCOPE[viewId], ed = sc.ed;
     var t = document.getElementById(ed.title); if (t) t.value = a.title || '';
     var c = document.getElementById(ed.cat); if (c) c.value = a.category || sc.defCat;
+    var au = document.getElementById(ed.author); if (au) au.value = a.author || sc.defAuthor;
     var s = document.getElementById(ed.summary); if (s) s.value = a.summary || '';
     var cv = document.getElementById(ed.cover); if (cv) cv.value = a.cover_image || '';
     var b = document.getElementById(ed.body); if (b) b.innerHTML = a.content || '';
@@ -1995,6 +2588,7 @@
     var payload = {
       title: title.trim(),
       category: (document.getElementById(ed.cat) || {}).value || sc.defCat,
+      author: ((document.getElementById(ed.author) || {}).value || '').trim() || sc.defAuthor,
       summary: ((document.getElementById(ed.summary) || {}).value || '').trim() || null,
       cover_image: ((document.getElementById(ed.cover) || {}).value || '').trim() || null,
       content: body,
@@ -2051,8 +2645,8 @@
     var tds = tr.querySelectorAll('td');
     return {
       id: tds[0].textContent.trim(), title: tds[1].textContent.trim(),
-      cat: tds[2].textContent.trim(), status: tds[4].textContent.trim(),
-      pub: tds[5].textContent.trim()
+      cat: tds[2].textContent.trim(), author: tds[3].textContent.trim(),
+      status: tds[4].textContent.trim(), pub: tds[5].textContent.trim()
     };
   }
   function bindContent() {
@@ -2114,6 +2708,8 @@
         $('#ed-title').value = d.title;
         var cats = $$('#ed-cat option').map(function (o) { return o.textContent.trim(); });
         if (cats.indexOf(d.cat) > -1) $('#ed-cat').selectedIndex = cats.indexOf(d.cat);
+        var authors = $$('#ed-author option').map(function (o) { return o.textContent.trim(); });
+        if (authors.indexOf(d.author) > -1) $('#ed-author').selectedIndex = authors.indexOf(d.author);
         $('#articleEditor').scrollIntoView({ behavior: 'smooth', block: 'center' });
         editingArticle = { viewId: viewId, tr: tr, d: d };
         toast('已载入编辑器（本地演示）');
@@ -2125,8 +2721,9 @@
       var title = $('#ed-title').value.trim();
       if (!title) { toast('请填写标题'); return; }
       var cat = $('#ed-cat').options[$('#ed-cat').selectedIndex].textContent.trim();
-      if (editingArticle) updateArticleRow(editingArticle, label);
-      else addArticleRow(title, cat, label);
+      var author = $('#ed-author') ? $('#ed-author').value : '';
+      if (editingArticle) updateArticleRow(editingArticle, label, author);
+      else addArticleRow(title, cat, label, author);
       toast('内容' + label + '（本地演示）：' + title);
       $('#ed-title').value = ''; $('#ed-body').innerHTML = '';
     }
@@ -2140,23 +2737,24 @@
   }
 
   var editingArticle = null;
-  function addArticleRow(title, cat, status) {
+  function addArticleRow(title, cat, status, author) {
     var t = $('#newsTbody');
     var id = randId('N');
     var cls = statusTagCls(status);
     var tr = document.createElement('tr');
-    tr.innerHTML = '<td class="mono">' + esc(id) + '</td><td>' + esc(title) + '</td><td>' + esc(cat) + '</td><td>' + esc($('#dispName').textContent) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + (status === '已发布' ? esc(nowStamp()) : '--') + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
+    tr.innerHTML = '<td class="mono">' + esc(id) + '</td><td>' + esc(title) + '</td><td>' + esc(cat) + '</td><td>' + esc(author || $('#dispName').textContent) + '</td><td><span class="tag ' + cls + '">' + esc(status) + '</span></td><td>' + (status === '已发布' ? esc(nowStamp()) : '--') + '</td><td><span class="op">编辑</span><span class="op del">删除</span></td>';
     t.insertBefore(tr, t.firstChild);
     updatePagerInfo($('#view-content'), countVisibleRows($('#view-content')));
     renderBoard();
   }
-  function updateArticleRow(ref, status) {
+  function updateArticleRow(ref, status, author) {
     var tr = ref.tr;
     var tds = tr.querySelectorAll('td');
     tds[1].textContent = $('#ed-title').value.trim();
     // 分类列显示所选分类的文本（企业新闻 / 行业资讯），而非底层 code
     var catEl = $('#ed-cat');
     tds[2].textContent = catEl ? catEl.options[catEl.selectedIndex].textContent.trim() : tds[2].textContent;
+    if (author) tds[3].textContent = author;   // 作者列：取编辑器下拉所选身份
     var cls = statusTagCls(status);
     var tag = tr.querySelector('.tag');
     tag.className = 'tag ' + cls; tag.textContent = status;
@@ -2457,6 +3055,10 @@
     bindTableViews();
     bindContent();
     bindMessages();
+    bindProductsViews();
+    renderStyleRows(DEMO_ITEMS, false);     // 未连接时先铺演示数据；连接后由 loadApiViews 覆盖
+    renderSeriesRows(DEMO_SERIES, false);
+    fillItemSelects();
     bindSettings();
     bindLogs();
     bindPagers();

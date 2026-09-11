@@ -92,6 +92,15 @@ ADMIN_DIR = BACKEND_DIR.parent / "backendManage"
 if ADMIN_DIR.is_dir():
     app.mount("/admin", StaticFiles(directory=str(ADMIN_DIR), html=True), name="admin")
 
+# 前台演示图库 /pic/*：数据库里的款式主图、系列封面都存成相对路径（如 /pic/hot-01.jpg）。
+# 前台由 Vite 从 public/ 提供，但后台管理页挂在后端 8000 的 /admin 下，
+# 若不挂载 /pic，「后台查看图片」就会 404 —— 这是「前台有图、后台看不到」的根因。
+# 这里复用前台同一份图片目录，保证前后台图片链路一致（只读，不复制文件）。
+WEB_PUBLIC_DIR = BACKEND_DIR.parent / "frontend" / "web" / "public"
+PIC_DIR = WEB_PUBLIC_DIR / "pic"
+if PIC_DIR.is_dir():
+    app.mount("/pic", StaticFiles(directory=str(PIC_DIR)), name="pic")
+
 
 @app.get("/", tags=["meta"], include_in_schema=False)
 async def index():

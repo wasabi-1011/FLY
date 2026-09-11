@@ -11,7 +11,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.config import settings
-from app.dependencies import CurrentContentOps
+from app.dependencies import CurrentAnyAdmin
 
 router = APIRouter(prefix="/api/admin/upload", tags=["admin-upload"])
 
@@ -32,9 +32,13 @@ EXT_BY_CT = {
 @router.post("", status_code=201)
 async def upload_image(
     file: UploadFile = File(...),
-    current: CurrentContentOps = None,
+    current: CurrentAnyAdmin = None,
 ):
-    """上传一张图片，返回 {"url": "/uploads/xxx.jpg"}。"""
+    """上传一张图片，返回 {"url": "/uploads/xxx.jpg"}。
+
+    权限：任意已登录后台账号（SUPER_ADMIN / CONTENT_OPS / MERCH_STORE_OPS）。
+    原先只放给内容运营，导致门店商品运营（R3）维护款式主图时上传 403。
+    """
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
     ext = Path(file.filename or "").suffix.lower()

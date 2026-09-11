@@ -4,13 +4,13 @@ import SiteNav from "../components/SiteNav.jsx";
 import SiteFooter from "../components/SiteFooter.jsx";
 import Hero from "../components/Hero.jsx";
 import StoreEntry from "../components/StoreEntry.jsx";
-import { CATEGORIES, HOME_COLLECTIONS, getHotItems } from "../data/siteData.js";
+import { CATEGORIES, HOME_COLLECTIONS, collectionsFromItems, getHotItems } from "../data/siteData.js";
 import { fetchLatestNews, localLatest } from "../data/newsApi.js";
+import { fetchHotItems, fetchAllItems } from "../data/productsApi.js";
 
-const HOT = getHotItems();
-const HOT_META = (code) => {
-  const it = HOT.find(h => h.code === code);
-  const c = CATEGORIES.find(x => x.key === it.cat);
+const HOT_META = (list, code) => {
+  const it = list.find(h => h.code === code);
+  const c = it && CATEGORIES.find(x => x.key === it.cat);
   return `${c ? c.label : ""} · ${code}`;
 };
 
@@ -27,6 +27,10 @@ export default function Home() {
   // 首页新闻与 /news 同源：都读数据库；接口不可用才回退本地默认
   const [news, setNews] = useState(null); // null = 加载中
   const [newsFallback, setNewsFallback] = useState(false);
+  // 首页「当季系列」「热门推荐」同样以数据库为准：先用本地兜底渲染，接口回来再替换
+  // （约定同 newsApi：接口成功但为空 → 显示空状态；仅接口失败 → 保留本地兜底）
+  const [hot, setHot] = useState(() => getHotItems());
+  const [cols, setColls] = useState(HOME_COLLECTIONS);
 
   useEffect(() => {
     let alive = true;
@@ -38,9 +42,26 @@ export default function Home() {
     return () => { alive = false; };
   }, []);
 
-  // 热门推荐入场动效（进入视口时逐个加 .in）
+  // 款式 / 系列：与产品中心同源（GET /api/products/hot、/api/products/{category}）
   useEffect(() => {
-    const cards = hotRef.current ? hotRef.current.querySelectorAll(".hot-card") : [];
+    let alive = true;
+    fetchHotItems().then((res) => {
+      if (!alive || !res.ok) return;   // 失败 → 保留本地兜底
+      setHot(res.items);               // 成功（含空数组）→ 以服务端为准
+    });
+    fetchAllItems().then((res) => {
+      if (!alive || !res.ok) return;
+      setColls(collectionsFromItems(res.items));
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // 热门推荐入场动效（进入视口时逐个加 .in）；数据异步到达后需重跑，否则卡片停在 opacity:0
+  useEffect(() => {
+    const el = hotRef.current;
+    if (!el) return;
+    const cards = el.querySelectorAll(".hot-card");
+    if (!cards.length) return;
     if (!("IntersectionObserver" in window)) {
       cards.forEach(c => c.classList.add("in"));
       return;
@@ -51,9 +72,9 @@ export default function Home() {
         obs.disconnect();
       }
     }, { threshold: 0.2 });
-    obs.observe(hotRef.current);
+    obs.observe(el);
     return () => obs.disconnect();
-  }, []);
+  }, [hot]);
 
   return (
     <>
@@ -85,12 +106,15 @@ export default function Home() {
             <Link className="more" to="/products">进入产品中心 →</Link>
           </div>
           <div className="coll-grid">
-            {HOME_COLLECTIONS.map((c, i) => (
+            {cols.map((c, i) => (
               <Link className="coll-card" to={`/products/${c.cat}`} key={i}>
                 <div className="visual"><img src={c.img} alt={c.title} loading="lazy" /><span className="tag">{c.tag}</span></div>
                 <div className="cap"><h3>{c.title}</h3><p>{c.desc}</p></div>
               </Link>
             ))}
+            {cols.length === 0 && (
+              <p className="sec-sub">暂无上架系列（可在后台「款式列表 / 系列管理」维护）。</p>
+            )}
           </div>
         </div>
       </section>
@@ -107,12 +131,15 @@ export default function Home() {
             <Link className="more" to="/products/hot" style={{ color: "#a89477" }}>查看全部 →</Link>
           </div>
           <div className="hot-grid">
-            {HOT.map((h, i) => (
+            {hot.map((h, i) => (
               <Link className="hot-card" to={`/products/${h.cat}/${h.code}`} key={i}>
                 <div className="visual"><span className="rec">推荐</span><img src={h.img} alt={h.name} loading="lazy" /></div>
-                <div className="cap"><b>{h.name}</b><span>{HOT_META(h.code)}</span></div>
+                <div className="cap"><b>{h.name}</b><span>{HOT_META(hot, h.code)}</span></div>
               </Link>
             ))}
+            {hot.length === 0 && (
+              <p className="sec-sub" style={{ color: "#b3a99a" }}>暂无主推款式（可在后台「款式列表」标记热门）。</p>
+            )}
           </div>
         </div>
       </div>

@@ -1,9 +1,12 @@
 # FLY 品牌官网 · 数据库设计技术文档（SQLite）
 
-> 文档版本：v1.1 ｜ 创建日期：2026-09-09（v1.1 同日更新）｜ 状态：技术评审版
+> 文档版本：v1.4 ｜ 创建日期：2026-09-09（v1.4 于 2026-09-10 更新）｜ 状态：技术评审版
 > 依据：`docs/FLY品牌官网_PRD_v1.0.md`（v1.6 评审修订版）第 9/10 章 + 后端现有 `backend/app/models/**` 实现
 > 配套文件：`docs/FLY官网_SQLite建表DDL.sql`（SQLAlchemy 生成的最终可执行 DDL）
 > **v1.1 变更**：`items` 表新增 `price` 价格**记录字段**（NUMERIC(10,2)，可空），用途为品牌方主数据记录（吊牌/参考零售价）；**后端本期不读写、前台不展示**，Non-goals N5 不受影响。建表 DDL 已同步补列，但 ORM 模型暂未映射（按"后端不使用"要求），详见 §4.2 说明。
+> **v1.2 变更（商品域层级重构 v2.2）**：商品主从关系**反转**为 **品类 → 款式 → 系列**。① `items` 新增必填列 `category`（款式自带品类），删除 `collection_id` 外键；② `collections` 删除全部冗余列（`slug`/`subtitle`/`category`/`hero_image`/`hero_video`/`story`/`sort_weight`/`published_at`），**只保留 名称 / 年份 / 季节 / 封面 / 状态**，改用 `item_id` 外键挂在款式下（`ON DELETE CASCADE`）；③ 删除保护随之反转：**款式下还有系列时禁止删除款式**（后端 409），系列本身可直接删。落地方案：迁移脚本 `backend/迁移_商品域v2.py`（重建两表 + 回填品类），种子 `backend/种子数据_商品.py`（8 款式 + 8 系列）。
+> **v1.3 变更（款号自动生成 v2.3）**：`items.item_code` 支持后端自动生成（留空 → `CO-<品类前缀><三位序号>`），**表结构与 DDL 不变**，详见 §4.2 说明；另新增 `GET /pic/*` 静态挂载供后台管理页复用前台演示图库（非数据库变更）。
+> **v1.4 变更（商品种子数据 v2.4）**：商品种子与初始快照的数据基准更新为 **5 款式 / 8 系列**（牛仔裤 2 系列 / 工装夹克 3 系列 / 其余各 1 系列；图片 `/pic/item-*.jpg`、`/pic/series-*.jpg`）；`启动.bat` 新增菜单项 **7**「恢复款式/系列种子数据」（只重灌 `items`/`collections`）。**表结构与 DDL 均未变化**；款号自动生成改为「扫描已用序号取 max+1 后向前探测空位」，仍属应用层规则（详见 §4.2）。
 
 ---
 
@@ -14,14 +17,15 @@
 全站共有 **12 张业务表、6 组领域枚举**，无其他存储对象（素材文件落磁盘不落库，见 §3.6）。核心关系：
 
 ```
-Category(枚举: men/women/kids)  → 1:N → Collection(系列) → 1:N → Item(款式) → N:1 ← StoreStock(门店库存)
+Item(款式) ──── 自带 Category(枚举: men/women/kids)
+Item(款式) → 1:N → Collection(系列，选填 0..n) → N:1 ← StoreStock(门店库存，按 item_code 逻辑关联)
 Store(门店)                     → 1:N → StoreStock
 Page(CMS页面) → 1:N → PageVersion(版本) → 1:N → Block(区块)
 Article(新闻) ｜ ContactMessage(留言)
 AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志)
 ```
 
-业务定位约束（来自 PRD Non-goals）：**无交易、无会员、无 SKU、无价格/尺码前台展示**；商品以「品类 → 系列 → 款式」两级粒度组织，`is_hot` 为人工打标；库存为后台内部工具、前台不展示数量。
+业务定位约束（来自 PRD Non-goals）：**无交易、无会员、无 SKU、无价格/尺码前台展示**；商品以「品类 → 款式 → 系列」组织——**款式是主体、自带品类且必填，系列是款式下的可选分组（0..n）**，`is_hot` 为人工打标；库存为后台内部工具、前台不展示数量。
 
 ---
 
@@ -70,8 +74,8 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 | # | 表名 | 中文名 | 所属领域 | PRD 出处 | 说明 |
 |---|---|---|---|---|---|
-| 1 | `collections` | 系列 | 商品域 | 10.2 Collection | 系列归属唯一品类 |
-| 2 | `items` | 款式 | 商品域 | 10.2 Item | 款式归属唯一系列 |
+| 1 | `collections` | 系列 | 商品域 | 10.2 Collection | **挂在款式下的可选分组（0..n）**，用 `item_id` 关联；品类继承自所属款式 |
+| 2 | `items` | 款式 | 商品域 | 10.2 Item | **商品主体**，自带必填品类 `category` |
 | 3 | `stores` | 门店 | 门店域 | 10.2 Store | 含 GCJ-02 坐标 |
 | 4 | `store_stocks` | 门店库存 | 门店域 | 10.2 StoreStock | 内部工具，前台不展示数量 |
 | 5 | `articles` | 新闻 | 内容域 | 10.2 Article | 企业新闻/行业资讯 |
@@ -99,7 +103,7 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 | 关系 | 外键 | 级联 | 删除语义 |
 |---|---|---|---|
-| Collection 1:N Item | `items.collection_id → collections.id` | `ON DELETE CASCADE` | 删除系列级联删款式 |
+| Item 1:N Collection | `collections.item_id → items.id` | `ON DELETE CASCADE` | 删除款式级联删其系列（**后端另有删除保护：下有系列时拒绝删除款式并返回 409**） |
 | Store 1:N StoreStock | `store_stocks.store_id → stores.id` | `ON DELETE CASCADE` | 删除门店级联删其库存 |
 | Item 1:N StoreStock（逻辑关联） | `store_stocks.item_code` ↔ `items.item_code` | 无物理外键 | 见下方说明 |
 | Page 1:N PageVersion | `page_versions.page_id → pages.id` | `ON DELETE CASCADE` | 删除页面级联删版本 |
@@ -117,9 +121,9 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 | 枚举 | 存储长度 | 取值 | 归属字段 |
 |---|---|---|---|
-| `Category` 品类 | VARCHAR(5) | `men` / `women` / `kids` | `collections.category` |
+| `Category` 品类 | VARCHAR(5) | `men` / `women` / `kids` | `items.category` |
 | `Season` 季节 | VARCHAR(13) | `SPRING_SUMMER` / `AUTUMN_WINTER` / `CAPSULE` | `collections.season` |
-| `Status` 通用状态 | VARCHAR(7) | `draft` / `online` / `offline` | `collections/items/stores/articles.status` |
+| `Status` 通用状态 | VARCHAR(7) | `draft` / `online` / `offline` | `items/collections/stores/articles.status` |
 | `PageStatus` 页面状态 | VARCHAR(9) | `draft` / `published` / `offline` | `pages.status` |
 | `StoreType` 门店类型 | VARCHAR(8) | `FLAGSHIP` / `STANDARD` / `OUTLET` | `stores.store_type` |
 | `NewsCategory` 新闻分类 | VARCHAR(8) | `company` / `industry` | `articles.category` |
@@ -167,51 +171,50 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 ### 4.1 `collections` 系列
 
-**用途**：商品系列，归属唯一品类；URL 路径含 `slug`（发布后不可改）。
+**用途**：款式下的**可选分组**（0..n），用 `item_id` 挂在款式下；品类继承自所属款式，**不再单独存储**。v1.2 起大幅瘦身：原来的 `slug`（URL 段）、`subtitle`、`category`、`hero_image`/`hero_video`、`story`、`sort_weight`、`published_at` 全部移除——系列在前台仅作为款式的展示标签，不再承载独立落地页。
 
 | 字段 | 类型 | 空 | 默认 | 说明 |
 |---|---|---|---|---|
-| `id` | INTEGER PK | 否 | 自增 | |
-| `name` | VARCHAR(200) | 否 | | 系列名 |
-| `slug` | VARCHAR(200) | 否 | | **UNIQUE**，URL 段，小写字母/数字/连字符 |
-| `subtitle` | VARCHAR(300) | 是 | | 副标题 |
-| `category` | VARCHAR(5) | 否 | | 枚举 men/women/kids（必填） |
+| `id` | INTEGER PK | 否 | 自增 | 系列 ID |
+| `item_id` | INTEGER FK | 否 | | → `items.id`，ON DELETE CASCADE（所属款式，必填） |
+| `name` | VARCHAR(200) | 否 | | 系列名称 |
 | `year` | INTEGER | 是 | | 年份 |
 | `season` | VARCHAR(13) | 是 | | 枚举季节 |
-| `cover_image` | VARCHAR(512) | 是 | | 列表封面 URL |
-| `hero_image` | VARCHAR(512) | 是 | | 详情页大视觉 URL |
-| `hero_video` | VARCHAR(512) | 是 | | 详情页视频 URL |
-| `story` | TEXT | 是 | | 系列故事富文本 |
-| `sort_weight` | INTEGER | 否 | 0 | 排序权重，越大越靠前 |
-| `status` | VARCHAR(7) | 否 | draft | 枚举 draft/online/offline |
-| `published_at` | DATETIME | 是 | | 发布时间 |
+| `cover_image` | VARCHAR(512) | 是 | | 封面 URL |
+| `status` | VARCHAR(7) | 否 | online | 枚举 draft/online/offline |
 
-**索引**：`ix_collections_slug`(UNIQUE)、`ix_collections_category`、`ix_collections_status`、`ix_collection_cat_status_pub(category,status,published_at)`（支撑品类页列表）。
+**索引**：`ix_collections_item_id`（按所属款式查询）、`ix_collections_status`。
+
+> 后台列表附带的 `item_code` / `item_name`（所属款式）**不是本表列**，由接口 join `items` 时临时填充（`CollectionOut`），仅用于展示。
 
 ### 4.2 `items` 款式
 
-**用途**：商品款式，归属唯一系列；`item_code` 款号为库存关联业务主键。v1.1 起含 `price` 价格**记录字段**（仅主数据记录用途，后端本期不读写、前台不展示）；无尺码/SKU/库存字段（Non-goals N5），其余二期扩展走 `ext_json`。
+**用途**：**商品主体**，自带必填品类 `category`；`item_code` 款号为库存关联业务主键。系列为其下的可选分组（见 §4.1）。v1.1 起含 `price` 价格**记录字段**（仅主数据记录用途，后端本期不读写、前台不展示）；无尺码/SKU/库存字段（Non-goals N5），其余二期扩展走 `ext_json`。
 
 | 字段 | 类型 | 空 | 默认 | 说明 |
 |---|---|---|---|---|
 | `id` | INTEGER PK | 否 | 自增 | |
-| `item_code` | VARCHAR(64) | 否 | | **UNIQUE**，款号，库存关联主键 |
+| `item_code` | VARCHAR(64) | 否 | | **UNIQUE**，款号，库存关联主键。**v1.3 起支持后端自动生成**：接口留空时按 `CO-<品类前缀><三位序号>` 落号（女 `SW` / 男 `MN` / 童 `KD`，序号为该品类已有最大序号 +1）；库里仍是 NOT NULL + UNIQUE，生成逻辑不改变表结构 |
 | `name` | VARCHAR(200) | 否 | | 款名 |
-| `collection_id` | INTEGER FK | 否 | | → `collections.id`，ON DELETE CASCADE |
+| `category` | VARCHAR(5) | 否 | | **v1.2 新增**：枚举 men/women/kids（必填，款式自带品类） |
 | `is_hot` | BOOLEAN | 否 | false | 人工打标热门，禁止自动计算 |
 | `hot_sort` | INTEGER | 否 | 0 | 热门排序，is_hot=true 时生效 |
 | `images` | JSON | 是 | | 主图数组（≥1） |
 | `video_url` | VARCHAR(512) | 是 | | 可选视频 |
 | `fabric` | VARCHAR(300) | 是 | | 面料成分 |
 | `colors` | JSON | 是 | | `[{name,hex}]` |
-| `price` | NUMERIC(10,2) | 是 | | **v1.1 新增·记录字段**：吊牌/参考零售价（元），两位小数。后端本期不读写、前台不展示（N5 不变） |
+| `price` | NUMERIC(10,2) | 是 | | **v1.1 记录字段**：吊牌/参考零售价（元），两位小数。后端本期不读写、前台不展示（N5 不变） |
 | `fit_description` | VARCHAR(300) | 是 | | 版型描述 |
 | `description` | TEXT | 是 | | 设计说明富文本 |
 | `sort_weight` | INTEGER | 否 | 0 | 排序权重 |
 | `status` | VARCHAR(7) | 否 | draft | 枚举 |
 | `ext_json` | JSON | 是 | | 二期扩展预留（SKU/尺码 等；价格已独立为 `price` 列，v1.1） |
 
-**索引**：`ix_items_item_code`(UNIQUE)、`ix_items_collection_id`、`ix_items_status`、`ix_items_is_hot`、`ix_item_hot(is_hot,hot_sort)`（支撑热门推荐页）。
+**索引**：`ix_items_item_code`(UNIQUE)、`ix_items_category`、`ix_items_status`、`ix_items_is_hot`、`ix_item_cat_status(category,status)`（支撑品类页）、`ix_item_hot(is_hot,hot_sort)`（支撑热门推荐页）。
+
+> **v1.2 关系变更**：删除原 `collection_id` 外键——款式不再挂在系列下，改为**系列挂款式**（`collections.item_id`）；品类由「系列继承」改为「款式自带」。
+
+> **v1.3 款号自动生成**：后台新增款式不再要求手填款号。接口 `POST /api/admin/items` 的 `item_code` 变为可选，留空时后端 `_next_item_code()` 生成 `CO-<品类前缀><三位序号>`（同品类最大序号 +1，循环校验唯一）；显式传入且重复仍返回 409。**这是应用层规则，表结构（NOT NULL + UNIQUE）与 DDL 均未变化**，自动生成的款号与人工录入的款号在库中完全等价。
 
 > **关于 `price`（v1.1 落地方式）**：品牌方要求款式主数据包含价格，但**后端本期不使用**。因此——① 建表 DDL（`docs/FLY官网_SQLite建表DDL.sql`）已补 `price NUMERIC(10,2)` 列（脚本内有注释）；② ORM 模型 `backend/app/models/product.py` 暂**不映射**该列，SQLAlchemy `create_all` 建出的库不含此列（现有 `fly.db` 亦无，如需启用需模型补列 + 迁移/重建）；③ 前后台接口均不返回价格字段，前台不展示（Non-goals N5 不变）。
 
@@ -402,9 +405,10 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 | 表 | 索引 | 类型 | 支撑查询 |
 |---|---|---|---|
-| collections | `(category,status,published_at)` | 组合 | 品类页系列墙（FR-F21/F22） |
+| collections | `item_id` | 单列 | 款式 → 其系列列表（FR-F25） |
+| collections | `status` | 单列 | 系列状态筛选 |
+| items | `(category,status)` | 组合 | 品类页款式墙（FR-F21/F22） |
 | items | `(is_hot,hot_sort)` | 组合 | 热门推荐页（FR-F23） |
-| items | `collection_id` | 单列 | 系列→款式列表（FR-F25） |
 | items | `item_code` | UNIQUE | 库存关联/详情 URL |
 | stores | `city` | 单列 | 城市筛选/地图聚类（FR-F34） |
 | store_stocks | `(store_id,item_code)` | UNIQUE | 去重导入（验收标准） |
@@ -412,7 +416,7 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 | contact_messages | `handle_status` | 单列 | 后台留言处理列表 |
 | admin_login_logs / operation_logs | `created_at` + `user_id` | 单列 | 后台日志筛选 |
 
-> 数据量级（一期：≤20 门店、≤3 品类各 1 系列、每系列 ≤60 款式、新闻月更）对 SQLite 完全友好，无需分区/全文索引；全站搜索 FR-F71 使用 `LIKE` 即可（见 §6.2 待确认）。
+> 数据量级（一期：≤20 门店、3 品类、每款式 ≤n 个系列、≤60 款式/品类、新闻月更）对 SQLite 完全友好，无需分区/全文索引；全站搜索 FR-F71 使用 `LIKE` 即可（见 §6.2 待确认）。
 
 ---
 
@@ -453,7 +457,7 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 
 ```sql
 -- 关键结构预览（完整版见 DDL 文件）：
--- 1) collections / items：商品域，items.collection_id FK CASCADE
+-- 1) collections / items：商品域，collections.item_id FK CASCADE（系列挂在款式下）
 -- 2) stores / store_stocks：门店域，uq_store_item UNIQUE(store_id,item_code)
 -- 3) pages / page_versions / blocks：CMS 域，版本快照 + 区块
 -- 4) articles / contact_messages：内容/留言
@@ -468,7 +472,8 @@ AdminUser(后台账号·角色为枚举) ｜ AdminLoginLog / OperationLog(日志
 |---|---|---|---|
 | 数据库 | PostgreSQL（v1.4 技术栈） | **SQLite** | v1.5 决策变更 |
 | `Role` | 实体/role_id FK | **枚举列** `admin_users.role` | 轻量 RBAC 三角色固定，不建 roles 表 |
-| `Category` | 概念枚举 | **不建表**，`collections.category` 枚举列 | 品类不是实体表 |
+| `Category` | 概念枚举 | **不建表**，`items.category` 枚举列（款式自带） | 品类不是实体表；v1.2 起由系列改为款式承载 |
+| 商品主从关系 | 系列 → 款式（系列在上） | **款式 → 系列**（款式为主体，系列为可选分组） | v1.2 层级重构：系列用 `item_id` 挂在款式下；品类由系列继承改为款式自带（见 §3.3 / §4.1 / §4.2） |
 | 库存关联 | `item_code` FK | 逻辑引用 + 应用层校验 | 有意设计（见 §3.3） |
 | `Item` 价格 | `price` decimal(10,2) 可空（v1.6 新增） | **独立列 `price` NUMERIC(10,2)（记录字段）** | v1.6/v1.1 变更：品牌方要求款式主数据含价格；后端本期不读写、前台不展示（N5 不变），ORM 未映射（见 §4.2） |
 | 素材库 | FR-B16 素材集中管理 | 不建表，URL 引用 + `uploads/` 磁盘 | 一期磁盘，二期 OSS |

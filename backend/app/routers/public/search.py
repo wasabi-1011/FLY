@@ -36,11 +36,17 @@ async def search(
     collections = list(
         (
             await db.execute(
-                select(Collection)
-                .where(Collection.name.like(like), Collection.status == Status.ONLINE)
+                select(Collection, Item)
+                .join(Item, Collection.item_id == Item.id)
+                .where(
+                    Collection.name.like(like),
+                    Collection.status == Status.ONLINE,
+                    # 所属款式已下线时，其系列不应再被检索出来
+                    Item.status == Status.ONLINE,
+                )
                 .limit(limit)
             )
-        ).scalars().all()
+        ).all()
     )
     articles = list(
         (
@@ -66,8 +72,8 @@ async def search(
             {"item_code": i.item_code, "name": i.name} for i in items
         ],
         "collections": [
-            {"slug": c.slug, "name": c.name, "category": c.category.value}
-            for c in collections
+            {"name": c.name, "item_code": it.item_code, "category": it.category.value}
+            for c, it in collections
         ],
         "news": [{"slug": a.slug, "title": a.title} for a in articles],
         "stores": [{"id": s.id, "name": s.name, "city": s.city} for s in stores],

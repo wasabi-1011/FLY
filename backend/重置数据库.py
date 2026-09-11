@@ -9,7 +9,8 @@
 
 原理：
     初始基准 = backend/初始数据/初始数据库.db
-      （干净初始态：3 个账号 / 7 个页面 / 首页 7 个区块含 4 帧轮播 / 9 条新闻 / 0 留言）
+      （干净初始态：3 个账号 / 7 个页面 / 首页 7 个区块含 4 帧轮播 / 9 条新闻 /
+        8 款式 + 8 系列（商品域 v2.2 起种子）/ 0 留言 / 无运行日志）
     重置 = 用基准整体覆盖 fly.db（走 SQLite backup API，保证一致性）。
     若基准文件缺失，则用内置初始数据现场重建（表结构 + 账号 + 首页区块 + 9 条新闻）。
 
@@ -62,7 +63,7 @@ def counts(path) -> dict | None:
 def brief(c: dict | None) -> str:
     if not c:
         return "(不存在)"
-    keys = ["pages", "blocks", "articles", "admin_users", "contact_messages"]
+    keys = ["pages", "blocks", "articles", "items", "collections", "admin_users", "contact_messages"]
     return " | ".join(f"{k}={c.get(k, '-')}" for k in keys)
 
 
@@ -167,7 +168,7 @@ FIXED_PAGES = [
 
 
 async def rebuild_minimal() -> None:
-    """初始快照缺失时的兜底：建表 + 3 账号 + 首页/固定页 + 9 条新闻。"""
+    """初始快照缺失时的兜底：建表 + 3 账号 + 首页/固定页 + 9 条新闻 + 8 款式/8 系列。"""
     import importlib.util
 
     from app import models  # noqa: F401  注册全部模型
@@ -231,6 +232,14 @@ async def rebuild_minimal() -> None:
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)  # type: ignore[union-attr]
     await mod.run(append=False, dry=False)
+
+    # 5) 商品域种子（5 款式 + 8 系列，图片取 /pic/item-*.jpg 与 /pic/series-*.jpg）
+    pspec = importlib.util.spec_from_file_location(
+        "fly_seed_product", str(BACKEND_DIR / "种子数据_商品.py")
+    )
+    pmod = importlib.util.module_from_spec(pspec)
+    pspec.loader.exec_module(pmod)  # type: ignore[union-attr]
+    await pmod.run(dry=False, append=False)
 
 
 # ---------------------------------------------------------------- 入口
