@@ -10,3 +10,6 @@ passlib[bcrypt]==1.7.4
 bcrypt==3.2.2  # passlib 1.7.4 与 bcrypt>=4.1 不兼容，锁定此版本
 python-multipart==0.0.11
 bleach==6.1.0
+# Python 3.9 兼容：使 `str | None` (PEP 604) 注解可被 pydantic 求值
+# （3.10+ 原生支持，无需此包；装了也不影响 3.10+）
+eval_type_backport>=0.2.0

@@ -6,8 +6,12 @@ setlocal
 
 rem 选择可用的 Python 解释器：优先项目 .venv，其次 Python311，最后 PATH 里的 python
 set "PY=%~dp0backend\.venv\Scripts\python.exe"
+if not exist "%PY%" set "PY=%LOCALAPPDATA%\Programs\Python\Python311\python.exe"
 if not exist "%PY%" set "PY=C:\Program Files\Python311\python.exe"
 if not exist "%PY%" set "PY=python"
+
+rem Project needs Python 3.10+ (PEP 604 "X | None" annotations)
+"%PY%" -c "import sys; print('Python', sys.version.split()[0]); print('[WARN] need 3.10+') if sys.version_info < (3, 10) else None"
 
 :menu
 cls
